@@ -37,22 +37,21 @@
       "wsLatency": "WebSocket"
     },
     "botinfo": {
-      "title": "∩LIEN Information",
-      "name": "Name",
-      "id": "ID",
-      "version": "Version",
-      "owner": "Owner",
-      "createdAt": "Created at",
-      "joinedAt": "Joined here at",
+      "greetingTitle": "Hello, human!",
+      "cornerLine": "You found my little corner!",
+      "bioLine": "I'm just an alien **trying to understand humans** while doing a few little things around here.",
+      "curiousIntro": "Since you're curious, here's some info about me:",
+      "infoSectionTitle": "Bot info",
       "servers": "Servers",
       "users": "Users",
       "commands": "Commands",
-      "uptime": "Uptime",
       "performanceTitle": "Performance",
-      "pingWs": "WebSocket Ping",
-      "heapUsed": "Memory used",
-      "techTitle": "Technologies",
-      "developerTitle": "Developer"
+      "pingWs": "Ping",
+      "uptime": "Uptime",
+      "statusLabel": "Status",
+      "statusOnline": "Online",
+      "closingLine1": "Hehe! That's all you wanted to know about me!",
+      "closingLine2": "Now go... I have **planets to explore**."
     },
     "config": {
       "userGroup": "User preferences",

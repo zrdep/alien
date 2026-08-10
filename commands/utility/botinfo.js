@@ -9,7 +9,6 @@ const {
 } = require('discord.js');
 
 const { tFor } = require('../../utils/i18n');
-const { version: discordJsVersion } = require('discord.js');
 
 module.exports = {
     cooldown: 5,
@@ -42,37 +41,34 @@ module.exports = {
         );
         const comandos = client.commands?.size ?? 0;
         const pingWs = client.ws.ping;
-        const nodeVersion = process.version;
-        const locale = interaction.user.id;
 
         const botAvatar = client.user.displayAvatarURL({
             extension: 'png',
             size: 4096,
         });
 
-        const introTitle = tt('commands.botinfo.title');
-        const serversLabel = tt('commands.botinfo.servers');
-        const usersLabel = tt('commands.botinfo.users');
-        const commandsLabel = tt('commands.botinfo.commands');
-        const perfTitle = tt('commands.botinfo.performanceTitle');
-        const pingLabel = tt('commands.botinfo.pingWs');
-        const uptimeLabel = tt('commands.botinfo.uptime');
-
         const introducao = new TextDisplayBuilder()
             .setContent(`
-# <:excited:1536247579061256252> ${introTitle}
+# <:excited:1536247579061256252> ${tt('commands.botinfo.greetingTitle')}
 
-<:ovni:1536247726889762847> ∩LIEN — versão \`${require('../../package.json').version}\`
+<:ovni:1536247726889762847> ${tt('commands.botinfo.cornerLine')}
+
+${tt('commands.botinfo.bioLine')}
+
+<:passionate:1536247742110634034> ${tt('commands.botinfo.curiousIntro')}
 `);
 
         const informacoes = new TextDisplayBuilder()
             .setContent(`
-<:ovni:1536247726889762847> **${serversLabel}:** \`${servidores.toLocaleString('pt-BR')}\`
-<:passionate:1536247742110634034> **${usersLabel}:** \`${usuarios.toLocaleString('pt-BR')}\`
-<:config:1536247533502734376> **${commandsLabel}:** \`${comandos}\`
+## ${tt('commands.botinfo.infoSectionTitle')}
+
+<:ovni:1536247726889762847> **${tt('commands.botinfo.servers')}:** \`${servidores.toLocaleString('pt-BR')}\`
+<:passionate:1536247742110634034> **${tt('commands.botinfo.users')}:** \`${usuarios.toLocaleString('pt-BR')}\`
+<:config:1536247533502734376> **${tt('commands.botinfo.commands')}:** \`${comandos}\`
 `);
 
-        const thumbnail = new ThumbnailBuilder().setURL(botAvatar);
+        const thumbnail = new ThumbnailBuilder()
+            .setURL(botAvatar);
 
         const sectionInformacoes = new SectionBuilder()
             .addTextDisplayComponents(informacoes)
@@ -80,15 +76,17 @@ module.exports = {
 
         const desempenho = new TextDisplayBuilder()
             .setContent(`
-## ${perfTitle}
+## ${tt('commands.botinfo.performanceTitle')}
 
-<:ping:1536248338108911626> **${pingLabel}:** \`${pingWs}ms\`
-<:restart:1536248409634246719> **${uptimeLabel}:** \`${uptime}\`
-<:online:1536247711169249391> **Status:** \`Online\`
+<:ping:1536248338108911626> **${tt('commands.botinfo.pingWs')}:** \`${pingWs}ms\`
+<:restart:1536248409634246719> **${tt('commands.botinfo.uptime')}:** \`${uptime}\`
+<:online:1536247711169249391> **${tt('commands.botinfo.statusLabel')}:** \`${tt('commands.botinfo.statusOnline')}\`
 `);
 
-        const final = new TextDisplayBuilder().setContent(`
-<:hmm:1536247599365890139> Agora vou... tenho **planetas pra explorar**.
+        const final = new TextDisplayBuilder()
+            .setContent(`
+${tt('commands.botinfo.closingLine1')}
+<:hmm:1536247599365890139> ${tt('commands.botinfo.closingLine2')}
 `);
 
         const container = new ContainerBuilder()

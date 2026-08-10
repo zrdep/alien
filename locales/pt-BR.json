@@ -37,22 +37,21 @@
       "wsLatency": "WebSocket"
     },
     "botinfo": {
-      "title": "Informações do ∩LIEN",
-      "name": "Nome",
-      "id": "ID",
-      "version": "Versão",
-      "owner": "Dono",
-      "createdAt": "Criado em",
-      "joinedAt": "Entrou aqui em",
+      "greetingTitle": "Olá humano!",
+      "cornerLine": "Você encontrou meu cantinho!",
+      "bioLine": "Eu sou só um alienígena **tentando entender os humanos** enquanto faço algumas coisinhas por aqui.",
+      "curiousIntro": "Já que você está curioso, aqui estão algumas informações sobre mim:",
+      "infoSectionTitle": "Informações do bot",
       "servers": "Servidores",
       "users": "Usuários",
       "commands": "Comandos",
-      "uptime": "Atividade",
       "performanceTitle": "Desempenho",
-      "pingWs": "Ping WebSocket",
-      "heapUsed": "Memória usada",
-      "techTitle": "Tecnologias",
-      "developerTitle": "Desenvolvedor"
+      "pingWs": "Ping",
+      "uptime": "Uptime",
+      "statusLabel": "Status",
+      "statusOnline": "Online",
+      "closingLine1": "Hehe! Era isso que você queria saber sobre mim!",
+      "closingLine2": "Agora vai... tenho **planetas pra explorar**."
     },
     "config": {
       "userGroup": "Preferências do usuário",
