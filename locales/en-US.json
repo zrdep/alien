@@ -1,0 +1,70 @@
+{
+  "terms": {
+    "title": "Hey, human!",
+    "introBefore": "Before using",
+    "introAfter": "you need to accept our **Terms of Service** and **Privacy Policy**.",
+    "consent": "By continuing, you agree to the bot's terms.",
+    "buttons": {
+      "view": "View terms",
+      "accept": "Accept",
+      "acceptFull": "Accept and continue"
+    },
+    "embed": {
+      "title": "∩lien Terms of Service",
+      "responsible": "Responsible Use",
+      "responsibleText": "Use this bot respectfully. Do not abuse the commands.",
+      "data": "Collected Data",
+      "dataText": "We only store your user ID to save your preferences, progress and settings within the bot.",
+      "privacy": "Privacy",
+      "privacyText": "We do not share any data with third parties. Everything is stored locally in the bot's database."
+    },
+    "tipConfig": "<:sunglasses:1536248455519801386> Want to change my language? Use </config user:1536383086521229373> anytime!",
+    "accepted": "**Terms accepted!** Now you can use all **∩lien** commands.",
+    "alreadyAccepted": "You already accepted the terms! You can use all commands."
+  },
+  "cooldown": {
+    "title": "Easy there, human!",
+    "text": "You can only use another command in `{seconds}s`."
+  },
+  "errors": {
+    "generic": "An error occurred while executing this command! Contact support."
+  },
+  "commands": {
+    "ping": {
+      "calculating": "Calculating...",
+      "title": "Pong!",
+      "botLatency": "Bot",
+      "wsLatency": "WebSocket"
+    },
+    "botinfo": {
+      "title": "∩LIEN Information",
+      "name": "Name",
+      "id": "ID",
+      "version": "Version",
+      "owner": "Owner",
+      "createdAt": "Created at",
+      "joinedAt": "Joined here at",
+      "servers": "Servers",
+      "users": "Users",
+      "commands": "Commands",
+      "uptime": "Uptime",
+      "performanceTitle": "Performance",
+      "pingWs": "WebSocket Ping",
+      "heapUsed": "Memory used",
+      "techTitle": "Technologies",
+      "developerTitle": "Developer"
+    },
+    "config": {
+      "userGroup": "User preferences",
+      "serverGroup": "Server preferences",
+      "userSubcommand": "Change your personal settings",
+      "serverSubcommand": "Change server settings (admins only)",
+      "panelUserTitle": "My Settings",
+      "panelUserIntro": "Here you customize how I interact with you personally.",
+      "languageLabel": "Bot language",
+      "languageDesc": "Choose the language ∩lien uses when responding to YOU",
+      "languageSaved": "Idioma alterado com sucesso! Agora eu respondo em português 🇧🇷",
+      "languageSavedEn": "Language updated successfully! Now I respond in English 🇺🇸"
+    }
+  }
+}

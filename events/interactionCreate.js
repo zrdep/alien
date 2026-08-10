@@ -9,58 +9,62 @@ const {
 const logger = require('../utils/logger');
 const picocolors = require('picocolors');
 const { hasAcceptedTerms, acceptTerms } = require('../utils/db');
+const { tFor } = require('../utils/i18n');
 
 const c = picocolors;
 
-const termosBotoes = () => {
+const termosBotoes = (langFn) => {
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId('terms_view')
-            .setLabel('Ver termos')
+            .setLabel(langFn('terms.buttons.view'))
             .setEmoji('<:book:1536247508181848134>')
             .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
             .setCustomId('terms_accept')
-            .setLabel('Aceitar')
+            .setLabel(langFn('terms.buttons.accept'))
             .setEmoji('<:excited:1536247579061256252>')
             .setStyle(ButtonStyle.Success)
     );
     return [row];
 };
 
-const termosMensagem = () => ({
-    content:
-`<:support:1536248470611173466> **| Ei, humano!**
+const termosMensagem = (interaction) => {
+    const tt = (k) => tFor(interaction, k);
+    return {
+        content:
+`<:support:1536248470611173466> **| ${tt('terms.title')}**
 
-Antes de usar o **∩lien**, você precisa aceitar nossos
-**Termos de Uso** e **Política de Privacidade**.
+${tt('terms.introBefore')} **∩lien**, ${tt('terms.introAfter')}
 
-Ao continuar, você concorda com os termos do bot.`,
-    components: termosBotoes(),
-    flags: MessageFlags.Ephemeral,
-});
+${tt('terms.consent')}
 
-const termosConteudoCompleto = () => {
+${tt('terms.tipConfig')}`,
+        components: termosBotoes(tt),
+        flags: MessageFlags.Ephemeral,
+    };
+};
+
+const termosConteudoCompleto = (interaction) => {
+    const tt = (k) => tFor(interaction, k);
     const embed = new EmbedBuilder()
         .setColor(0x7e22ce)
-        .setTitle('<:book:1536247508181848134> Termos de Uso ∩lien')
+        .setTitle(`<:book:1536247508181848134> ${tt('terms.embed.title')}`)
         .setDescription(
-`> **1. Uso Responsável**
-> Use este bot de forma respeitosa. Não abuse dos comandos.
+`> **1. ${tt('terms.embed.responsible')}**
+> ${tt('terms.embed.responsibleText')}
 
-> **2. Dados Coletados**
-> Armazenamos apenas seu ID de usuário para salvar suas preferências,
-> progresso e configurações dentro do bot.
+> **2. ${tt('terms.embed.data')}**
+> ${tt('terms.embed.dataText')}
 
-> **3. Privacidade**
-> Não compartilhamos nenhum dado com terceiros.
-> Tudo fica armazenado localmente no banco do bot.`
-        )
+> **3. ${tt('terms.embed.privacy')}**
+> ${tt('terms.embed.privacyText')}`
+        );
 
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId('terms_accept')
-            .setLabel('Aceitar e continuar')
+            .setLabel(tt('terms.buttons.acceptFull'))
             .setEmoji('<:excited:1536247579061256252>')
             .setStyle(ButtonStyle.Success)
     );
@@ -72,15 +76,15 @@ const termosConteudoCompleto = () => {
     };
 };
 
-const termosJaAceito = () => ({
-    content: '<:excited:1536247579061256252> **Termos aceitos!** Agora você já pode usar todos os comandos do ∩lien.',
+const termosJaAceito = (interaction) => ({
+    content: `<:excited:1536247579061256252> ${tFor(interaction, 'terms.accepted')}`,
     components: [],
     embeds: [],
     flags: MessageFlags.Ephemeral,
 });
 
-const termosViewJaAceito = () => ({
-    content: '<:book:1536247508181848134> Você já aceitou os termos! Pode usar todos os comandos.',
+const termosViewJaAceito = (interaction) => ({
+    content: `<:book:1536247508181848134> ${tFor(interaction, 'terms.alreadyAccepted')}`,
     components: [],
     embeds: [],
     flags: MessageFlags.Ephemeral,
@@ -89,37 +93,50 @@ const termosViewJaAceito = () => ({
 const GLOBAL_COOLDOWN_MS = 5_000;
 const globalCooldowns = new Map();
 
-const mensagemCooldown = (segundos) => ({
-    content: `<:hmm:1536247599365890139> **Calma aí, humano!**
-Você só pode usar outro comando daqui a \`${segundos}s\`.`,
+const mensagemCooldown = (interaction, segundos) => ({
+    content: `<:hmm:1536247599365890139> **${tFor(interaction, 'cooldown.title')}**
+${tFor(interaction, 'cooldown.text', { seconds: segundos })}`,
     flags: MessageFlags.Ephemeral,
 });
 
 module.exports = {
     name: Events.InteractionCreate,
     async execute(interaction) {
+        if (interaction.isStringSelectMenu()) {
+            for (const command of interaction.client.commands.values()) {
+                if (typeof command.handleSelectMenu === 'function') {
+                    const handled = await command.handleSelectMenu(interaction);
+                    if (handled !== false) return;
+                }
+            }
+            return;
+        }
+
         if (interaction.isButton()) {
             if (interaction.customId === 'terms_accept') {
                 if (hasAcceptedTerms(interaction.user.id)) {
-                    await interaction.update(termosViewJaAceito());
+                    await interaction.update(termosViewJaAceito(interaction));
                     return;
                 }
                 acceptTerms(interaction.user.id);
                 logger.success(`${interaction.user.tag} aceitou os termos de uso`);
-                await interaction.update(termosJaAceito());
+                await interaction.update(termosJaAceito(interaction));
                 return;
             }
 
             if (interaction.customId === 'terms_view') {
-                await interaction.update(termosConteudoCompleto());
+                await interaction.update(termosConteudoCompleto(interaction));
                 return;
             }
         }
 
         if (!interaction.isChatInputCommand()) return;
 
-        if (!hasAcceptedTerms(interaction.user.id)) {
-            await interaction.reply(termosMensagem());
+        const comandoLivre = ['config'];
+        const precisaDeTermos = !comandoLivre.includes(interaction.commandName);
+
+        if (precisaDeTermos && !hasAcceptedTerms(interaction.user.id)) {
+            await interaction.reply(termosMensagem(interaction));
             logger.warn(`${interaction.user.tag} tentou /${interaction.commandName} mas não aceitou os termos`);
             return;
         }
@@ -130,7 +147,7 @@ module.exports = {
 
         if (tempoRestante > 0) {
             const segundos = Math.ceil(tempoRestante / 1000);
-            await interaction.reply(mensagemCooldown(segundos));
+            await interaction.reply(mensagemCooldown(interaction, segundos));
             return;
         }
 
@@ -171,7 +188,7 @@ module.exports = {
 
             try {
                 await interaction.reply({
-                    content: '<:dnd:1536247547193204766> Ocorreu um erro ao executar este comando! Contate o suporte.',
+                    content: `<:dnd:1536247547193204766> ${tFor(interaction, 'errors.generic')}`,
                     flags: MessageFlags.Ephemeral,
                 });
             } catch (replyError) {

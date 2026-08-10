@@ -4,6 +4,7 @@ const {
     ContainerBuilder,
     TextDisplayBuilder,
 } = require('discord.js');
+const { tFor } = require('../../utils/i18n');
 
 module.exports = {
     cooldown: 5,
@@ -13,7 +14,7 @@ module.exports = {
 
     async execute(interaction) {
         await interaction.reply({
-            content: 'Calculando...',
+            content: tFor(interaction, 'commands.ping.calculating'),
             withResponse: true
         });
 
@@ -25,10 +26,10 @@ module.exports = {
         const container = new ContainerBuilder()
             .addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(
-`# <:ping:1536248338108911626> Pong!
+`# <:ping:1536248338108911626> ${tFor(interaction, 'commands.ping.title')}
 
-**Bot:** \`${botPing}ms\`
-**WebSocket:** \`${wsPing}ms\``
+**${tFor(interaction, 'commands.ping.botLatency')}:** \`${botPing}ms\`
+**${tFor(interaction, 'commands.ping.wsLatency')}:** \`${wsPing}ms\``
                 )
             );
 

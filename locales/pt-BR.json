@@ -1,0 +1,70 @@
+{
+  "terms": {
+    "title": "Ei, humano!",
+    "introBefore": "Antes de usar o",
+    "introAfter": "você precisa aceitar nossos **Termos de Uso** e **Política de Privacidade**.",
+    "consent": "Ao continuar, você concorda com os termos do bot.",
+    "buttons": {
+      "view": "Ver termos",
+      "accept": "Aceitar",
+      "acceptFull": "Aceitar e continuar"
+    },
+    "embed": {
+      "title": "Termos de Uso ∩lien",
+      "responsible": "Uso Responsável",
+      "responsibleText": "Use este bot de forma respeitosa. Não abuse dos comandos.",
+      "data": "Dados Coletados",
+      "dataText": "Armazenamos apenas seu ID de usuário para salvar suas preferências, progresso e configurações dentro do bot.",
+      "privacy": "Privacidade",
+      "privacyText": "Não compartilhamos nenhum dado com terceiros. Tudo fica armazenado localmente no banco do bot."
+    },
+    "tipConfig": "<:sunglasses:1536248455519801386> Quer mudar meu idioma? Use </config user:1536383086521229373> a qualquer momento!",
+    "accepted": "**Termos aceitos!** Agora você já pode usar todos os comandos do **∩lien**.",
+    "alreadyAccepted": "Você já aceitou os termos! Pode usar todos os comandos."
+  },
+  "cooldown": {
+    "title": "Calma aí, humano!",
+    "text": "Você só pode usar outro comando daqui a `{seconds}s`."
+  },
+  "errors": {
+    "generic": "Ocorreu um erro ao executar este comando! Contate o suporte."
+  },
+  "commands": {
+    "ping": {
+      "calculating": "Calculando...",
+      "title": "Pong!",
+      "botLatency": "Bot",
+      "wsLatency": "WebSocket"
+    },
+    "botinfo": {
+      "title": "Informações do ∩LIEN",
+      "name": "Nome",
+      "id": "ID",
+      "version": "Versão",
+      "owner": "Dono",
+      "createdAt": "Criado em",
+      "joinedAt": "Entrou aqui em",
+      "servers": "Servidores",
+      "users": "Usuários",
+      "commands": "Comandos",
+      "uptime": "Atividade",
+      "performanceTitle": "Desempenho",
+      "pingWs": "Ping WebSocket",
+      "heapUsed": "Memória usada",
+      "techTitle": "Tecnologias",
+      "developerTitle": "Desenvolvedor"
+    },
+    "config": {
+      "userGroup": "Preferências do usuário",
+      "serverGroup": "Preferências do servidor",
+      "userSubcommand": "Altere suas configurações pessoais",
+      "serverSubcommand": "Altere as configurações do servidor (apenas admins)",
+      "panelUserTitle": "Minhas Configurações",
+      "panelUserIntro": "Aqui você personaliza como eu interajo com você pessoalmente.",
+      "languageLabel": "Idioma do bot",
+      "languageDesc": "Escolha o idioma que o ∩lien usa para responder VOCÊ",
+      "languageSaved": "Idioma alterado com sucesso! Agora eu respondo em português 🇧🇷",
+      "languageSavedEn": "Language updated successfully! Now I respond in English 🇺🇸"
+    }
+  }
+}

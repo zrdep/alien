@@ -17,11 +17,23 @@ const status = [
         type: ActivityType.Watching,
     },
     {
+        name: `Exploring ${servidores} planets | ∩lien ${versao}`,
+        type: ActivityType.Watching,
+    },
+    {
         name: `A processar ${comandos} comandos | ∩lien ${versao}`,
         type: ActivityType.Watching,
     },
     {
+        name: `Processing ${comandos} commands | ∩lien ${versao}`,
+        type: ActivityType.Watching,
+    },
+    {
         name: `A abduzir ${usuarios} usuários | ∩lien ${versao}`,
+        type: ActivityType.Watching,
+    },
+    {
+        name: `Abduzing ${usuarios} users | ∩lien ${versao}`,
         type: ActivityType.Watching,
     },
 ];
