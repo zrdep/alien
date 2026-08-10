@@ -64,6 +64,25 @@
       "languageDesc": "Escolha o idioma que o ∩lien usa para responder VOCÊ",
       "languageSaved": "Idioma alterado com sucesso! Agora eu respondo em português 🇧🇷",
       "languageSavedEn": "Language updated successfully! Now I respond in English 🇺🇸"
+    },
+    "planeta": {
+      "dmDisabled": "Este comando só funciona dentro de servidores.",
+      "title": "Planeta Gerado",
+      "subtitle": "Capturamos um planeta na sua órbita!",
+      "detailsTitle": "Detalhes",
+      "seedLabel": "Seed",
+      "registryTitle": "Rastreamento",
+      "prefixLabel": "Prefixo",
+      "numberLabel": "Número",
+      "suffixLabel": "Sufixo",
+      "rarityLabel": "Raridade",
+      "rarityA": "Comum",
+      "rarityB": "Incomum",
+      "rarityC": "Raro",
+      "rarityD": "Épico",
+      "rarityE": "Lendário",
+      "footerTip": "Cada planeta é único! Rode o comando de novo para descobrir um novo mundo.",
+      "footerLater": "Em breve você poderá nomear, explorar e fazer muito mais com este planeta!"
     }
   }
 }

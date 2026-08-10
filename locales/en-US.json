@@ -64,6 +64,25 @@
       "languageDesc": "Choose the language ∩lien uses when responding to YOU",
       "languageSaved": "Idioma alterado com sucesso! Agora eu respondo em português 🇧🇷",
       "languageSavedEn": "Language updated successfully! Now I respond in English 🇺🇸"
+    },
+    "planeta": {
+      "dmDisabled": "This command only works inside servers.",
+      "title": "Generated Planet",
+      "subtitle": "We captured a planet in your orbit!",
+      "detailsTitle": "Details",
+      "seedLabel": "Seed",
+      "registryTitle": "Registry",
+      "prefixLabel": "Prefix",
+      "numberLabel": "Number",
+      "suffixLabel": "Suffix",
+      "rarityLabel": "Rarity",
+      "rarityA": "Common",
+      "rarityB": "Uncommon",
+      "rarityC": "Rare",
+      "rarityD": "Epic",
+      "rarityE": "Legendary",
+      "footerTip": "Each planet is unique! Run the command again to discover a new world.",
+      "footerLater": "Soon you will be able to name, explore and do much more with this planet!"
     }
   }
 }
