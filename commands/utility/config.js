@@ -31,7 +31,7 @@ const buildMenu = (currentLang) => {
             .setPlaceholder('Escolha um idioma / Choose a language')
             .addOptions(
                 SUPPORTED_LANGS.map((code) => ({
-                    label: `${FLAG[code]} ${NAME[code][currentLang]}`,
+                    label: NAME[code][currentLang],
                     description: DESC[code][currentLang],
                     value: code,
                     emoji: FLAG[code],
