@@ -189,6 +189,79 @@
       "subtitle": "All resources your aliens collected on expeditions.",
       "resourcesTitle": "Your Resources",
       "empty": "Your inventory is empty. Explore planets with **/planet** and click **Explore**!"
+    },
+    "craft": {
+      "title": "Crafting Workshop",
+      "subtitle": "Use your galactic ores to craft ship upgrades!",
+      "categoryPlaceholder": "Select an item category...",
+      "recipePlaceholder": "Select a recipe to craft...",
+      "categories": {
+        "propulsor": "Speed Propulsors",
+        "excavation": "Excavation Probes",
+        "scanner": "Star Scanners"
+      },
+      "ingredientsTitle": "Required Ingredients",
+      "craftTimeLabel": "Crafting time",
+      "buttonCraft": "Start Crafting",
+      "alreadyMaxLevel": "You already own this level or upgrade!",
+      "requirementNotMet": "You need to craft the previous upgrade first!",
+      "insufficientResources": "Insufficient resources in inventory for this recipe.",
+      "busyError": "Your alien is already crafting an item in the workshop! Wait for it to finish.",
+      "inProgressTitle": "Crafting in Progress!",
+      "inProgressBody": "Your alien is constructing **{item}** in the ship workshop.",
+      "inProgressEta": "Finishes in: **{time}**",
+      "successTitle": "Item Crafted Successfully!",
+      "successBody": "Your craft of **{item}** was completed and applied to your ship!",
+      "recipes": {
+        "propulsor_b": {
+          "title": "Propulsor B — 4,000 km/s",
+          "desc": "Increases travel speed to 4,000 km/s."
+        },
+        "propulsor_c": {
+          "title": "Propulsor C — 12,000 km/s",
+          "desc": "Advanced propulsor for 12,000 km/s travel."
+        },
+        "propulsor_d": {
+          "title": "Propulsor D — 20,000 km/s",
+          "desc": "Epic propulsor capable of crossing the galaxy at 20,000 km/s."
+        },
+        "propulsor_e": {
+          "title": "Propulsor E — 40,000 km/s",
+          "desc": "Legendary propulsor reaching top speed of 40,000 km/s."
+        },
+        "excavation_2": {
+          "title": "Excavation Probe Level 2",
+          "desc": "80m depth and +5% bonus resources."
+        },
+        "excavation_3": {
+          "title": "Excavation Probe Level 3",
+          "desc": "120m depth and +10% bonus resources."
+        },
+        "excavation_4": {
+          "title": "Excavation Probe Level 4",
+          "desc": "180m depth and +18% bonus resources."
+        },
+        "excavation_5": {
+          "title": "Excavation Probe Level 5",
+          "desc": "Legendary probe with 250m depth and +28% bonus."
+        },
+        "scanner_2": {
+          "title": "Star Scanner Level 2",
+          "desc": "6 light-years planetary detection range."
+        },
+        "scanner_3": {
+          "title": "Star Scanner Level 3",
+          "desc": "10 light-years planetary detection range."
+        },
+        "scanner_4": {
+          "title": "Star Scanner Level 4",
+          "desc": "Epic scanner with 15 light-years range."
+        },
+        "scanner_5": {
+          "title": "Star Scanner Level 5",
+          "desc": "Legendary scanner with maximum 25 light-years range."
+        }
+      }
     }
   }
 }

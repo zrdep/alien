@@ -2,7 +2,7 @@ const { Events, ActivityType } = require('discord.js');
 const figlet = require('figlet');
 const picocolors = require('picocolors');
 const logger = require('../utils/logger');
-const { resolveAllPendingMissions, cleanExpiredPlanetOffers } = require('../utils/db');
+const { resolveAllPendingMissions, cleanExpiredPlanetOffers, resolveAllPendingCrafts } = require('../utils/db');
 const versao = require('../config.json').versao;
 
 const c = picocolors;
@@ -93,8 +93,12 @@ module.exports = {
 
         const expiredOffers = cleanExpiredPlanetOffers();
         const missions = resolveAllPendingMissions();
+        const crafts = resolveAllPendingCrafts();
         if (missions.total > 0) {
             logger.info(`Missões sincronizadas: ${missions.total} ativa(s), ${missions.completed} concluída(s) offline`);
+        }
+        if (crafts.total > 0) {
+            logger.info(`Fabricações sincronizadas: ${crafts.total} ativa(s), ${crafts.completed} concluída(s) offline`);
         }
         if (expiredOffers > 0) {
             logger.info(`Ofertas de planeta expiradas removidas: ${expiredOffers}`);

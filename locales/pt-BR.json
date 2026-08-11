@@ -189,6 +189,79 @@
       "subtitle": "Todos os recursos que seus aliens coletaram nas expedições.",
       "resourcesTitle": "Seus Recursos",
       "empty": "Seu inventário está vazio. Explore planetas com **/planet** e clique em **Explorar**!"
+    },
+    "craft": {
+      "title": "Oficina de Fabricação",
+      "subtitle": "Use seus minérios galácticos para fabricar melhorias na sua nave!",
+      "categoryPlaceholder": "Selecione uma categoria de itens...",
+      "recipePlaceholder": "Selecione uma receita para fabricar...",
+      "categories": {
+        "propulsor": "Propulsores de Velocidade",
+        "excavation": "Sondas de Escavação",
+        "scanner": "Scanners Estelares"
+      },
+      "ingredientsTitle": "Ingredientes Necessários",
+      "craftTimeLabel": "Tempo de fabricação",
+      "buttonCraft": "Iniciar Fabricação",
+      "alreadyMaxLevel": "Você já possui este nível ou melhoria!",
+      "requirementNotMet": "Você precisa fabricar a melhoria anterior primeiro!",
+      "insufficientResources": "Recursos insuficientes no inventário para esta receita.",
+      "busyError": "Seu alien já está fabricando um item na oficina! Aguarde ele terminar.",
+      "inProgressTitle": "Fabricação em Andamento!",
+      "inProgressBody": "Seu alien está construindo **{item}** na oficina da nave.",
+      "inProgressEta": "Conclui em: **{time}**",
+      "successTitle": "Item Fabricado com Sucesso!",
+      "successBody": "Sua fabricação de **{item}** foi concluída e aplicada à sua nave!",
+      "recipes": {
+        "propulsor_b": {
+          "title": "Propulsor B — 4.000 km/s",
+          "desc": "Aumenta a velocidade de viagem para 4.000 km/s."
+        },
+        "propulsor_c": {
+          "title": "Propulsor C — 12.000 km/s",
+          "desc": "Propulsor avançado para viagens de 12.000 km/s."
+        },
+        "propulsor_d": {
+          "title": "Propulsor D — 20.000 km/s",
+          "desc": "Propulsor Épico capaz de cruzar a galáxia a 20.000 km/s."
+        },
+        "propulsor_e": {
+          "title": "Propulsor E — 40.000 km/s",
+          "desc": "Propulsor Lendário atinge velocidade máxima de 40.000 km/s."
+        },
+        "excavation_2": {
+          "title": "Sonda de Escavação Nível 2",
+          "desc": "Profundidade de 80m e +5% de recursos bônus."
+        },
+        "excavation_3": {
+          "title": "Sonda de Escavação Nível 3",
+          "desc": "Profundidade de 120m e +10% de recursos bônus."
+        },
+        "excavation_4": {
+          "title": "Sonda de Escavação Nível 4",
+          "desc": "Profundidade de 180m e +18% de recursos bônus."
+        },
+        "excavation_5": {
+          "title": "Sonda de Escavação Nível 5",
+          "desc": "Sonda Lendária com profundidade de 250m e +28% de bônus."
+        },
+        "scanner_2": {
+          "title": "Scanner Estelar Nível 2",
+          "desc": "Alcance de detecção planetária de 6 anos-luz."
+        },
+        "scanner_3": {
+          "title": "Scanner Estelar Nível 3",
+          "desc": "Alcance de detecção planetária de 10 anos-luz."
+        },
+        "scanner_4": {
+          "title": "Scanner Estelar Nível 4",
+          "desc": "Scanner Épico com alcance de 15 anos-luz."
+        },
+        "scanner_5": {
+          "title": "Scanner Estelar Nível 5",
+          "desc": "Scanner Lendário com alcance máximo de 25 anos-luz."
+        }
+      }
     }
   }
 }

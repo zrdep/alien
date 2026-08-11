@@ -20,7 +20,7 @@ const {
 } = require('discord.js');
 
 const { tFor } = require('../../utils/i18n');
-const { getUserLanguage, getUserAlien, setUserAlien, getUserShip, getPlanetUsageState } = require('../../utils/db');
+const { getUserLanguage, getUserAlien, setUserAlien, getUserShip, getPlanetUsageState, resolveActiveCraft } = require('../../utils/db');
 const { buildHangarContent } = require('../../utils/ship');
 
 const ALIEN_COLORS = [
@@ -214,6 +214,7 @@ ${nameLine}
 ${colorLine}
 `);
 
+    resolveActiveCraft(interaction.user.id);
     const usage = getPlanetUsageState(interaction.user.id);
     const ship = getUserShip(interaction.user.id);
     const hangarTxt = new TextDisplayBuilder().setContent(

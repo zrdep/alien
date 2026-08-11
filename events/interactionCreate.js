@@ -96,7 +96,7 @@ const GLOBAL_COOLDOWN_MS = 5_000;
 const globalCooldowns = new Map();
 
 const getDeferOptions = (interaction) => {
-    if (interaction.commandName === 'config' || interaction.commandName === 'inventory') {
+    if (interaction.commandName === 'config' || interaction.commandName === 'inventory' || interaction.commandName === 'craft') {
         return { flags: MessageFlags.Ephemeral };
     }
 

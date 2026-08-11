@@ -136,6 +136,22 @@ db.exec(`
     );
 `);
 
+db.exec(`
+    CREATE TABLE IF NOT EXISTS active_crafts (
+        user_id TEXT PRIMARY KEY,
+        recipe_id TEXT NOT NULL,
+        started_at INTEGER NOT NULL,
+        ends_at INTEGER NOT NULL
+    );
+`);
+
+db.exec(`
+    CREATE TABLE IF NOT EXISTS craft_notices (
+        user_id TEXT PRIMARY KEY,
+        notice_json TEXT NOT NULL
+    );
+`);
+
 const getUser = (userId) => {
     let user = db.prepare('SELECT * FROM users WHERE user_id = ?').get(userId);
     if (!user) {
@@ -542,6 +558,130 @@ const clearGuildAllowedChannel = (guildId) => {
     db.prepare('DELETE FROM guild_settings WHERE guild_id = ?').run(guildId);
 };
 
+const getActiveCraft = (userId) => {
+    return db.prepare('SELECT * FROM active_crafts WHERE user_id = ?').get(userId) ?? null;
+};
+
+const setCraftNotice = (userId, notice) => {
+    db.prepare(`
+        INSERT INTO craft_notices (user_id, notice_json)
+        VALUES (?, ?)
+        ON CONFLICT(user_id) DO UPDATE SET notice_json = excluded.notice_json
+    `).run(userId, JSON.stringify(notice));
+};
+
+const popCraftNotice = (userId) => {
+    const row = db.prepare('SELECT notice_json FROM craft_notices WHERE user_id = ?').get(userId);
+    if (!row) return null;
+
+    db.prepare('DELETE FROM craft_notices WHERE user_id = ?').run(userId);
+
+    try {
+        return JSON.parse(row.notice_json);
+    } catch {
+        return null;
+    }
+};
+
+const startCraftJob = (userId, recipe, now = Date.now()) => {
+    if (!recipe) return { success: false, reason: 'invalid_recipe' };
+
+    const active = getActiveCraft(userId);
+    if (active) {
+        return { success: false, reason: 'craft_in_progress', activeCraft: active };
+    }
+
+    const userShip = getUserShip(userId);
+    if (typeof recipe.checkRequirement === 'function' && !recipe.checkRequirement(userShip)) {
+        return { success: false, reason: 'requirement_not_met' };
+    }
+
+    const inventory = getUserInventory(userId);
+    const userStock = new Map(inventory.map((item) => [item.key, item.amount]));
+
+    for (const ing of recipe.ingredients) {
+        const hasAmount = userStock.get(ing.key) ?? 0;
+        if (hasAmount < ing.amount) {
+            return { success: false, reason: 'insufficient_resources' };
+        }
+    }
+
+    const durationMs = (recipe.craftSeconds ?? 60) * 1000;
+    const endsAt = now + durationMs;
+
+    const performStartCraftTx = db.transaction(() => {
+        const deductStmt = db.prepare(`
+            UPDATE user_inventory
+            SET amount = amount - ?
+            WHERE user_id = ? AND resource_key = ? AND amount >= ?
+        `);
+        for (const ing of recipe.ingredients) {
+            const res = deductStmt.run(ing.amount, userId, ing.key, ing.amount);
+            if (res.changes === 0) {
+                throw new Error(`Insufficient resource ${ing.key}`);
+            }
+        }
+
+        db.prepare(`
+            INSERT INTO active_crafts (user_id, recipe_id, started_at, ends_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                recipe_id = excluded.recipe_id,
+                started_at = excluded.started_at,
+                ends_at = excluded.ends_at
+        `).run(userId, recipe.id, now, endsAt);
+    });
+
+    try {
+        performStartCraftTx();
+        return { success: true, endsAt };
+    } catch (err) {
+        return { success: false, reason: err.message };
+    }
+};
+
+const resolveActiveCraft = (userId, now = Date.now()) => {
+    const { getRecipe } = require('./craftRecipes');
+    const active = getActiveCraft(userId);
+
+    if (!active) {
+        return { craft: null, notice: popCraftNotice(userId) };
+    }
+
+    if (now < active.ends_at) {
+        return { craft: active, notice: null };
+    }
+
+    const recipe = getRecipe(active.recipe_id);
+    if (recipe) {
+        try {
+            recipe.applyReward(db, userId);
+        } catch (_err) {}
+    }
+
+    db.prepare('DELETE FROM active_crafts WHERE user_id = ?').run(userId);
+
+    const notice = {
+        recipeId: active.recipe_id,
+        titleKey: recipe?.titleKey ?? null,
+    };
+    setCraftNotice(userId, notice);
+
+    return { craft: null, notice };
+};
+
+const resolveAllPendingCrafts = (now = Date.now()) => {
+    const rows = db.prepare('SELECT user_id FROM active_crafts').all();
+    let completed = 0;
+
+    for (const row of rows) {
+        const { notice } = resolveActiveCraft(row.user_id, now);
+        if (notice) completed++;
+    }
+
+    return { total: rows.length, completed };
+};
+
 module.exports = {
     db,
     getUser,
@@ -566,6 +706,11 @@ module.exports = {
     clearExplorationMission,
     addInventoryResources,
     getUserInventory,
+    getActiveCraft,
+    startCraftJob,
+    resolveActiveCraft,
+    popCraftNotice,
+    resolveAllPendingCrafts,
     setMissionNotice,
     popMissionNotice,
     resolveExplorationMission,
@@ -576,3 +721,4 @@ module.exports = {
     setGuildAllowedChannel,
     clearGuildAllowedChannel,
 };
+
