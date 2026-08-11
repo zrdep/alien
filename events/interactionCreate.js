@@ -8,8 +8,10 @@ const {
 } = require('discord.js');
 const logger = require('../utils/logger');
 const picocolors = require('picocolors');
-const { hasAcceptedTerms, acceptTerms } = require('../utils/db');
+const { hasAcceptedTerms, acceptTerms, getUserAlien } = require('../utils/db');
 const { tFor } = require('../utils/i18n');
+const { blockWrongComponentUser } = require('../utils/componentGuard');
+const { checkGuildAccess, replyBlocked } = require('../utils/guildGuard');
 
 const c = picocolors;
 
@@ -93,6 +95,18 @@ const termosViewJaAceito = (interaction) => ({
 const GLOBAL_COOLDOWN_MS = 5_000;
 const globalCooldowns = new Map();
 
+const getDeferOptions = (interaction) => {
+    if (interaction.commandName === 'config' || interaction.commandName === 'inventory') {
+        return { flags: MessageFlags.Ephemeral };
+    }
+
+    if (interaction.commandName === 'alien' && !getUserAlien(interaction.user.id)) {
+        return { flags: MessageFlags.Ephemeral };
+    }
+
+    return {};
+};
+
 const mensagemCooldown = (interaction, segundos) => ({
     content: `<:hmm:1536247599365890139> **${tFor(interaction, 'cooldown.title')}**
 ${tFor(interaction, 'cooldown.text', { seconds: segundos })}`,
@@ -103,6 +117,14 @@ module.exports = {
     name: Events.InteractionCreate,
     async execute(interaction) {
         if (interaction.isStringSelectMenu()) {
+            const access = checkGuildAccess(interaction);
+            if (!access.ok) {
+                await replyBlocked(interaction, access);
+                return;
+            }
+
+            if (await blockWrongComponentUser(interaction)) return;
+
             for (const command of interaction.client.commands.values()) {
                 if (typeof command.handleSelectMenu === 'function') {
                     const handled = await command.handleSelectMenu(interaction);
@@ -112,7 +134,33 @@ module.exports = {
             return;
         }
 
+        if (interaction.isChannelSelectMenu()) {
+            const access = checkGuildAccess(interaction);
+            if (!access.ok) {
+                await replyBlocked(interaction, access);
+                return;
+            }
+
+            if (await blockWrongComponentUser(interaction)) return;
+
+            for (const command of interaction.client.commands.values()) {
+                if (typeof command.handleChannelSelectMenu === 'function') {
+                    const handled = await command.handleChannelSelectMenu(interaction);
+                    if (handled !== false) return;
+                }
+            }
+            return;
+        }
+
         if (interaction.isButton()) {
+            const access = checkGuildAccess(interaction);
+            if (!access.ok) {
+                await replyBlocked(interaction, access);
+                return;
+            }
+
+            if (await blockWrongComponentUser(interaction)) return;
+
             if (interaction.customId === 'terms_accept') {
                 if (hasAcceptedTerms(interaction.user.id)) {
                     await interaction.update(termosViewJaAceito(interaction));
@@ -128,9 +176,41 @@ module.exports = {
                 await interaction.update(termosConteudoCompleto(interaction));
                 return;
             }
+
+            for (const command of interaction.client.commands.values()) {
+                if (typeof command.handleButton === 'function') {
+                    const handled = await command.handleButton(interaction);
+                    if (handled !== false) return;
+                }
+            }
+            return;
+        }
+
+        if (interaction.isModalSubmit()) {
+            const access = checkGuildAccess(interaction);
+            if (!access.ok) {
+                await replyBlocked(interaction, access);
+                return;
+            }
+
+            if (await blockWrongComponentUser(interaction)) return;
+
+            for (const command of interaction.client.commands.values()) {
+                if (typeof command.handleModalSubmit === 'function') {
+                    const handled = await command.handleModalSubmit(interaction);
+                    if (handled !== false) return;
+                }
+            }
+            return;
         }
 
         if (!interaction.isChatInputCommand()) return;
+
+        const access = checkGuildAccess(interaction);
+        if (!access.ok) {
+            await replyBlocked(interaction, access);
+            return;
+        }
 
         const comandoLivre = ['config'];
         const precisaDeTermos = !comandoLivre.includes(interaction.commandName);
@@ -165,6 +245,13 @@ module.exports = {
             interaction.commandName,
             interaction.guild?.name ?? null
         );
+
+        try {
+            await interaction.deferReply(getDeferOptions(interaction));
+        } catch (deferError) {
+            logger.warn(`Interação expirada antes do defer: /${interaction.commandName} (${interaction.user.tag})`);
+            return;
+        }
 
         try {
             await command.execute(interaction);

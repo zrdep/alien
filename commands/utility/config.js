@@ -1,14 +1,25 @@
 const {
     SlashCommandBuilder,
     MessageFlags,
+    ChannelType,
     ContainerBuilder,
     TextDisplayBuilder,
     SeparatorBuilder,
     ActionRowBuilder,
     StringSelectMenuBuilder,
+    ChannelSelectMenuBuilder,
+    ButtonBuilder,
+    ButtonStyle,
 } = require('discord.js');
 const { t, SUPPORTED_LANGS } = require('../../utils/i18n');
-const { setUserLanguage, getUserLanguage } = require('../../utils/db');
+const {
+    setUserLanguage,
+    getUserLanguage,
+    getGuildSettings,
+    setGuildAllowedChannel,
+    clearGuildAllowedChannel,
+} = require('../../utils/db');
+const { hasManageGuild } = require('../../utils/guildGuard');
 
 const FLAG = {
     'pt-BR': '🇧🇷',
@@ -74,6 +85,66 @@ const buildSuccessToast = (userId) => {
     return new TextDisplayBuilder().setContent(
         `<:excited:1536247579061256252> **${t(userId, 'commands.config.languageSaved')}**
 `);
+};
+
+const buildServerChannelValue = (userId, guildId) => {
+    const settings = getGuildSettings(guildId);
+    if (!settings.allowedChannelId) {
+        return t(userId, 'commands.config.serverChannelAll');
+    }
+    return `<#${settings.allowedChannelId}>`;
+};
+
+const buildServerPanel = (userId, guildId, { saved = false, savedMessage = null } = {}) => {
+    const container = new ContainerBuilder();
+
+    if (saved && savedMessage) {
+        container
+            .addTextDisplayComponents(new TextDisplayBuilder().setContent(savedMessage))
+            .addSeparatorComponents(new SeparatorBuilder());
+    }
+
+    container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`
+# <:settings:1536248422686920704> ${t(userId, 'commands.config.panelServerTitle')}
+
+<:registry:1536459835921530890> ${t(userId, 'commands.config.panelServerIntro')}
+`));
+
+    container.addSeparatorComponents(new SeparatorBuilder());
+
+    container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`
+## <:earth:1536459925495087226> ${t(userId, 'commands.config.serverChannelLabel')}
+
+${t(userId, 'commands.config.serverChannelDesc')}
+
+**${t(userId, 'commands.config.currentValue')}** ${buildServerChannelValue(userId, guildId)}
+`));
+
+    container.addSeparatorComponents(new SeparatorBuilder());
+
+    container.addActionRowComponents(
+        new ActionRowBuilder().addComponents(
+            new ChannelSelectMenuBuilder()
+                .setCustomId('config_server_channel')
+                .setPlaceholder(t(userId, 'commands.config.serverChannelPlaceholder'))
+                .setChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
+                .setMaxValues(1)
+                .setMinValues(1)
+        ),
+        new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId('config_server_clear')
+                .setLabel(t(userId, 'commands.config.serverChannelClear'))
+                .setStyle(ButtonStyle.Secondary)
+                .setEmoji('<:restart:1536248409634246719>')
+        )
+    );
+
+    return {
+        flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+        content: '',
+        components: [container],
+    };
 };
 
 const painelUsuario = (userId) => {
@@ -155,14 +226,25 @@ module.exports = {
         const sub = interaction.options.getSubcommand();
 
         if (sub === 'server') {
-            await interaction.reply({
-                content: `<:question:1536248373240270888> **${t(interaction.user.id, 'commands.config.serverComingSoon')}**`,
-                flags: MessageFlags.Ephemeral,
-            });
+            if (!interaction.inGuild()) {
+                await interaction.editReply({
+                    content: `<:error:1536247565006143528> ${t(interaction.user.id, 'commands.config.serverGuildOnly')}`,
+                });
+                return;
+            }
+
+            if (!hasManageGuild(interaction)) {
+                await interaction.editReply({
+                    content: `<:error:1536247565006143528> ${t(interaction.user.id, 'commands.config.serverNoPermission')}`,
+                });
+                return;
+            }
+
+            await interaction.editReply(buildServerPanel(interaction.user.id, interaction.guildId));
             return;
         }
 
-        await interaction.reply(painelUsuario(interaction.user.id));
+        await interaction.editReply(painelUsuario(interaction.user.id));
     },
 
     async handleSelectMenu(interaction) {
@@ -178,9 +260,50 @@ module.exports = {
         }
 
         setUserLanguage(interaction.user.id, code);
-
         await interaction.update(painelUsuarioAtualizado(interaction.user.id));
+        return true;
+    },
 
+    async handleChannelSelectMenu(interaction) {
+        if (interaction.customId !== 'config_server_channel') return false;
+
+        if (!hasManageGuild(interaction)) {
+            await interaction.reply({
+                content: `<:error:1536247565006143528> ${t(interaction.user.id, 'commands.config.serverNoPermission')}`,
+                flags: MessageFlags.Ephemeral,
+            });
+            return true;
+        }
+
+        const channelId = interaction.values[0];
+        setGuildAllowedChannel(interaction.guildId, channelId);
+
+        const savedMessage = `<:excited:1536247579061256252> **${t(interaction.user.id, 'commands.config.serverChannelSaved', { channel: `<#${channelId}>` })}**`;
+        await interaction.update(buildServerPanel(interaction.user.id, interaction.guildId, {
+            saved: true,
+            savedMessage,
+        }));
+        return true;
+    },
+
+    async handleButton(interaction) {
+        if (interaction.customId !== 'config_server_clear') return false;
+
+        if (!hasManageGuild(interaction)) {
+            await interaction.reply({
+                content: `<:error:1536247565006143528> ${t(interaction.user.id, 'commands.config.serverNoPermission')}`,
+                flags: MessageFlags.Ephemeral,
+            });
+            return true;
+        }
+
+        clearGuildAllowedChannel(interaction.guildId);
+
+        const savedMessage = `<:excited:1536247579061256252> **${t(interaction.user.id, 'commands.config.serverChannelCleared')}**`;
+        await interaction.update(buildServerPanel(interaction.user.id, interaction.guildId, {
+            saved: true,
+            savedMessage,
+        }));
         return true;
     },
 };

@@ -6,12 +6,37 @@ const {
     ThumbnailBuilder,
     SectionBuilder,
     SeparatorBuilder,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
 } = require('discord.js');
 
 const { tFor } = require('../../utils/i18n');
-const { getUserLanguage, consumePlanetUsage } = require('../../utils/db');
+const {
+    getUserLanguage,
+    consumePlanetUsage,
+    getUserAlien,
+    getUserShip,
+    savePlanetOffer,
+    getPlanetOffer,
+    deletePlanetOffer,
+    resolveExplorationMission,
+    getExplorationMission,
+    startExplorationMission,
+    popMissionNotice,
+} = require('../../utils/db');
 const { gerarDadosPlaneta } = require('../../utils/planet');
 const { gerarRecursosPlaneta } = require('../../utils/planetResources');
+const { formatResourcesInline } = require('../../utils/resourcesDisplay');
+const {
+    EXPLORE_OFFER_MS,
+    MISSION_STATUS,
+    calculateTravelSeconds,
+    getExpeditionTimes,
+    buildMissionStatusContent,
+    buildArrivalNotice,
+    buildExploreStartedContent,
+} = require('../../utils/exploration');
 const logger = require('../../utils/logger');
 
 const RARITY_EMOJI = {
@@ -27,91 +52,156 @@ const USAGE_EMOJI = {
     remaining: '<:hmm:1536247599365890139>',
 };
 
-const RESOURCE_NAME = {
-    'pt-BR': {
-        stone: 'Pedra',
-        wood: 'Madeira',
-        dirt: 'Terra',
-        iron: 'Ferro',
-        copper: 'Cobre',
-        metal: 'Metal',
-        blueCrystal: 'Cristal Azul',
-        starFragment: 'Fragmento Estelar',
-        purpleCrystal: 'Cristal Roxo',
-        glowingOre: 'Minério Luminoso',
-        planetCore: 'Núcleo de Planeta',
-        cosmicPearl: 'Pérola Cósmica',
-        starEssence: 'Essência Estelar',
-    },
-    'en-US': {
-        stone: 'Stone',
-        wood: 'Wood',
-        dirt: 'Dirt',
-        iron: 'Iron',
-        copper: 'Copper',
-        metal: 'Metal',
-        blueCrystal: 'Blue Crystal',
-        starFragment: 'Star Fragment',
-        purpleCrystal: 'Purple Crystal',
-        glowingOre: 'Glowing Ore',
-        planetCore: 'Planet Core',
-        cosmicPearl: 'Cosmic Pearl',
-        starEssence: 'Star Essence',
-    },
-};
+const ATTACHMENT_NAME = 'planet.png';
 
-const RESOURCE_RARITY_EMOJI = {
-    A: '<:comum:1536459746364760215>',
-    B: '<:incomum:1536459764492533800>',
-    C: '<:rare:1536459780166647878>',
-    D: '<:epic:1536459798269395044>',
-    E: '<:legendary:1536459814475927653>',
-};
+const rarityKey = (code) => `commands.planet.rarity${code}`;
 
 const buildResourcesContent = (interaction, recursos) => {
-    const lang = getUserLanguage(interaction.user.id);
-    const names = RESOURCE_NAME[lang] ?? RESOURCE_NAME['pt-BR'];
     const title = tFor(interaction, 'commands.planet.resourcesTitle');
     const empty = tFor(interaction, 'commands.planet.resourcesEmpty');
+    const lang = getUserLanguage(interaction.user.id);
 
     let body = '';
-    if (!recursos || recursos.length === 0) {
+    if (!recursos?.length) {
         body = `<:hmm:1536247599365890139> ${empty}`;
     } else {
-        body = recursos.map((r) => {
-            const rName = names[r.key] ?? r.key;
-            const rEmoji = r.emoji;
-            const rRarityEmoji = RESOURCE_RARITY_EMOJI[r.rarity] ?? '';
-            return `${rEmoji} **${rName}** × \`${r.amount}\` ${rRarityEmoji}`;
-        }).join('\n');
+        body = formatResourcesInline(lang, recursos);
     }
 
     return `\n## <:excited:1536247579061256252> ${title}\n\n${body}\n`;
+};
+
+const buildPlanetButtons = (interaction, planetSeed) => {
+    return new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId(`planet_explore:${planetSeed}`)
+            .setLabel(tFor(interaction, 'commands.planet.exploreLabel'))
+            .setStyle(ButtonStyle.Success)
+            .setEmoji('<:ovni:1536247726889762847>'),
+        new ButtonBuilder()
+            .setCustomId('planet_next')
+            .setLabel(tFor(interaction, 'commands.planet.nextLabel'))
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('<:restart:1536248409634246719>')
+    );
+};
+
+const buildPlanetContainer = (interaction, dados, usage, recursos, { withThumbnail = true, exploreSeed = null } = {}) => {
+    const emojiRarity = RARITY_EMOJI[dados.raridadeCode] ?? RARITY_EMOJI.A;
+    const rarityLabel = tFor(interaction, rarityKey(dados.raridadeCode));
+    const lang = getUserLanguage(interaction.user.id);
+    const ship = getUserShip(interaction.user.id);
+    const times = getExpeditionTimes(interaction.user.id, dados.distancia, ship.propulsorTier);
+
+    const header = new TextDisplayBuilder().setContent(
+`# <:asteroid:1536459906973171782> ${dados.nome}
+
+${emojiRarity} **${rarityLabel}**
+<:earth:1536459925495087226> ${tFor(interaction, 'commands.planet.subtitle')}
+`
+    );
+
+    const detailsTxt = new TextDisplayBuilder().setContent(
+`## <:saturn:1536459943480270959> ${tFor(interaction, 'commands.planet.detailsTitle')}
+${tFor(interaction, 'commands.planet.idLabel')}: \`${dados.seedDicebear}\`
+${tFor(interaction, 'commands.planet.distanceLabel')}: **\`${dados.distanciaFormat(lang)}\`**
+
+<:ovni:1536247726889762847> ${tFor(interaction, 'commands.planet.travelOneWayLabel')}: **\`${times.oneWay}\`**
+<:ovni:1536247726889762847> ${tFor(interaction, 'commands.planet.travelRoundTripLabel')}: **\`${times.roundTrip}\`**
+<:rock:1536579687407681596> ${tFor(interaction, 'commands.planet.miningTimeLabel')}: **\`${times.mining}\`**
+
+${USAGE_EMOJI.uses} ${tFor(interaction, 'commands.planet.usageUsed')}: **\`${usage.uses}/${usage.limit}\`**
+${USAGE_EMOJI.remaining} ${tFor(interaction, 'commands.planet.usageRemaining')}: **\`${usage.remaining}\`**
+`
+    );
+
+    const registryTxt = new TextDisplayBuilder().setContent(
+`## <:registry:1536459835921530890> ${tFor(interaction, 'commands.planet.registryTitle')}
+${tFor(interaction, 'commands.planet.prefixLabel')}: \`${dados.prefixo}\`
+${tFor(interaction, 'commands.planet.numberLabel')}: \`${dados.numeroStr}\`
+${tFor(interaction, 'commands.planet.suffixLabel')}: \`${dados.sufixo.code}\`
+${tFor(interaction, 'commands.planet.rarityLabel')}: ${emojiRarity} ${rarityLabel}
+`
+    );
+
+    const resourcesTxt = new TextDisplayBuilder().setContent(buildResourcesContent(interaction, recursos));
+
+    let section;
+    if (withThumbnail) {
+        try {
+            const thumbnail = new ThumbnailBuilder().setURL(`attachment://${ATTACHMENT_NAME}`);
+            section = new SectionBuilder()
+                .addTextDisplayComponents(detailsTxt)
+                .addTextDisplayComponents(registryTxt)
+                .setThumbnailAccessory(thumbnail);
+        } catch (_err) {
+            section = new SectionBuilder()
+                .addTextDisplayComponents(detailsTxt)
+                .addTextDisplayComponents(registryTxt);
+        }
+    } else {
+        section = new SectionBuilder()
+            .addTextDisplayComponents(detailsTxt)
+            .addTextDisplayComponents(registryTxt);
+    }
+
+    const container = new ContainerBuilder()
+        .addTextDisplayComponents(header)
+        .addSeparatorComponents(new SeparatorBuilder())
+        .addSectionComponents(section)
+        .addSeparatorComponents(new SeparatorBuilder())
+        .addTextDisplayComponents(resourcesTxt);
+
+    if (exploreSeed) {
+        container.addActionRowComponents(buildPlanetButtons(interaction, exploreSeed));
+    }
+
+    return container;
+};
+
+const buildPlanetPayload = (interaction, dados, usage, recursos, pngBuffer, arrivalNotice = null) => {
+    const container = buildPlanetContainer(interaction, dados, usage, recursos, {
+        withThumbnail: pngBuffer !== null,
+        exploreSeed: dados.seedDicebear,
+    });
+
+    if (arrivalNotice) {
+        const noticeTxt = new TextDisplayBuilder().setContent(buildArrivalNotice(interaction.user.id, arrivalNotice));
+        const wrapped = new ContainerBuilder()
+            .addTextDisplayComponents(noticeTxt)
+            .addSeparatorComponents(new SeparatorBuilder());
+
+        for (const part of container.toJSON().components ?? []) {
+            if (part.type === 10) {
+                wrapped.addTextDisplayComponents(new TextDisplayBuilder().setContent(part.content));
+            } else if (part.type === 14) {
+                wrapped.addSeparatorComponents(new SeparatorBuilder());
+            } else if (part.type === 9) {
+                const section = new SectionBuilder();
+                for (const c of part.components ?? []) {
+                    if (c.type === 10) section.addTextDisplayComponents(new TextDisplayBuilder().setContent(c.content));
+                }
+                if (part.accessory?.media?.url) {
+                    section.setThumbnailAccessory(new ThumbnailBuilder().setURL(part.accessory.media.url));
+                }
+                wrapped.addSectionComponents(section);
+            } else if (part.type === 1) {
+                wrapped.addActionRowComponents(buildPlanetButtons(interaction, dados.seedDicebear));
+            }
+        }
+
+        return wrapped;
+    }
+
+    return container;
 };
 
 const gerarSvgPlaneta = async (seed) => {
     const { Style, Avatar } = await import('@dicebear/core');
     const path = require('path');
     const fs = require('fs');
-    const definitionPath = path.join(
-        __dirname,
-        '..',
-        '..',
-        'node_modules',
-        '@dicebear',
-        'styles',
-        'planets.json'
-    );
-    const altPath = path.join(
-        __dirname,
-        '..',
-        '..',
-        'node_modules',
-        '@dicebear',
-        'styles',
-        'dist',
-        'planets.min.json'
-    );
+    const definitionPath = path.join(__dirname, '..', '..', 'node_modules', '@dicebear', 'styles', 'planets.json');
+    const altPath = path.join(__dirname, '..', '..', 'node_modules', '@dicebear', 'styles', 'dist', 'planets.min.json');
 
     let definition = null;
     if (fs.existsSync(definitionPath)) {
@@ -125,35 +215,16 @@ const gerarSvgPlaneta = async (seed) => {
     const style = new Style(definition);
     const avatar = new Avatar(style, {
         borderRadius: 10,
-        shadeVariant: {
-            hard: 1,
-            soft: 1,
-        },
+        shadeVariant: { hard: 1, soft: 1 },
         starProbability: 80,
-        starVariant: {
-            faint: 2,
-            large: 1,
-            medium: 1,
-            small: 1,
-            sparkle: 1,
-        },
+        starVariant: { faint: 2, large: 1, medium: 1, small: 1, sparkle: 1 },
         surfaceVariant: {
-            banded: 1,
-            belted: 2,
-            cap: 2,
-            cracked: 2,
-            cratered: 2,
-            marbled: 2,
-            speckled: 2,
-            spotted: 1,
-            swirl: 2,
-            terra: 2,
+            banded: 1, belted: 2, cap: 2, cracked: 2, cratered: 2,
+            marbled: 2, speckled: 2, spotted: 1, swirl: 2, terra: 2,
         },
         backgroundColor: [
-            '17233f', '23244a', '2c1c45',
-            '0f2336', '012e3a', '002a2e',
-            '0b3533', '361b34', '1c1f27',
-            '1d1a2a', '2e1b20', '242424',
+            '17233f', '23244a', '2c1c45', '0f2336', '012e3a', '002a2e',
+            '0b3533', '361b34', '1c1f27', '1d1a2a', '2e1b20', '242424',
         ],
         backgroundColorFill: ['linear'],
         backgroundColorAngle: 295,
@@ -166,146 +237,198 @@ const gerarSvgPlaneta = async (seed) => {
 
 const svgToPngBuffer = async (svg) => {
     const { Resvg } = require('@resvg/resvg-js');
-    const resvg = new Resvg(svg, {
-        fitTo: {
-            mode: 'width',
-            value: 512,
-        },
-    });
-    const pngData = resvg.render();
-    return pngData.asPng();
+    const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: 512 } });
+    return resvg.render().asPng();
 };
 
-const ATTACHMENT_NAME = 'planet.png';
+const buildFuelEmptyMessage = (interaction, usage) => {
+    const lang = getUserLanguage(interaction.user.id);
+    const mins = usage.nextReset.minutesLeft;
+    return lang === 'en-US'
+        ? `<:sob:1536248436339376138> **Empty fuel tank!** You've completed all 10 space trips for this hour. Recharge and come back in **${mins} minutes** — until then, the ship stays in the hangar. <:ovni:1536247726889762847>`
+        : `<:sob:1536248436339376138> **Tanque de combustível vazio!** Você já fez todas as 10 explorações espaciais desta hora. Recarregue as energias e volte daqui **${mins} minutos** — até lá, a nave fica no hangar. <:ovni:1536247726889762847>`;
+};
 
-const rarityKey = (code) => `commands.planet.rarity${code}`;
+const buildV2TextPayload = (text) => ({
+    content: '',
+    flags: MessageFlags.IsComponentsV2,
+    components: [
+        new ContainerBuilder().addTextDisplayComponents(
+            new TextDisplayBuilder().setContent(text)
+        ),
+    ],
+    files: [],
+});
+
+const buildMissionV2Payload = (userId, mission, arrivalNotice = null) => {
+    const container = new ContainerBuilder();
+
+    if (arrivalNotice) {
+        container.addTextDisplayComponents(
+            new TextDisplayBuilder().setContent(buildArrivalNotice(userId, arrivalNotice))
+        );
+        container.addSeparatorComponents(new SeparatorBuilder());
+    }
+
+    container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(buildMissionStatusContent(userId, mission))
+    );
+
+    return {
+        content: '',
+        flags: MessageFlags.IsComponentsV2,
+        components: [container],
+        files: [],
+    };
+};
+
+const generatePlanetReply = async (interaction, usage, arrivalNotice = null) => {
+    const dados = gerarDadosPlaneta();
+    const recursos = gerarRecursosPlaneta(dados.seedDicebear, dados.raridadeCode);
+
+    savePlanetOffer(interaction.user.id, dados.seedDicebear, {
+        nome: dados.nome,
+        distancia: dados.distancia,
+        raridadeCode: dados.raridadeCode,
+        recursos,
+    }, Date.now() + EXPLORE_OFFER_MS);
+
+    let pngBuffer = null;
+    try {
+        pngBuffer = await svgToPngBuffer(await gerarSvgPlaneta(dados.seedDicebear));
+    } catch (err) {
+        logger.error(`Failed to generate planet image: ${err.message}`);
+    }
+
+    const container = buildPlanetPayload(interaction, dados, usage, recursos, pngBuffer, arrivalNotice);
+    const files = pngBuffer ? [{ attachment: pngBuffer, name: ATTACHMENT_NAME }] : [];
+
+    return {
+        content: '',
+        flags: MessageFlags.IsComponentsV2,
+        components: [container],
+        files,
+    };
+};
+
+const editPlanetReply = async (interaction, payload) => {
+    try {
+        await interaction.editReply(payload);
+    } catch (replyErr) {
+        if (!payload.files?.length && payload.components?.length) return;
+        logger.warn(`Failed to send planet with thumbnail: ${replyErr.message}. Retrying without thumbnail...`);
+        const stripped = { ...payload, files: [] };
+        await interaction.editReply(stripped);
+    }
+};
 
 module.exports = {
     cooldown: 10,
 
     data: new SlashCommandBuilder()
         .setName('planet')
-        .setNameLocalizations({
-            'pt-BR': 'planet',
-        })
+        .setNameLocalizations({ 'pt-BR': 'planet' })
         .setDescription('Generates a random planet in ∩lien galaxy')
         .setDescriptionLocalizations({
             'pt-BR': 'Gera um planeta aleatório na galáxia do ∩lien',
         }),
 
     async execute(interaction) {
-        await interaction.deferReply();
-
-        const lang = getUserLanguage(interaction.user.id);
-        const usage = consumePlanetUsage(interaction.user.id);
-
-        if (!usage.canUse) {
-            const mins = usage.nextReset.minutesLeft;
-            const msg = lang === 'en-US'
-                ? `<:sob:1536248436339376138> **Empty fuel tank!** You've completed all 10 space trips for this hour. Recharge and come back in **${mins} minutes** — until then, the ship stays in the hangar. <:ovni:1536247726889762847>`
-                : `<:sob:1536248436339376138> **Tanque de combustível vazio!** Você já fez todas as 10 explorações espaciais desta hora. Recarregue as energias e volte daqui **${mins} minutos** — até lá, a nave fica no hangar. <:ovni:1536247726889762847>`;
-            await interaction.editReply({ content: msg });
+        const alien = getUserAlien(interaction.user.id);
+        if (!alien) {
+            await interaction.editReply({
+                content: `<:alien:1536247533502734376> **${tFor(interaction, 'commands.planet.alienRequired')}**\n${tFor(interaction, 'commands.planet.alienRequiredTip')}`,
+            });
             return;
         }
 
-        const dados = gerarDadosPlaneta();
-        const recursos = gerarRecursosPlaneta(dados.seedDicebear, dados.raridadeCode);
+        const { mission } = resolveExplorationMission(interaction.user.id);
+        const arrivalNotice = popMissionNotice(interaction.user.id);
 
-        const emojiRarity = RARITY_EMOJI[dados.raridadeCode] ?? RARITY_EMOJI.A;
-        const rarityLabel = tFor(interaction, rarityKey(dados.raridadeCode));
-
-        let pngBuffer = null;
-        try {
-            const svg = await gerarSvgPlaneta(dados.seedDicebear);
-            pngBuffer = await svgToPngBuffer(svg);
-        } catch (err) {
-            logger.error(`Failed to generate planet image: ${err.message}`);
-            pngBuffer = null;
+        if (mission) {
+            await interaction.editReply(buildMissionV2Payload(interaction.user.id, mission, arrivalNotice));
+            return;
         }
 
-        const header = new TextDisplayBuilder().setContent(
-`# <:asteroid:1536459906973171782> ${dados.nome}
+        const usage = consumePlanetUsage(interaction.user.id);
 
-${emojiRarity} **${rarityLabel}**
-<:earth:1536459925495087226> ${tFor(interaction, 'commands.planet.subtitle')}
-`
-        );
+        if (!usage.canUse) {
+            await interaction.editReply({ content: buildFuelEmptyMessage(interaction, usage) });
+            return;
+        }
 
-        const detailsTxt = new TextDisplayBuilder().setContent(
-`## <:saturn:1536459943480270959> ${tFor(interaction, 'commands.planet.detailsTitle')}
-${tFor(interaction, 'commands.planet.idLabel')}: \`${dados.seedDicebear}\`
-${tFor(interaction, 'commands.planet.distanceLabel')}: **\`${dados.distanciaFormat(lang)}\`**
+        await editPlanetReply(interaction, await generatePlanetReply(interaction, usage, arrivalNotice));
+    },
 
-${USAGE_EMOJI.uses} ${tFor(interaction, 'commands.planet.usageUsed')}: **\`${usage.uses}/${usage.limit}\`**
-${USAGE_EMOJI.remaining} ${tFor(interaction, 'commands.planet.usageRemaining')}: **\`${usage.remaining}\`**
-`
-        );
+    async handleButton(interaction) {
+        if (interaction.customId === 'planet_next') {
+            await interaction.deferUpdate();
 
-        const registryTxt = new TextDisplayBuilder().setContent(
-`## <:registry:1536459835921530890> ${tFor(interaction, 'commands.planet.registryTitle')}
-${tFor(interaction, 'commands.planet.prefixLabel')}: \`${dados.prefixo}\`
-${tFor(interaction, 'commands.planet.numberLabel')}: \`${dados.numeroStr}\`
-${tFor(interaction, 'commands.planet.suffixLabel')}: \`${dados.sufixo.code}\`
-${tFor(interaction, 'commands.planet.rarityLabel')}: ${emojiRarity} ${rarityLabel}
-`
-        );
+            const userId = interaction.user.id;
+            resolveExplorationMission(userId);
+            const mission = getExplorationMission(userId);
 
-        const resourcesTxt = new TextDisplayBuilder().setContent(buildResourcesContent(interaction, recursos));
-
-        const buildContainer = (withThumbnail) => {
-            let section;
-            if (withThumbnail) {
-                try {
-                    const thumbnail = new ThumbnailBuilder().setURL(`attachment://${ATTACHMENT_NAME}`);
-                    section = new SectionBuilder()
-                        .addTextDisplayComponents(detailsTxt)
-                        .addTextDisplayComponents(registryTxt)
-                        .setThumbnailAccessory(thumbnail);
-                } catch (_err) {
-                    section = new SectionBuilder()
-                        .addTextDisplayComponents(detailsTxt)
-                        .addTextDisplayComponents(registryTxt);
-                }
-            } else {
-                section = new SectionBuilder()
-                    .addTextDisplayComponents(detailsTxt)
-                    .addTextDisplayComponents(registryTxt);
+            if (mission) {
+                await interaction.editReply(buildMissionV2Payload(userId, mission));
+                return true;
             }
 
-            return new ContainerBuilder()
-                .addTextDisplayComponents(header)
-                .addSeparatorComponents(new SeparatorBuilder())
-                .addSectionComponents(section)
-                .addSeparatorComponents(new SeparatorBuilder())
-                .addTextDisplayComponents(resourcesTxt);
-        };
+            const usage = consumePlanetUsage(userId);
+            if (!usage.canUse) {
+                await interaction.editReply(buildV2TextPayload(buildFuelEmptyMessage(interaction, usage)));
+                return true;
+            }
 
-        const files = pngBuffer
-            ? [{ attachment: pngBuffer, name: ATTACHMENT_NAME }]
-            : [];
+            await editPlanetReply(interaction, await generatePlanetReply(interaction, usage));
+            return true;
+        }
 
-        const tryThumbnail = pngBuffer !== null;
+        if (!interaction.customId.startsWith('planet_explore:')) return false;
 
-        try {
-            await interaction.editReply({
-                content: '',
-                flags: MessageFlags.IsComponentsV2,
-                components: [buildContainer(tryThumbnail)],
-                files,
+        const planetSeed = interaction.customId.slice('planet_explore:'.length);
+        const userId = interaction.user.id;
+
+        resolveExplorationMission(userId);
+        if (getExplorationMission(userId)) {
+            await interaction.reply({
+                content: `<:error:1536247565006143528> ${tFor(interaction, 'commands.planet.exploreBusy')}`,
+                flags: MessageFlags.Ephemeral,
             });
-        } catch (replyErr) {
-            logger.warn(`Failed to send /planet with thumbnail: ${replyErr.message}. Retrying without thumbnail...`);
-            try {
-                await interaction.editReply({
-                    content: '',
-                    flags: MessageFlags.IsComponentsV2,
-                    components: [buildContainer(false)],
-                    files,
-                });
-            } catch (finalErr) {
-                logger.warn(`Failed to send /planet without thumbnail: ${finalErr.message}`);
-                throw finalErr;
-            }
+            return true;
         }
+
+        const offer = getPlanetOffer(userId, planetSeed);
+        if (!offer || Date.now() > offer.expiresAt) {
+            await interaction.reply({
+                content: `<:hmm:1536247599365890139> ${tFor(interaction, 'commands.planet.exploreExpired')}`,
+                flags: MessageFlags.Ephemeral,
+            });
+            return true;
+        }
+
+        const ship = getUserShip(userId);
+        const travelSeconds = calculateTravelSeconds(offer.payload.distancia, ship.propulsorTier);
+        const now = Date.now();
+
+        startExplorationMission(userId, {
+            status: MISSION_STATUS.TRAVELING_OUT,
+            planetName: offer.payload.nome,
+            planetSeed,
+            planetDistanceKm: offer.payload.distancia,
+            planetRarity: offer.payload.raridadeCode,
+            resources: offer.payload.recursos,
+            travelSeconds,
+            phaseStartedAt: now,
+            phaseEndsAt: now + travelSeconds * 1000,
+        });
+
+        deletePlanetOffer(userId, planetSeed);
+
+        const mission = getExplorationMission(userId);
+        await interaction.update(
+            buildV2TextPayload(buildExploreStartedContent(userId, mission))
+        );
+
+        return true;
     },
 };

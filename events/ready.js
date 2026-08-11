@@ -2,6 +2,7 @@ const { Events, ActivityType } = require('discord.js');
 const figlet = require('figlet');
 const picocolors = require('picocolors');
 const logger = require('../utils/logger');
+const { resolveAllPendingMissions, cleanExpiredPlanetOffers } = require('../utils/db');
 const versao = require('../config.json').versao;
 
 const c = picocolors;
@@ -87,6 +88,17 @@ module.exports = {
         stat('Usuários:', usuarios, c.yellow);
         stat('Comandos:', comandos, c.magenta);
         stat('Ping WS:', `${client.ws.ping}ms`, c.green);
+
+        logger.br();
+
+        const expiredOffers = cleanExpiredPlanetOffers();
+        const missions = resolveAllPendingMissions();
+        if (missions.total > 0) {
+            logger.info(`Missões sincronizadas: ${missions.total} ativa(s), ${missions.completed} concluída(s) offline`);
+        }
+        if (expiredOffers > 0) {
+            logger.info(`Ofertas de planeta expiradas removidas: ${expiredOffers}`);
+        }
 
         logger.br();
 

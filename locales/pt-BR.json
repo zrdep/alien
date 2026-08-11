@@ -18,9 +18,9 @@
       "privacy": "Privacidade",
       "privacyText": "Não compartilhamos nenhum dado com terceiros. Tudo fica armazenado localmente no banco do bot."
     },
-    "tipConfig": "<:sunglasses:1536248455519801386> Quer mudar meu idioma? Use </config user:1536383086521229373> a qualquer momento!",
+    "tipConfig": "<:sunglasses:1536248455519801386> Quer mudar meu idioma? Use </config user:1536804847142314078> a qualquer momento!",
     "accepted": "**Termos aceitos!** Agora você já pode usar todos os comandos do **∩lien**.",
-    "alreadyAccepted": "Você já aceitou os termos! Pode usar todos os comandos."
+    "alreadyAccepted": "Você já aceitou os termos! Pode usar todos os comandos do **∩lien**."
   },
   "cooldown": {
     "title": "Calma aí, humano!",
@@ -28,6 +28,19 @@
   },
   "errors": {
     "generic": "Ocorreu um erro ao executar este comando! Contate o suporte."
+  },
+  "guildGuard": {
+    "userInstall": "<:ovni:1536247726889762847> **Instalação de usuário detectada!**\n\nNeste servidor, o **∩lien** precisa ser usado como app do servidor, no canal configurado pela equipe. Peça a um moderador para configurar em `/config server` ou adicione o bot ao servidor normalmente.",
+    "wrongChannel": "<:hmm:1536247599365890139> **Canal errado!**\n\nNeste servidor, os comandos do **∩lien** só funcionam em {channel}.",
+    "dmNotAllowed": "<:question:1536248373240270888> **Este comando só funciona em servidores!**\n\nEntre em um servidor com o **∩lien** e use o canal permitido pela equipe."
+  },
+  "components": {
+    "notYourButton": {
+      "msg1": "<:ovni:1536247726889762847> **Ei!** Esse botão não é seu, humano curioso! <:sunglasses:1536248455519801386>",
+      "msg2": "<:hmm:1536247599365890139> **Hmm...** acho que você clicou no botão errado! Esse painel é de outra pessoa. <:question:1536248373240270888>",
+      "msg3": "<:sob:1536248436339376138> **Ops!** Esse botão é de outro explorador espacial. Usa seus próprios comandos! <:ovni:1536247726889762847>",
+      "msg4": "<:passionate:1536247742110634034> **Calma aí!** Só quem usou o comando pode mexer nisso. <:excited:1536247579061256252>"
+    }
   },
   "commands": {
     "ping": {
@@ -67,15 +80,75 @@
       "currentValue": "Selecionado agora:",
       "languageSaved": "Preferências salvas! Idioma atualizado com sucesso. <:passionate:1536247742110634034>",
       "invalidLanguage": "Idioma inválido.",
-      "serverComingSoon": "Em breve! As configurações de servidor estarão disponíveis na próxima atualização do ∩lien."
+      "panelServerTitle": "Configurações do Servidor",
+      "panelServerIntro": "Defina onde o ∩lien pode ser usado neste servidor. Requer permissão de **Gerenciar Servidor**.",
+      "serverChannelLabel": "Canal permitido",
+      "serverChannelDesc": "Quando definido, os comandos do bot só funcionam nesse canal. Botões de mensagens antigas em outros canais também são bloqueados.",
+      "serverChannelPlaceholder": "Selecione o canal do bot...",
+      "serverChannelAll": "Todos os canais (sem restrição)",
+      "serverChannelClear": "Liberar todos os canais",
+      "serverChannelSaved": "Canal definido: {channel}",
+      "serverChannelCleared": "Restrição removida! O bot funciona em todos os canais.",
+      "serverGuildOnly": "Este comando só pode ser usado dentro de um servidor.",
+      "serverNoPermission": "Você precisa da permissão **Gerenciar Servidor** para alterar estas configurações."
+    },
+    "alien": {
+      "onboardingTitle": "Escolha seu Alien",
+      "onboardingIntro": "Antes de explorar planetas, escolha a cor do seu companheiro intergaláctico.",
+      "colorPlaceholder": "Selecione a cor do seu alien...",
+      "colorChoice": {
+        "purple": "Alien roxo — misterioso e encantador",
+        "green": "Alien verde — curioso e aventureiro",
+        "blue": "Alien azul — calmo e sábio",
+        "pink": "Alien rosa — fofo e cheio de energia",
+        "orange": "Alien laranja — animado e destemido"
+      },
+      "panelTitle": "Meu Alien",
+      "panelGreeting": "Este é **{name}**, seu companheiro intergaláctico!",
+      "infoTitle": "Informações",
+      "nameLabel": "Nome",
+      "colorLabel": "Cor",
+      "defaultName": "Alienígena",
+      "renameLabel": "Mudar nome",
+      "hangarTitle": "Hangar — Nave",
+      "hangarUsageUsed": "Explorações desta hora: `{uses}/{limit}`",
+      "hangarUsageRemaining": "Restam: `{remaining}`",
+      "hangarUsageReset": "Recarga às: `{time}`",
+      "upgradesTitle": "Melhorias da Nave",
+      "upgrade": {
+        "excavation": {
+          "name": "Sonda de Escavação",
+          "stat": "{emoji} {rarity} — Profundidade: `{depth} m` · Bônus: `+{bonus}%`"
+        },
+        "propulsor": {
+          "name": "Propulsor",
+          "stat": "{emoji} {rarity} — `{speed}`"
+        },
+        "scanner": {
+          "name": "Scanner Estelar",
+          "stat": "{emoji} {rarity} — Alcance: `{range} anos-luz`"
+        }
+      },
+      "renameModalTitle": "Renomear alien",
+      "renameInputLabel": "Novo nome",
+      "renameInputPlaceholder": "Digite o nome",
+      "savedLabel": "Salvo com sucesso!",
+      "invalidColor": "Cor inválida. Tente novamente.",
+      "invalidName": "Nome inválido. Use entre 1 e 12 caracteres.",
+      "noAlienButton": "Você ainda não tem um alien. Use </alien:1536760221983051816> primeiro."
     },
     "planet": {
+      "alienRequired": "Você precisa de um alien para explorar planetas!",
+      "alienRequiredTip": "Use </alien:1536760221983051816> para escolher seu companheiro intergaláctico.",
       "dmDisabled": "Este comando só funciona dentro de servidores.",
       "title": "Planeta Gerado",
       "subtitle": "Capturamos um planeta na sua órbita!",
       "detailsTitle": "Detalhes",
       "idLabel": "ID",
       "distanceLabel": "Distância da Terra",
+      "travelOneWayLabel": "Tempo de ida",
+      "travelRoundTripLabel": "Tempo de ida e volta",
+      "miningTimeLabel": "Tempo para minerar",
       "registryTitle": "Rastreamento",
       "prefixLabel": "Prefixo",
       "numberLabel": "Número",
@@ -91,7 +164,31 @@
       "resourcesTitle": "Recursos para Coletar",
       "resourcesEmpty": "Este planeta não tinha recursos úteis para coletar. A sorte fica pra próxima!",
       "footerTip": "Cada planeta é único! Rode o comando de novo para descobrir um novo mundo.",
-      "footerLater": "Em breve você poderá nomear, explorar e fazer muito mais com este planeta!"
+      "footerLater": "Em breve você poderá nomear, explorar e fazer muito mais com este planeta!",
+      "exploreLabel": "Explorar",
+      "nextLabel": "Próximo",
+      "exploreExpired": "Essa oportunidade de exploração expirou! Gere um novo planeta com **/planet**.",
+      "exploreBusy": "Seu alien já está em uma missão! Aguarde ele terminar.",
+      "exploreStartedTitle": "Missão iniciada!",
+      "exploreStartedBody": "**{alien}** decolou em direção a **{planet}**! Tempo de viagem: **{travel}**.",
+      "missionCollectingFor": "**Para coletar:**",
+      "missionEta": "Chega em: **{time}**",
+      "missionTravelingTitle": "Alien em viagem",
+      "missionTravelingBody": "**{alien}** está viajando até **{planet}**",
+      "missionCollectingTitle": "Coletando recursos",
+      "missionCollectingBody": "**{alien}** está coletando recursos em **{planet}**",
+      "missionCollectingEta": "Termina em: **{time}**",
+      "missionReturningTitle": "Retornando à base",
+      "missionReturningBody": "**{alien}** está voltando com os recursos de **{planet}**",
+      "missionArrivedTitle": "Missão concluída!",
+      "missionArrivedBody": "**{alien}** chegou da expedição em **{planet}** e depositou os recursos no inventário!",
+      "missionArrivedTip": "Use **/inventory** para ver tudo que você coletou."
+    },
+    "inventory": {
+      "title": "Inventário Galáctico",
+      "subtitle": "Todos os recursos que seus aliens coletaram nas expedições.",
+      "resourcesTitle": "Seus Recursos",
+      "empty": "Seu inventário está vazio. Explore planetas com **/planet** e clique em **Explorar**!"
     }
   }
 }

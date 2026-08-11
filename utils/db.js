@@ -13,7 +13,9 @@ db.exec(`
         user_id TEXT PRIMARY KEY,
         terms_accepted INTEGER NOT NULL DEFAULT 0,
         terms_accepted_at TEXT,
-        language TEXT NOT NULL DEFAULT 'pt-BR'
+        language TEXT NOT NULL DEFAULT 'pt-BR',
+        alien_color TEXT,
+        alien_name TEXT
     );
 `);
 
@@ -28,6 +30,8 @@ db.exec(`
 
 const colunas = db.prepare("PRAGMA table_info(users)").all();
 const temLanguage = colunas.some(c => c.name === 'language');
+const temAlienColor = colunas.some(c => c.name === 'alien_color');
+const temAlienName = colunas.some(c => c.name === 'alien_name');
 
 if (!temLanguage) {
     db.exec(`
@@ -37,7 +41,100 @@ if (!temLanguage) {
     logger.success('Coluna `language` adicionada à tabela `users`');
 }
 
+if (!temAlienColor) {
+    db.exec(`
+        ALTER TABLE users
+        ADD COLUMN alien_color TEXT;
+    `);
+    logger.success('Coluna `alien_color` adicionada à tabela `users`');
+}
+
+if (!temAlienName) {
+    db.exec(`
+        ALTER TABLE users
+        ADD COLUMN alien_name TEXT;
+    `);
+    logger.success('Coluna `alien_name` adicionada à tabela `users`');
+}
+
+const temShipExcavation = colunas.some(c => c.name === 'ship_excavation_level');
+const temShipPropulsor = colunas.some(c => c.name === 'ship_propulsor_tier');
+const temShipScanner = colunas.some(c => c.name === 'ship_scanner_level');
+
+if (!temShipExcavation) {
+    db.exec(`
+        ALTER TABLE users
+        ADD COLUMN ship_excavation_level INTEGER NOT NULL DEFAULT 1;
+    `);
+    logger.success('Coluna `ship_excavation_level` adicionada à tabela `users`');
+}
+
+if (!temShipPropulsor) {
+    db.exec(`
+        ALTER TABLE users
+        ADD COLUMN ship_propulsor_tier TEXT NOT NULL DEFAULT 'A';
+    `);
+    logger.success('Coluna `ship_propulsor_tier` adicionada à tabela `users`');
+}
+
+if (!temShipScanner) {
+    db.exec(`
+        ALTER TABLE users
+        ADD COLUMN ship_scanner_level INTEGER NOT NULL DEFAULT 1;
+    `);
+    logger.success('Coluna `ship_scanner_level` adicionada à tabela `users`');
+}
+
 logger.success('Banco SQLite inicializado (data/bot.db)');
+
+db.exec(`
+    CREATE TABLE IF NOT EXISTS planet_offers (
+        user_id TEXT NOT NULL,
+        planet_seed TEXT NOT NULL,
+        payload_json TEXT NOT NULL,
+        expires_at INTEGER NOT NULL,
+        PRIMARY KEY (user_id, planet_seed)
+    );
+`);
+
+db.exec(`
+    CREATE TABLE IF NOT EXISTS exploration_missions (
+        user_id TEXT PRIMARY KEY,
+        status TEXT NOT NULL,
+        planet_name TEXT NOT NULL,
+        planet_seed TEXT NOT NULL,
+        planet_distance_km INTEGER NOT NULL,
+        planet_rarity TEXT NOT NULL,
+        resources_json TEXT NOT NULL,
+        travel_seconds INTEGER NOT NULL,
+        phase_started_at INTEGER NOT NULL,
+        phase_ends_at INTEGER NOT NULL
+    );
+`);
+
+db.exec(`
+    CREATE TABLE IF NOT EXISTS user_inventory (
+        user_id TEXT NOT NULL,
+        resource_key TEXT NOT NULL,
+        amount INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (user_id, resource_key)
+    );
+`);
+
+db.exec(`
+    CREATE TABLE IF NOT EXISTS mission_notices (
+        user_id TEXT PRIMARY KEY,
+        notice_json TEXT NOT NULL
+    );
+`);
+
+db.exec(`
+    CREATE TABLE IF NOT EXISTS guild_settings (
+        guild_id TEXT PRIMARY KEY,
+        allowed_channel_id TEXT,
+        updated_at TEXT
+    );
+`);
 
 const getUser = (userId) => {
     let user = db.prepare('SELECT * FROM users WHERE user_id = ?').get(userId);
@@ -73,6 +170,36 @@ const setUserLanguage = (userId, language) => {
         SET language = ?
         WHERE user_id = ?
     `).run(language, userId);
+};
+
+const getUserAlien = (userId) => {
+    const user = getUser(userId);
+    if (!user.alien_color) return null;
+    return {
+        color: user.alien_color,
+        name: user.alien_name || null,
+    };
+};
+
+const setUserAlien = (userId, { color, name }) => {
+    const current = getUserAlien(userId);
+    const finalColor = color ?? current?.color;
+    const finalName = name !== undefined ? name : current?.name;
+    db.prepare(`
+        UPDATE users
+        SET alien_color = COALESCE(?, alien_color),
+            alien_name  = CASE WHEN ? IS NOT NULL THEN ? ELSE alien_name END
+        WHERE user_id = ?
+    `).run(finalColor, finalName, finalName, userId);
+};
+
+const getUserShip = (userId) => {
+    const user = getUser(userId);
+    return {
+        excavationProbeLevel: user.ship_excavation_level ?? 1,
+        propulsorTier: user.ship_propulsor_tier ?? 'A',
+        starScannerLevel: user.ship_scanner_level ?? 1,
+    };
 };
 
 const getBraziliaDateParts = (date = new Date()) => {
@@ -171,6 +298,250 @@ const consumePlanetUsage = (userId, date = new Date()) => {
     };
 };
 
+const savePlanetOffer = (userId, planetSeed, payload, expiresAt) => {
+    db.prepare(`
+        INSERT INTO planet_offers (user_id, planet_seed, payload_json, expires_at)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(user_id, planet_seed) DO UPDATE SET
+            payload_json = excluded.payload_json,
+            expires_at = excluded.expires_at
+    `).run(userId, planetSeed, JSON.stringify(payload), expiresAt);
+};
+
+const getPlanetOffer = (userId, planetSeed) => {
+    const row = db.prepare(`
+        SELECT * FROM planet_offers
+        WHERE user_id = ? AND planet_seed = ?
+    `).get(userId, planetSeed);
+
+    if (!row) return null;
+
+    let payload = null;
+    try {
+        payload = JSON.parse(row.payload_json);
+    } catch {
+        return null;
+    }
+
+    return {
+        planetSeed: row.planet_seed,
+        payload,
+        expiresAt: row.expires_at,
+    };
+};
+
+const deletePlanetOffer = (userId, planetSeed) => {
+    db.prepare('DELETE FROM planet_offers WHERE user_id = ? AND planet_seed = ?').run(userId, planetSeed);
+};
+
+const getExplorationMission = (userId) => {
+    return db.prepare('SELECT * FROM exploration_missions WHERE user_id = ?').get(userId) ?? null;
+};
+
+const startExplorationMission = (userId, data) => {
+    db.prepare(`
+        INSERT INTO exploration_missions (
+            user_id, status, planet_name, planet_seed, planet_distance_km,
+            planet_rarity, resources_json, travel_seconds, phase_started_at, phase_ends_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(user_id) DO UPDATE SET
+            status = excluded.status,
+            planet_name = excluded.planet_name,
+            planet_seed = excluded.planet_seed,
+            planet_distance_km = excluded.planet_distance_km,
+            planet_rarity = excluded.planet_rarity,
+            resources_json = excluded.resources_json,
+            travel_seconds = excluded.travel_seconds,
+            phase_started_at = excluded.phase_started_at,
+            phase_ends_at = excluded.phase_ends_at
+    `).run(
+        userId,
+        data.status,
+        data.planetName,
+        data.planetSeed,
+        data.planetDistanceKm,
+        data.planetRarity,
+        JSON.stringify(data.resources),
+        data.travelSeconds,
+        data.phaseStartedAt,
+        data.phaseEndsAt,
+    );
+};
+
+const updateExplorationMission = (userId, data) => {
+    db.prepare(`
+        UPDATE exploration_missions
+        SET status = ?,
+            phase_started_at = ?,
+            phase_ends_at = ?
+        WHERE user_id = ?
+    `).run(data.status, data.phaseStartedAt, data.phaseEndsAt, userId);
+};
+
+const clearExplorationMission = (userId) => {
+    db.prepare('DELETE FROM exploration_missions WHERE user_id = ?').run(userId);
+};
+
+const addInventoryResources = (userId, resources) => {
+    const stmt = db.prepare(`
+        INSERT INTO user_inventory (user_id, resource_key, amount)
+        VALUES (?, ?, ?)
+        ON CONFLICT(user_id, resource_key) DO UPDATE SET
+            amount = amount + excluded.amount
+    `);
+
+    const runMany = db.transaction((items) => {
+        for (const item of items) {
+            stmt.run(userId, item.key, item.amount);
+        }
+    });
+
+    runMany(resources);
+};
+
+const getUserInventory = (userId) => {
+    const rows = db.prepare(`
+        SELECT resource_key, amount
+        FROM user_inventory
+        WHERE user_id = ? AND amount > 0
+        ORDER BY amount DESC
+    `).all(userId);
+
+    return rows.map((row) => ({
+        key: row.resource_key,
+        amount: row.amount,
+    }));
+};
+
+const setMissionNotice = (userId, notice) => {
+    db.prepare(`
+        INSERT INTO mission_notices (user_id, notice_json)
+        VALUES (?, ?)
+        ON CONFLICT(user_id) DO UPDATE SET notice_json = excluded.notice_json
+    `).run(userId, JSON.stringify(notice));
+};
+
+const popMissionNotice = (userId) => {
+    const row = db.prepare('SELECT notice_json FROM mission_notices WHERE user_id = ?').get(userId);
+    if (!row) return null;
+
+    db.prepare('DELETE FROM mission_notices WHERE user_id = ?').run(userId);
+
+    try {
+        return JSON.parse(row.notice_json);
+    } catch {
+        return null;
+    }
+};
+
+const resolveExplorationMission = (userId, now = Date.now()) => {
+    const COLLECT_DURATION_MS = 30 * 60 * 1000;
+    const STATUS = {
+        TRAVELING_OUT: 'traveling_out',
+        COLLECTING: 'collecting',
+        TRAVELING_BACK: 'traveling_back',
+    };
+
+    let notice = null;
+
+    while (true) {
+        const mission = getExplorationMission(userId);
+        if (!mission) return { mission: null, notice };
+
+        if (now < mission.phase_ends_at) {
+            return { mission, notice };
+        }
+
+        if (mission.status === STATUS.TRAVELING_OUT) {
+            const collectStart = mission.phase_ends_at;
+            updateExplorationMission(userId, {
+                status: STATUS.COLLECTING,
+                phaseStartedAt: collectStart,
+                phaseEndsAt: collectStart + COLLECT_DURATION_MS,
+            });
+            continue;
+        }
+
+        if (mission.status === STATUS.COLLECTING) {
+            const returnStart = mission.phase_ends_at;
+            updateExplorationMission(userId, {
+                status: STATUS.TRAVELING_BACK,
+                phaseStartedAt: returnStart,
+                phaseEndsAt: returnStart + mission.travel_seconds * 1000,
+            });
+            continue;
+        }
+
+        if (mission.status === STATUS.TRAVELING_BACK) {
+            let resources = [];
+            try {
+                resources = JSON.parse(mission.resources_json);
+            } catch {
+                resources = [];
+            }
+
+            addInventoryResources(userId, resources);
+
+            const alien = getUserAlien(userId);
+            notice = {
+                alienName: alien?.name ?? 'Alienígena',
+                planetName: mission.planet_name,
+                resources,
+            };
+            setMissionNotice(userId, notice);
+            clearExplorationMission(userId);
+            return { mission: null, notice };
+        }
+
+        clearExplorationMission(userId);
+        return { mission: null, notice: null };
+    }
+};
+
+const resolveAllPendingMissions = (now = Date.now()) => {
+    const rows = db.prepare('SELECT user_id FROM exploration_missions').all();
+    let completed = 0;
+
+    for (const row of rows) {
+        const { notice } = resolveExplorationMission(row.user_id, now);
+        if (notice) completed++;
+    }
+
+    return { total: rows.length, completed };
+};
+
+const cleanExpiredPlanetOffers = (now = Date.now()) => {
+    const result = db.prepare('DELETE FROM planet_offers WHERE expires_at < ?').run(now);
+    return result.changes;
+};
+
+const getGuildAllowedChannel = (guildId) => {
+    const row = db.prepare('SELECT allowed_channel_id FROM guild_settings WHERE guild_id = ?').get(guildId);
+    return row?.allowed_channel_id ?? null;
+};
+
+const getGuildSettings = (guildId) => {
+    const row = db.prepare('SELECT * FROM guild_settings WHERE guild_id = ?').get(guildId);
+    return {
+        allowedChannelId: row?.allowed_channel_id ?? null,
+        updatedAt: row?.updated_at ?? null,
+    };
+};
+
+const setGuildAllowedChannel = (guildId, channelId) => {
+    db.prepare(`
+        INSERT INTO guild_settings (guild_id, allowed_channel_id, updated_at)
+        VALUES (?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(guild_id) DO UPDATE SET
+            allowed_channel_id = excluded.allowed_channel_id,
+            updated_at = CURRENT_TIMESTAMP
+    `).run(guildId, channelId);
+};
+
+const clearGuildAllowedChannel = (guildId) => {
+    db.prepare('DELETE FROM guild_settings WHERE guild_id = ?').run(guildId);
+};
+
 module.exports = {
     db,
     getUser,
@@ -178,9 +549,30 @@ module.exports = {
     acceptTerms,
     getUserLanguage,
     setUserLanguage,
+    getUserAlien,
+    setUserAlien,
+    getUserShip,
     getBraziliaDateParts,
     getPlanetCycleKey,
     getPlanetNextResetInfo,
     getPlanetUsageState,
     consumePlanetUsage,
+    savePlanetOffer,
+    getPlanetOffer,
+    deletePlanetOffer,
+    getExplorationMission,
+    startExplorationMission,
+    updateExplorationMission,
+    clearExplorationMission,
+    addInventoryResources,
+    getUserInventory,
+    setMissionNotice,
+    popMissionNotice,
+    resolveExplorationMission,
+    resolveAllPendingMissions,
+    cleanExpiredPlanetOffers,
+    getGuildAllowedChannel,
+    getGuildSettings,
+    setGuildAllowedChannel,
+    clearGuildAllowedChannel,
 };
