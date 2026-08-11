@@ -44,18 +44,6 @@ module.exports = {
         resolveExplorationMission(interaction.user.id);
         const mission = getExplorationMission(interaction.user.id);
         const arrivalNotice = popMissionNotice(interaction.user.id);
-
-        if (mission) {
-            const blocks = [];
-            if (arrivalNotice) blocks.push(buildArrivalNotice(interaction.user.id, arrivalNotice));
-            blocks.push(buildMissionStatusContent(interaction.user.id, mission));
-
-            await interaction.editReply({
-                content: blocks.filter(Boolean).join('\n\n'),
-            });
-            return;
-        }
-
         const lang = getUserLanguage(interaction.user.id);
         const inventory = getUserInventory(interaction.user.id);
 
@@ -96,10 +84,31 @@ ${lines}
 `);
         }
 
-        const container = new ContainerBuilder()
+        const inventoryContainer = new ContainerBuilder()
             .addTextDisplayComponents(header)
             .addSeparatorComponents(new SeparatorBuilder())
             .addTextDisplayComponents(body);
+
+        if (mission) {
+            const missionBlocks = [];
+            if (arrivalNotice) missionBlocks.push(buildArrivalNotice(interaction.user.id, arrivalNotice));
+            missionBlocks.push(buildMissionStatusContent(interaction.user.id, mission));
+
+            const missionText = new TextDisplayBuilder().setContent(missionBlocks.filter(Boolean).join('\n\n'));
+            const combined = new ContainerBuilder()
+                .addTextDisplayComponents(missionText)
+                .addSeparatorComponents(new SeparatorBuilder())
+                .addTextDisplayComponents(header)
+                .addSeparatorComponents(new SeparatorBuilder())
+                .addTextDisplayComponents(body);
+
+            await interaction.editReply({
+                content: '',
+                flags: MessageFlags.IsComponentsV2,
+                components: [combined],
+            });
+            return;
+        }
 
         if (arrivalNotice) {
             const notice = new TextDisplayBuilder().setContent(buildArrivalNotice(interaction.user.id, arrivalNotice));
@@ -121,7 +130,7 @@ ${lines}
         await interaction.editReply({
             content: '',
             flags: MessageFlags.IsComponentsV2,
-            components: [container],
+            components: [inventoryContainer],
         });
     },
 };
