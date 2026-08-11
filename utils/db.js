@@ -82,6 +82,7 @@ const getBraziliaDateParts = (date = new Date()) => {
         month: '2-digit',
         day: '2-digit',
         hour: '2-digit',
+        minute: '2-digit',
         hour12: false,
     });
 
@@ -93,6 +94,7 @@ const getBraziliaDateParts = (date = new Date()) => {
         month: Number(values.month),
         day: Number(values.day),
         hour: Number(values.hour),
+        minute: Number(values.minute),
     };
 };
 
@@ -102,13 +104,17 @@ const getPlanetCycleKey = (date = new Date()) => {
 };
 
 const getPlanetNextResetInfo = (date = new Date()) => {
-    const { year, month, day, hour } = getBraziliaDateParts(date);
-    const nextDate = new Date(Date.UTC(year, month - 1, day, hour + 1, 0, 0));
-    const nextParts = getBraziliaDateParts(nextDate);
+    const { year, month, day, hour, minute } = getBraziliaDateParts(date);
+    const nextHour = (hour + 1) % 24;
+    const minutesLeft = 60 - minute;
+    const label = `${String(nextHour).padStart(2, '0')}:00`;
+    const nextDay = (hour + 1) >= 24 ? day + 1 : day;
+    const fullLabel = `${String(nextDay).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year} ${String(nextHour).padStart(2, '0')}:00`;
 
     return {
-        label: `${String(nextParts.hour).padStart(2, '0')}:00`,
-        fullLabel: `${String(nextParts.day).padStart(2, '0')}/${String(nextParts.month).padStart(2, '0')}/${nextParts.year} ${String(nextParts.hour).padStart(2, '0')}:00`,
+        label,
+        fullLabel,
+        minutesLeft,
     };
 };
 
@@ -172,6 +178,7 @@ module.exports = {
     acceptTerms,
     getUserLanguage,
     setUserLanguage,
+    getBraziliaDateParts,
     getPlanetCycleKey,
     getPlanetNextResetInfo,
     getPlanetUsageState,

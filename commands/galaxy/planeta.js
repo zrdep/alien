@@ -9,7 +9,7 @@ const {
 } = require('discord.js');
 
 const { tFor } = require('../../utils/i18n');
-const { getUserLanguage, consumePlanetUsage, getPlanetUsageState } = require('../../utils/db');
+const { getUserLanguage, consumePlanetUsage } = require('../../utils/db');
 const { gerarDadosPlaneta } = require('../../utils/planet');
 const logger = require('../../utils/logger');
 
@@ -19,6 +19,11 @@ const RARITY_EMOJI = {
     C: '<:rare:1536459780166647878>',
     D: '<:epic:1536459798269395044>',
     E: '<:legendary:1536459814475927653>',
+};
+
+const USAGE_EMOJI = {
+    uses: '<:loading:1536247662372982794>',
+    remaining: '<:hmm:1536247599365890139>',
 };
 
 const gerarSvgPlaneta = async (seed) => {
@@ -126,12 +131,11 @@ module.exports = {
         const usage = consumePlanetUsage(interaction.user.id);
 
         if (!usage.canUse) {
-            await interaction.editReply({
-                content: `⏳ ${tFor(interaction, 'commands.planeta.limitReached', {
-                    remaining: usage.remaining,
-                    resetAt: usage.nextReset.label,
-                })}`,
-            });
+            const mins = usage.nextReset.minutesLeft;
+            const msg = lang === 'en-US'
+                ? `<:sob:1536248436339376138> **Empty fuel tank!** You've completed all 10 space trips for this hour. Recharge and come back in **${mins} minutes** — until then, the ship stays in the hangar. <:ovni:1536247726889762847>`
+                : `<:sob:1536248436339376138> **Tanque de combustível vazio!** Você já fez todas as 10 explorações espaciais desta hora. Recarregue as energias e volte daqui **${mins} minutos** — até lá, a nave fica no hangar. <:ovni:1536247726889762847>`;
+            await interaction.editReply({ content: msg });
             return;
         }
 
@@ -159,12 +163,11 @@ ${emojiRarity} **${rarityLabel}**
 
         const detailsTxt = new TextDisplayBuilder().setContent(
 `## <:saturn:1536459943480270959> ${tFor(interaction, 'commands.planeta.detailsTitle')}
-${tFor(interaction, 'commands.planeta.seedLabel')}: \`${dados.seedDicebear}\`
-${tFor(interaction, 'commands.planeta.usageStatus', {
-    used: usage.uses,
-    remaining: usage.remaining,
-    resetAt: usage.nextReset.label,
-})}
+${tFor(interaction, 'commands.planeta.idLabel')}: \`${dados.seedDicebear}\`
+${tFor(interaction, 'commands.planeta.distanceLabel')}: **\`${dados.distanciaFormat(lang)}\`**
+
+${USAGE_EMOJI.uses} ${tFor(interaction, 'commands.planeta.usageUsed')}: **\`${usage.uses}/${usage.limit}\`**
+${USAGE_EMOJI.remaining} ${tFor(interaction, 'commands.planeta.usageRemaining')}: **\`${usage.remaining}\`**
 `
         );
 
