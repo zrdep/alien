@@ -88,6 +88,8 @@
       "rarityC": "Rare",
       "rarityD": "Epic",
       "rarityE": "Legendary",
+      "resourcesTitle": "Resources to Collect",
+      "resourcesEmpty": "This planet had no useful resources to collect. Better luck next time!",
       "footerTip": "Each planet is unique! Run the command again to discover a new world.",
       "footerLater": "Soon you will be able to name, explore and do much more with this planet!"
     }

@@ -88,6 +88,8 @@
       "rarityC": "Raro",
       "rarityD": "Épico",
       "rarityE": "Lendário",
+      "resourcesTitle": "Recursos para Coletar",
+      "resourcesEmpty": "Este planeta não tinha recursos úteis para coletar. A sorte fica pra próxima!",
       "footerTip": "Cada planeta é único! Rode o comando de novo para descobrir um novo mundo.",
       "footerLater": "Em breve você poderá nomear, explorar e fazer muito mais com este planeta!"
     }

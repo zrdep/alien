@@ -11,6 +11,7 @@ const {
 const { tFor } = require('../../utils/i18n');
 const { getUserLanguage, consumePlanetUsage } = require('../../utils/db');
 const { gerarDadosPlaneta } = require('../../utils/planet');
+const { gerarRecursosPlaneta } = require('../../utils/planetResources');
 const logger = require('../../utils/logger');
 
 const RARITY_EMOJI = {
@@ -24,6 +25,68 @@ const RARITY_EMOJI = {
 const USAGE_EMOJI = {
     uses: '<:loading:1536247662372982794>',
     remaining: '<:hmm:1536247599365890139>',
+};
+
+const RESOURCE_NAME = {
+    'pt-BR': {
+        stone: 'Pedra',
+        wood: 'Madeira',
+        dirt: 'Terra',
+        iron: 'Ferro',
+        copper: 'Cobre',
+        metal: 'Metal',
+        blueCrystal: 'Cristal Azul',
+        starFragment: 'Fragmento Estelar',
+        purpleCrystal: 'Cristal Roxo',
+        glowingOre: 'Minério Luminoso',
+        planetCore: 'Núcleo de Planeta',
+        cosmicPearl: 'Pérola Cósmica',
+        starEssence: 'Essência Estelar',
+    },
+    'en-US': {
+        stone: 'Stone',
+        wood: 'Wood',
+        dirt: 'Dirt',
+        iron: 'Iron',
+        copper: 'Copper',
+        metal: 'Metal',
+        blueCrystal: 'Blue Crystal',
+        starFragment: 'Star Fragment',
+        purpleCrystal: 'Purple Crystal',
+        glowingOre: 'Glowing Ore',
+        planetCore: 'Planet Core',
+        cosmicPearl: 'Cosmic Pearl',
+        starEssence: 'Star Essence',
+    },
+};
+
+const RESOURCE_RARITY_EMOJI = {
+    A: '<:comum:1536459746364760215>',
+    B: '<:incomum:1536459764492533800>',
+    C: '<:rare:1536459780166647878>',
+    D: '<:epic:1536459798269395044>',
+    E: '<:legendary:1536459814475927653>',
+};
+
+const buildResourcesContent = (interaction, recursos) => {
+    const lang = getUserLanguage(interaction.user.id);
+    const names = RESOURCE_NAME[lang] ?? RESOURCE_NAME['pt-BR'];
+    const title = tFor(interaction, 'commands.planet.resourcesTitle');
+    const empty = tFor(interaction, 'commands.planet.resourcesEmpty');
+
+    let body = '';
+    if (!recursos || recursos.length === 0) {
+        body = `<:hmm:1536247599365890139> ${empty}`;
+    } else {
+        body = recursos.map((r) => {
+            const rName = names[r.key] ?? r.key;
+            const rEmoji = r.emoji;
+            const rRarityEmoji = RESOURCE_RARITY_EMOJI[r.rarity] ?? '';
+            return `${rEmoji} **${rName}** × \`${r.amount}\` ${rRarityEmoji}`;
+        }).join('\n');
+    }
+
+    return `\n## <:excited:1536247579061256252> ${title}\n\n${body}\n`;
 };
 
 const gerarSvgPlaneta = async (seed) => {
@@ -146,6 +209,7 @@ module.exports = {
         }
 
         const dados = gerarDadosPlaneta();
+        const recursos = gerarRecursosPlaneta(dados.seedDicebear, dados.raridadeCode);
 
         const emojiRarity = RARITY_EMOJI[dados.raridadeCode] ?? RARITY_EMOJI.A;
         const rarityLabel = tFor(interaction, rarityKey(dados.raridadeCode));
@@ -186,6 +250,8 @@ ${tFor(interaction, 'commands.planet.rarityLabel')}: ${emojiRarity} ${rarityLabe
 `
         );
 
+        const resourcesTxt = new TextDisplayBuilder().setContent(buildResourcesContent(interaction, recursos));
+
         const buildContainer = (withThumbnail) => {
             let section;
             if (withThumbnail) {
@@ -209,7 +275,9 @@ ${tFor(interaction, 'commands.planet.rarityLabel')}: ${emojiRarity} ${rarityLabe
             return new ContainerBuilder()
                 .addTextDisplayComponents(header)
                 .addSeparatorComponents(new SeparatorBuilder())
-                .addSectionComponents(section);
+                .addSectionComponents(section)
+                .addSeparatorComponents(new SeparatorBuilder())
+                .addTextDisplayComponents(resourcesTxt);
         };
 
         const files = pngBuffer
