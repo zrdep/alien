@@ -96,11 +96,11 @@ const GLOBAL_COOLDOWN_MS = 5_000;
 const globalCooldowns = new Map();
 
 const getDeferOptions = (interaction) => {
-    if (interaction.commandName === 'config' || interaction.commandName === 'inventory' || interaction.commandName === 'craft') {
+    if (interaction.commandName === 'config' || interaction.commandName === 'inventory') {
         return { flags: MessageFlags.Ephemeral };
     }
 
-    if (interaction.commandName === 'alien' && !getUserAlien(interaction.user.id)) {
+    if ((interaction.commandName === 'alien' || interaction.commandName === 'craft') && !getUserAlien(interaction.user.id)) {
         return { flags: MessageFlags.Ephemeral };
     }
 

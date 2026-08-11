@@ -92,7 +92,7 @@ ${tFor(interaction, 'commands.craft.inProgressBody', { item: itemTitle })}
     );
 
     return {
-        flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+        flags: MessageFlags.IsComponentsV2,
         content: '',
         components: [container],
     };
