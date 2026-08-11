@@ -13,9 +13,8 @@ module.exports = {
         .setDescription('Mostra a latência do bot e da conexão websocket'),
 
     async execute(interaction) {
-        await interaction.reply({
+        await interaction.editReply({
             content: tFor(interaction, 'commands.ping.calculating'),
-            withResponse: true
         });
 
         const reply = await interaction.fetchReply();

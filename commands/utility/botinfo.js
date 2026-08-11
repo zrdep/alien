@@ -98,7 +98,7 @@ ${tt('commands.botinfo.closingLine1')}
             .addSeparatorComponents(new SeparatorBuilder())
             .addTextDisplayComponents(final);
 
-        await interaction.reply({
+        await interaction.editReply({
             flags: MessageFlags.IsComponentsV2,
             components: [container],
         });
