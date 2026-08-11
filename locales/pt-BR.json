@@ -60,12 +60,16 @@
       "serverSubcommand": "Altere as configurações do servidor (apenas admins)",
       "panelUserTitle": "Minhas Configurações",
       "panelUserIntro": "Aqui você personaliza como eu interajo com você pessoalmente.",
-      "languageLabel": "Idioma do bot",
-      "languageDesc": "Escolha o idioma que o ∩lien usa para responder VOCÊ",
-      "languageSaved": "Idioma alterado com sucesso! Agora eu respondo em português 🇧🇷",
-      "languageSavedEn": "Language updated successfully! Now I respond in English 🇺🇸"
+      "panelUserFooter": "Mais opções de personalização chegando em breve! <:loading:1536247662372982794>",
+      "languageLabel": "Idioma",
+      "languageDesc": "Escolha o idioma que o ∩lien usa quando for responder VOCÊ.",
+      "languagePlaceholder": "Selecione um idioma...",
+      "currentValue": "Selecionado agora:",
+      "languageSaved": "Preferências salvas! Idioma atualizado com sucesso. <:passionate:1536247742110634034>",
+      "invalidLanguage": "Idioma inválido.",
+      "serverComingSoon": "Em breve! As configurações de servidor estarão disponíveis na próxima atualização do ∩lien."
     },
-    "planeta": {
+    "planet": {
       "dmDisabled": "Este comando só funciona dentro de servidores.",
       "title": "Planeta Gerado",
       "subtitle": "Capturamos um planeta na sua órbita!",

@@ -113,16 +113,22 @@ const svgToPngBuffer = async (svg) => {
     return pngData.asPng();
 };
 
-const ATTACHMENT_NAME = 'planeta.png';
+const ATTACHMENT_NAME = 'planet.png';
 
-const rarityKey = (code) => `commands.planeta.rarity${code}`;
+const rarityKey = (code) => `commands.planet.rarity${code}`;
 
 module.exports = {
     cooldown: 10,
 
     data: new SlashCommandBuilder()
-        .setName('planeta')
-        .setDescription('Gera um planeta aleatório na galáxia do ∩lien'),
+        .setName('planet')
+        .setNameLocalizations({
+            'pt-BR': 'planet',
+        })
+        .setDescription('Generates a random planet in ∩lien galaxy')
+        .setDescriptionLocalizations({
+            'pt-BR': 'Gera um planeta aleatório na galáxia do ∩lien',
+        }),
 
     async execute(interaction) {
         await interaction.deferReply();
@@ -149,7 +155,7 @@ module.exports = {
             const svg = await gerarSvgPlaneta(dados.seedDicebear);
             pngBuffer = await svgToPngBuffer(svg);
         } catch (err) {
-            logger.error(`Falha ao gerar imagem do planeta: ${err.message}`);
+            logger.error(`Failed to generate planet image: ${err.message}`);
             pngBuffer = null;
         }
 
@@ -157,26 +163,26 @@ module.exports = {
 `# <:asteroid:1536459906973171782> ${dados.nome}
 
 ${emojiRarity} **${rarityLabel}**
-<:earth:1536459925495087226> ${tFor(interaction, 'commands.planeta.subtitle')}
+<:earth:1536459925495087226> ${tFor(interaction, 'commands.planet.subtitle')}
 `
         );
 
         const detailsTxt = new TextDisplayBuilder().setContent(
-`## <:saturn:1536459943480270959> ${tFor(interaction, 'commands.planeta.detailsTitle')}
-${tFor(interaction, 'commands.planeta.idLabel')}: \`${dados.seedDicebear}\`
-${tFor(interaction, 'commands.planeta.distanceLabel')}: **\`${dados.distanciaFormat(lang)}\`**
+`## <:saturn:1536459943480270959> ${tFor(interaction, 'commands.planet.detailsTitle')}
+${tFor(interaction, 'commands.planet.idLabel')}: \`${dados.seedDicebear}\`
+${tFor(interaction, 'commands.planet.distanceLabel')}: **\`${dados.distanciaFormat(lang)}\`**
 
-${USAGE_EMOJI.uses} ${tFor(interaction, 'commands.planeta.usageUsed')}: **\`${usage.uses}/${usage.limit}\`**
-${USAGE_EMOJI.remaining} ${tFor(interaction, 'commands.planeta.usageRemaining')}: **\`${usage.remaining}\`**
+${USAGE_EMOJI.uses} ${tFor(interaction, 'commands.planet.usageUsed')}: **\`${usage.uses}/${usage.limit}\`**
+${USAGE_EMOJI.remaining} ${tFor(interaction, 'commands.planet.usageRemaining')}: **\`${usage.remaining}\`**
 `
         );
 
         const registryTxt = new TextDisplayBuilder().setContent(
-`## <:registry:1536459835921530890> ${tFor(interaction, 'commands.planeta.registryTitle')}
-${tFor(interaction, 'commands.planeta.prefixLabel')}: \`${dados.prefixo}\`
-${tFor(interaction, 'commands.planeta.numberLabel')}: \`${dados.numeroStr}\`
-${tFor(interaction, 'commands.planeta.suffixLabel')}: \`${dados.sufixo.code}\`
-${tFor(interaction, 'commands.planeta.rarityLabel')}: ${emojiRarity} ${rarityLabel}
+`## <:registry:1536459835921530890> ${tFor(interaction, 'commands.planet.registryTitle')}
+${tFor(interaction, 'commands.planet.prefixLabel')}: \`${dados.prefixo}\`
+${tFor(interaction, 'commands.planet.numberLabel')}: \`${dados.numeroStr}\`
+${tFor(interaction, 'commands.planet.suffixLabel')}: \`${dados.sufixo.code}\`
+${tFor(interaction, 'commands.planet.rarityLabel')}: ${emojiRarity} ${rarityLabel}
 `
         );
 
@@ -220,7 +226,7 @@ ${tFor(interaction, 'commands.planeta.rarityLabel')}: ${emojiRarity} ${rarityLab
                 files,
             });
         } catch (replyErr) {
-            logger.warn(`Falha ao enviar /planeta com thumbnail: ${replyErr.message}. Tentando sem thumbnail...`);
+            logger.warn(`Failed to send /planet with thumbnail: ${replyErr.message}. Retrying without thumbnail...`);
             try {
                 await interaction.editReply({
                     content: '',
@@ -229,7 +235,7 @@ ${tFor(interaction, 'commands.planeta.rarityLabel')}: ${emojiRarity} ${rarityLab
                     files,
                 });
             } catch (finalErr) {
-                logger.warn(`Falha ao enviar /planeta sem thumbnail: ${finalErr.message}`);
+                logger.warn(`Failed to send /planet without thumbnail: ${finalErr.message}`);
                 throw finalErr;
             }
         }

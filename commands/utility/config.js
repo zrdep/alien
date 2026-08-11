@@ -3,10 +3,11 @@ const {
     MessageFlags,
     ContainerBuilder,
     TextDisplayBuilder,
+    SeparatorBuilder,
     ActionRowBuilder,
     StringSelectMenuBuilder,
 } = require('discord.js');
-const { t, tFor, SUPPORTED_LANGS } = require('../../utils/i18n');
+const { t, SUPPORTED_LANGS } = require('../../utils/i18n');
 const { setUserLanguage, getUserLanguage } = require('../../utils/db');
 
 const FLAG = {
@@ -16,19 +17,20 @@ const FLAG = {
 
 const NAME = {
     'pt-BR': { 'pt-BR': 'Português (Brasil)', 'en-US': 'Portuguese (Brazil)' },
-    'en-US': { 'pt-BR': 'Inglês (EUA)',        'en-US': 'English (USA)'     },
+    'en-US': { 'pt-BR': 'Inglês (EUA)', 'en-US': 'English (USA)' },
 };
 
 const DESC = {
     'pt-BR': { 'pt-BR': 'Respostas do bot em português', 'en-US': 'Bot responses in Portuguese' },
-    'en-US': { 'pt-BR': 'Respostas do bot em inglês',    'en-US': 'Bot responses in English'    },
+    'en-US': { 'pt-BR': 'Respostas do bot em inglês', 'en-US': 'Bot responses in English' },
 };
 
-const buildMenu = (currentLang) => {
+const buildLanguageMenu = (userId) => {
+    const currentLang = getUserLanguage(userId);
     const row = new ActionRowBuilder().addComponents(
         new StringSelectMenuBuilder()
             .setCustomId('config_user_language')
-            .setPlaceholder('Escolha um idioma / Choose a language')
+            .setPlaceholder(t(userId, 'commands.config.languagePlaceholder'))
             .addOptions(
                 SUPPORTED_LANGS.map((code) => ({
                     label: NAME[code][currentLang],
@@ -42,31 +44,80 @@ const buildMenu = (currentLang) => {
     return [row];
 };
 
-const painelUsuario = (userId) => {
+const buildHeader = (userId) => {
+    return new TextDisplayBuilder().setContent(`
+# <:settings:1536248422686920704> ${t(userId, 'commands.config.panelUserTitle')}
+
+<:alien:1536247533502734376> ${t(userId, 'commands.config.panelUserIntro')}
+`);
+};
+
+const buildLanguageSection = (userId) => {
     const lang = getUserLanguage(userId);
-    const titleKey = 'commands.config.panelUserTitle';
-    const introKey = 'commands.config.panelUserIntro';
-    const labelKey = 'commands.config.languageLabel';
-    const descKey  = 'commands.config.languageDesc';
+
+    return new TextDisplayBuilder().setContent(`
+## ${t(userId, 'commands.config.languageLabel')}
+
+${t(userId, 'commands.config.languageDesc')}
+
+**${t(userId, 'commands.config.currentValue')}** ${FLAG[lang]} ${NAME[lang][lang]}
+`);
+};
+
+const buildFooter = (userId) => {
+    return new TextDisplayBuilder().setContent(`
+<:sunglasses:1536248455519801386> ${t(userId, 'commands.config.panelUserFooter')}
+`);
+};
+
+const buildSuccessToast = (userId) => {
+    return new TextDisplayBuilder().setContent(
+        `<:excited:1536247579061256252> **${t(userId, 'commands.config.languageSaved')}**
+`);
+};
+
+const painelUsuario = (userId) => {
+    const header = buildHeader(userId);
+    const separator1 = new SeparatorBuilder();
+    const languageBlock = buildLanguageSection(userId);
+    const separator2 = new SeparatorBuilder();
+    const footer = buildFooter(userId);
 
     const container = new ContainerBuilder()
-        .addTextDisplayComponents(
-            new TextDisplayBuilder().setContent(
-`# <:settings:1536248422686920704> ${t(userId, titleKey)}
-
-${t(userId, introKey)}
-
-## <:config:1536247533502734376> ${t(userId, labelKey)}
-${t(userId, descKey)}
-
-**${FLAG[lang]} ${NAME[lang][lang]}**`
-            )
-        );
+        .addTextDisplayComponents(header)
+        .addSeparatorComponents(separator1)
+        .addTextDisplayComponents(languageBlock)
+        .addSeparatorComponents(separator2)
+        .addTextDisplayComponents(footer);
 
     return {
         flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
         content: '',
-        components: [container, ...buildMenu(lang)],
+        components: [container, ...buildLanguageMenu(userId)],
+    };
+};
+
+const painelUsuarioAtualizado = (userId) => {
+    const toast = buildSuccessToast(userId);
+    const header = buildHeader(userId);
+    const separator1 = new SeparatorBuilder();
+    const languageBlock = buildLanguageSection(userId);
+    const separator2 = new SeparatorBuilder();
+    const footer = buildFooter(userId);
+
+    const container = new ContainerBuilder()
+        .addTextDisplayComponents(toast)
+        .addSeparatorComponents(separator1)
+        .addTextDisplayComponents(header)
+        .addSeparatorComponents(new SeparatorBuilder())
+        .addTextDisplayComponents(languageBlock)
+        .addSeparatorComponents(separator2)
+        .addTextDisplayComponents(footer);
+
+    return {
+        flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+        content: '',
+        components: [container, ...buildLanguageMenu(userId)],
     };
 };
 
@@ -74,16 +125,30 @@ module.exports = {
     cooldown: 5,
     data: new SlashCommandBuilder()
         .setName('config')
+        .setNameLocalizations({
+            'en-US': 'config',
+        })
         .setDescription('Configure suas preferências no bot')
+        .setDescriptionLocalizations({
+            'en-US': 'Configure your preferences in the bot',
+        })
         .addSubcommand((sub) =>
             sub
                 .setName('user')
+                .setNameLocalizations({ 'en-US': 'user' })
                 .setDescription('Altere suas configurações pessoais')
+                .setDescriptionLocalizations({
+                    'en-US': 'Change your personal settings',
+                })
         )
         .addSubcommand((sub) =>
             sub
                 .setName('server')
+                .setNameLocalizations({ 'en-US': 'server' })
                 .setDescription('Altere configurações do servidor')
+                .setDescriptionLocalizations({
+                    'en-US': 'Change server settings',
+                })
         ),
 
     async execute(interaction) {
@@ -91,7 +156,7 @@ module.exports = {
 
         if (sub === 'server') {
             await interaction.reply({
-                content: '<:question:1536248373240270888> **Em breve!** As configurações de servidor estarão disponíveis na próxima atualização do ∩lien.',
+                content: `<:question:1536248373240270888> **${t(interaction.user.id, 'commands.config.serverComingSoon')}**`,
                 flags: MessageFlags.Ephemeral,
             });
             return;
@@ -106,7 +171,7 @@ module.exports = {
         const code = interaction.values[0];
         if (!SUPPORTED_LANGS.includes(code)) {
             await interaction.reply({
-                content: '<:error:1536247536191111248> Idioma inválido.',
+                content: `<:error:1536247536191111248> ${t(interaction.user.id, 'commands.config.invalidLanguage')}`,
                 flags: MessageFlags.Ephemeral,
             });
             return true;
@@ -114,33 +179,7 @@ module.exports = {
 
         setUserLanguage(interaction.user.id, code);
 
-        const savedKey = code === 'pt-BR'
-            ? 'commands.config.languageSaved'
-            : 'commands.config.languageSavedEn';
-
-        const successText = `<:excited:1536247579061256252> ${t(interaction.user.id, savedKey)}`;
-
-        const container = new ContainerBuilder()
-            .addTextDisplayComponents(
-                new TextDisplayBuilder().setContent(
-`${successText}
-
-# <:settings:1536248422686920704> ${t(interaction.user.id, 'commands.config.panelUserTitle')}
-
-${t(interaction.user.id, 'commands.config.panelUserIntro')}
-
-## <:config:1536247533502734376> ${t(interaction.user.id, 'commands.config.languageLabel')}
-${t(interaction.user.id, 'commands.config.languageDesc')}
-
-**${FLAG[code]} ${NAME[code][code]}**`
-                )
-            );
-
-        await interaction.update({
-            flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
-            content: '',
-            components: [container, ...buildMenu(code)],
-        });
+        await interaction.update(painelUsuarioAtualizado(interaction.user.id));
 
         return true;
     },
