@@ -9,7 +9,7 @@ const {
 } = require('discord.js');
 
 const { tFor } = require('../../utils/i18n');
-const { getUserLanguage } = require('../../utils/db');
+const { getUserLanguage, consumePlanetUsage, getPlanetUsageState } = require('../../utils/db');
 const { gerarDadosPlaneta } = require('../../utils/planet');
 const logger = require('../../utils/logger');
 
@@ -123,6 +123,18 @@ module.exports = {
         await interaction.deferReply();
 
         const lang = getUserLanguage(interaction.user.id);
+        const usage = consumePlanetUsage(interaction.user.id);
+
+        if (!usage.canUse) {
+            await interaction.editReply({
+                content: `⏳ ${tFor(interaction, 'commands.planeta.limitReached', {
+                    remaining: usage.remaining,
+                    resetAt: usage.nextReset.label,
+                })}`,
+            });
+            return;
+        }
+
         const dados = gerarDadosPlaneta();
 
         const emojiRarity = RARITY_EMOJI[dados.raridadeCode] ?? RARITY_EMOJI.A;
@@ -148,6 +160,11 @@ ${emojiRarity} **${rarityLabel}**
         const detailsTxt = new TextDisplayBuilder().setContent(
 `## <:saturn:1536459943480270959> ${tFor(interaction, 'commands.planeta.detailsTitle')}
 ${tFor(interaction, 'commands.planeta.seedLabel')}: \`${dados.seedDicebear}\`
+${tFor(interaction, 'commands.planeta.usageStatus', {
+    used: usage.uses,
+    remaining: usage.remaining,
+    resetAt: usage.nextReset.label,
+})}
 `
         );
 

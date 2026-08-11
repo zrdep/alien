@@ -17,6 +17,15 @@ db.exec(`
     );
 `);
 
+db.exec(`
+    CREATE TABLE IF NOT EXISTS planet_usage (
+        user_id TEXT PRIMARY KEY,
+        cycle_key TEXT NOT NULL DEFAULT '',
+        uses INTEGER NOT NULL DEFAULT 0,
+        updated_at TEXT
+    );
+`);
+
 const colunas = db.prepare("PRAGMA table_info(users)").all();
 const temLanguage = colunas.some(c => c.name === 'language');
 
@@ -66,6 +75,96 @@ const setUserLanguage = (userId, language) => {
     `).run(language, userId);
 };
 
+const getBraziliaDateParts = (date = new Date()) => {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Sao_Paulo',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        hour12: false,
+    });
+
+    const parts = formatter.formatToParts(date);
+    const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+
+    return {
+        year: Number(values.year),
+        month: Number(values.month),
+        day: Number(values.day),
+        hour: Number(values.hour),
+    };
+};
+
+const getPlanetCycleKey = (date = new Date()) => {
+    const { year, month, day, hour } = getBraziliaDateParts(date);
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}-${String(hour).padStart(2, '0')}`;
+};
+
+const getPlanetNextResetInfo = (date = new Date()) => {
+    const { year, month, day, hour } = getBraziliaDateParts(date);
+    const nextDate = new Date(Date.UTC(year, month - 1, day, hour + 1, 0, 0));
+    const nextParts = getBraziliaDateParts(nextDate);
+
+    return {
+        label: `${String(nextParts.hour).padStart(2, '0')}:00`,
+        fullLabel: `${String(nextParts.day).padStart(2, '0')}/${String(nextParts.month).padStart(2, '0')}/${nextParts.year} ${String(nextParts.hour).padStart(2, '0')}:00`,
+    };
+};
+
+const getPlanetUsageState = (userId, date = new Date()) => {
+    const cycleKey = getPlanetCycleKey(date);
+    const row = db.prepare('SELECT * FROM planet_usage WHERE user_id = ?').get(userId);
+
+    if (!row || row.cycle_key !== cycleKey) {
+        db.prepare(`
+            INSERT INTO planet_usage (user_id, cycle_key, uses, updated_at)
+            VALUES (?, ?, 0, CURRENT_TIMESTAMP)
+            ON CONFLICT(user_id) DO UPDATE SET cycle_key = excluded.cycle_key, uses = 0, updated_at = CURRENT_TIMESTAMP
+        `).run(userId, cycleKey);
+
+        return {
+            cycleKey,
+            uses: 0,
+            limit: 10,
+            canUse: true,
+            remaining: 10,
+            nextReset: getPlanetNextResetInfo(date),
+        };
+    }
+
+    return {
+        cycleKey: row.cycle_key,
+        uses: row.uses,
+        limit: 10,
+        canUse: row.uses < 10,
+        remaining: Math.max(0, 10 - row.uses),
+        nextReset: getPlanetNextResetInfo(date),
+    };
+};
+
+const consumePlanetUsage = (userId, date = new Date()) => {
+    const state = getPlanetUsageState(userId, date);
+
+    if (!state.canUse) {
+        return state;
+    }
+
+    const nextUses = state.uses + 1;
+    db.prepare(`
+        INSERT INTO planet_usage (user_id, cycle_key, uses, updated_at)
+        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(user_id) DO UPDATE SET cycle_key = excluded.cycle_key, uses = excluded.uses, updated_at = CURRENT_TIMESTAMP
+    `).run(userId, state.cycleKey, nextUses);
+
+    return {
+        ...state,
+        uses: nextUses,
+        canUse: true,
+        remaining: Math.max(0, 10 - nextUses),
+    };
+};
+
 module.exports = {
     db,
     getUser,
@@ -73,4 +172,8 @@ module.exports = {
     acceptTerms,
     getUserLanguage,
     setUserLanguage,
+    getPlanetCycleKey,
+    getPlanetNextResetInfo,
+    getPlanetUsageState,
+    consumePlanetUsage,
 };

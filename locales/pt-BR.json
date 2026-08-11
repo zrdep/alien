@@ -76,6 +76,8 @@
       "numberLabel": "Número",
       "suffixLabel": "Sufixo",
       "rarityLabel": "Raridade",
+      "usageStatus": "Uso desta hora: {used}/10 | Restam: {remaining} | Próximo reset às {resetAt}",
+      "limitReached": "⏳ Você já usou suas 10 viagens espaciais desta hora em Brasília. O próximo reset é às {resetAt}.",
       "rarityA": "Comum",
       "rarityB": "Incomum",
       "rarityC": "Raro",

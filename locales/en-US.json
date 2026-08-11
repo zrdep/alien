@@ -76,6 +76,8 @@
       "numberLabel": "Number",
       "suffixLabel": "Suffix",
       "rarityLabel": "Rarity",
+      "usageStatus": "Uses this hour: {used}/10 | Remaining: {remaining} | Next reset at {resetAt}",
+      "limitReached": "⏳ You already used your 10 space trips this hour in Brasília. The next reset is at {resetAt}.",
       "rarityA": "Common",
       "rarityB": "Uncommon",
       "rarityC": "Rare",
