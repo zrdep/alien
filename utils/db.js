@@ -627,14 +627,11 @@ const resolveExplorationMission = (userId, now = Date.now()) => {
 
         if (mission.status === STATUS.COLLECTING) {
             const returnStart = mission.phase_ends_at;
-            const coinsReward = generateMissionCoins(mission.planet_rarity);
-            const coinsJson = JSON.stringify(coinsReward);
 
             updateExplorationMission(userId, {
                 status: STATUS.TRAVELING_BACK,
                 phaseStartedAt: returnStart,
                 phaseEndsAt: returnStart + mission.travel_seconds * 1000,
-                coinsJson,
             });
             continue;
         }
