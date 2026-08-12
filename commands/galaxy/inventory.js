@@ -13,6 +13,7 @@ const {
     resolveExplorationMission,
     getExplorationMission,
     getUserInventory,
+    getUserCoins,
     popMissionNotice,
 } = require('../../utils/db');
 const { getResourceMeta } = require('../../utils/planetResources');
@@ -46,11 +47,15 @@ module.exports = {
         const arrivalNotice = popMissionNotice(interaction.user.id);
         const lang = getUserLanguage(interaction.user.id);
         const inventory = getUserInventory(interaction.user.id);
+        const coins = getUserCoins(interaction.user.id);
+        const numLoc = lang === 'pt-BR' ? 'pt-BR' : 'en-US';
 
         const header = new TextDisplayBuilder().setContent(`
 # <:registry:1536459835921530890> ${tFor(interaction, 'commands.inventory.title')}
 
 <:sunglasses:1536248455519801386> ${tFor(interaction, 'commands.inventory.subtitle')}
+
+<:gold_coins:1536941656178298992> **${tFor(interaction, 'commands.inventory.coinsLabel')}:** \`${coins.toLocaleString(numLoc)}\` ∩oins
 `);
 
         let body;

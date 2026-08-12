@@ -187,8 +187,43 @@
     "inventory": {
       "title": "Inventário Galáctico",
       "subtitle": "Todos os recursos que seus aliens coletaram nas expedições.",
+      "coinsLabel": "Saldo de ∩oins",
       "resourcesTitle": "Seus Recursos",
-      "empty": "Seu inventário está vazio. Explore planetas com **/planet** e clique em **Explorar**!"
+      "empty": "Seu inventário está vazio. Explore planetas com </planet:1536804847142314076> e clique em **Explorar**!"
+    },
+    "daily": {
+      "claimedTitle": "Recompensa Diária!",
+      "claimedBody": "Você resgatou sua recompensa diária de **{emoji} +{amount} ∩oins**!",
+      "alreadyClaimedTitle": "Recompensa já Coletada!",
+      "alreadyClaimedBody": "Você já resgatou seu daily hoje. Volte quando o relógio bater **00:00**!",
+      "balanceLabel": "Saldo Atual",
+      "nextResetLabel": "Próxima recompensa disponível em: **{time}**"
+    },
+    "wallet": {
+      "myTitle": "Minha Carteira Galáctica",
+      "userTitle": "Carteira Galáctica de {user}",
+      "balanceLabel": "Saldo de ∩oins",
+      "alienCompanion": "Companheiro",
+      "dailyStatusLabel": "Status do Daily",
+      "dailyAvailable": "Disponível para resgate! Use `/daily`",
+      "dailyClaimed": "Já resgatado hoje (reseta em `{time}`)"
+    },
+    "profile": {
+      "myTitle": "Meu Perfil Galáctico",
+      "userTitle": "Perfil Galáctico de {user}",
+      "alienLabel": "Companheiro Alien",
+      "coinsLabel": "Saldo de ∩oins",
+      "statsTitle": "Estatísticas Espaciais",
+      "planetsSeen": "Planetas vistos",
+      "distanceTraveled": "Distância percorrida",
+      "tripsCompleted": "Viagens concluídas",
+      "resourcesCollected": "Recursos coletados",
+      "shipTitle": "Nave & Equipamentos",
+      "propulsor": "Propulsor",
+      "excavation": "Sonda de Escavação",
+      "scanner": "Scanner Estelar",
+      "botTitle": "Este não é um usuário!",
+      "botBody": "**{user}** é um bot!"
     },
     "craft": {
       "title": "Oficina de Fabricação",

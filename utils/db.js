@@ -2,6 +2,7 @@ const fs = require('fs');
 const Database = require('better-sqlite3');
 const path = require('path');
 const logger = require('./logger');
+const { generateMissionCoins } = require('./coins');
 
 const dataDir = path.join(__dirname, '..', 'data');
 if (!fs.existsSync(dataDir)) {
@@ -91,6 +92,47 @@ if (!temShipScanner) {
     logger.success('Coluna `ship_scanner_level` adicionada à tabela `users`');
 }
 
+const temCoins = colunas.some(c => c.name === 'coins');
+const temLastDailyDate = colunas.some(c => c.name === 'last_daily_date');
+
+if (!temCoins) {
+    db.exec(`
+        ALTER TABLE users
+        ADD COLUMN coins INTEGER NOT NULL DEFAULT 0;
+    `);
+    logger.success('Coluna `coins` adicionada à tabela `users`');
+}
+
+if (!temLastDailyDate) {
+    db.exec(`
+        ALTER TABLE users
+        ADD COLUMN last_daily_date TEXT;
+    `);
+    logger.success('Coluna `last_daily_date` adicionada à tabela `users`');
+}
+
+const temPlanetsSeen = colunas.some(c => c.name === 'planets_seen');
+const temDistanceTraveled = colunas.some(c => c.name === 'distance_traveled_km');
+const temTripsCompleted = colunas.some(c => c.name === 'trips_completed');
+const temTotalResources = colunas.some(c => c.name === 'total_resources_collected');
+
+if (!temPlanetsSeen) {
+    db.exec(`ALTER TABLE users ADD COLUMN planets_seen INTEGER NOT NULL DEFAULT 0;`);
+    logger.success('Coluna `planets_seen` adicionada à tabela `users`');
+}
+if (!temDistanceTraveled) {
+    db.exec(`ALTER TABLE users ADD COLUMN distance_traveled_km INTEGER NOT NULL DEFAULT 0;`);
+    logger.success('Coluna `distance_traveled_km` adicionada à tabela `users`');
+}
+if (!temTripsCompleted) {
+    db.exec(`ALTER TABLE users ADD COLUMN trips_completed INTEGER NOT NULL DEFAULT 0;`);
+    logger.success('Coluna `trips_completed` adicionada à tabela `users`');
+}
+if (!temTotalResources) {
+    db.exec(`ALTER TABLE users ADD COLUMN total_resources_collected INTEGER NOT NULL DEFAULT 0;`);
+    logger.success('Coluna `total_resources_collected` adicionada à tabela `users`');
+}
+
 logger.success('Banco SQLite inicializado (data/bot.db)');
 
 db.exec(`
@@ -114,9 +156,21 @@ db.exec(`
         resources_json TEXT NOT NULL,
         travel_seconds INTEGER NOT NULL,
         phase_started_at INTEGER NOT NULL,
-        phase_ends_at INTEGER NOT NULL
+        phase_ends_at INTEGER NOT NULL,
+        coins_json TEXT
     );
 `);
+
+const colunasMission = db.prepare("PRAGMA table_info(exploration_missions)").all();
+const temMissionCoins = colunasMission.some(c => c.name === 'coins_json');
+
+if (!temMissionCoins) {
+    db.exec(`
+        ALTER TABLE exploration_missions
+        ADD COLUMN coins_json TEXT;
+    `);
+    logger.success('Coluna `coins_json` adicionada à tabela `exploration_missions`');
+}
 
 db.exec(`
     CREATE TABLE IF NOT EXISTS user_inventory (
@@ -244,6 +298,80 @@ const getBraziliaDateParts = (date = new Date()) => {
         day: Number(values.day),
         hour: Number(values.hour),
         minute: Number(values.minute),
+        second: Number(values.second ?? 0),
+    };
+};
+
+const getUserCoins = (userId) => {
+    const user = getUser(userId);
+    return user.coins ?? 0;
+};
+
+const addUserCoins = (userId, amount) => {
+    if (typeof amount !== 'number' || amount <= 0) return;
+    getUser(userId);
+    db.prepare(`
+        UPDATE users
+        SET coins = coins + ?
+        WHERE user_id = ?
+    `).run(amount, userId);
+};
+
+const getDailyState = (userId, date = new Date()) => {
+    const user = getUser(userId);
+    const { year, month, day, hour, minute, second } = getBraziliaDateParts(date);
+    const today = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const canClaim = user.last_daily_date !== today;
+
+    const passedSeconds = hour * 3600 + minute * 60 + second;
+    const secondsUntilReset = Math.max(0, 86400 - passedSeconds);
+
+    return {
+        canClaim,
+        today,
+        lastDailyDate: user.last_daily_date ?? null,
+        secondsUntilReset,
+    };
+};
+
+const claimDaily = (userId, dateStr, coinsAmount) => {
+    getUser(userId);
+    db.prepare(`
+        UPDATE users
+        SET last_daily_date = ?,
+            coins = coins + ?
+        WHERE user_id = ?
+    `).run(dateStr, coinsAmount, userId);
+};
+
+const incrementPlanetsSeen = (userId, count = 1) => {
+    getUser(userId);
+    db.prepare(`
+        UPDATE users
+        SET planets_seen = planets_seen + ?
+        WHERE user_id = ?
+    `).run(count, userId);
+};
+
+const addMissionCompletionStats = (userId, distanceKm, totalResources) => {
+    getUser(userId);
+    const roundTripDistance = distanceKm * 2;
+    db.prepare(`
+        UPDATE users
+        SET distance_traveled_km = distance_traveled_km + ?,
+            trips_completed = trips_completed + 1,
+            total_resources_collected = total_resources_collected + ?
+        WHERE user_id = ?
+    `).run(roundTripDistance, totalResources, userId);
+};
+
+const getUserProfileStats = (userId) => {
+    const user = getUser(userId);
+    return {
+        planetsSeen: user.planets_seen ?? 0,
+        distanceTraveledKm: user.distance_traveled_km ?? 0,
+        tripsCompleted: user.trips_completed ?? 0,
+        totalResourcesCollected: user.total_resources_collected ?? 0,
     };
 };
 
@@ -391,13 +519,24 @@ const startExplorationMission = (userId, data) => {
 };
 
 const updateExplorationMission = (userId, data) => {
-    db.prepare(`
-        UPDATE exploration_missions
-        SET status = ?,
-            phase_started_at = ?,
-            phase_ends_at = ?
-        WHERE user_id = ?
-    `).run(data.status, data.phaseStartedAt, data.phaseEndsAt, userId);
+    if (data.coinsJson !== undefined) {
+        db.prepare(`
+            UPDATE exploration_missions
+            SET status = ?,
+                phase_started_at = ?,
+                phase_ends_at = ?,
+                coins_json = ?
+            WHERE user_id = ?
+        `).run(data.status, data.phaseStartedAt, data.phaseEndsAt, data.coinsJson, userId);
+    } else {
+        db.prepare(`
+            UPDATE exploration_missions
+            SET status = ?,
+                phase_started_at = ?,
+                phase_ends_at = ?
+            WHERE user_id = ?
+        `).run(data.status, data.phaseStartedAt, data.phaseEndsAt, userId);
+    }
 };
 
 const clearExplorationMission = (userId) => {
@@ -486,10 +625,14 @@ const resolveExplorationMission = (userId, now = Date.now()) => {
 
         if (mission.status === STATUS.COLLECTING) {
             const returnStart = mission.phase_ends_at;
+            const coinsReward = generateMissionCoins(mission.planet_rarity);
+            const coinsJson = JSON.stringify(coinsReward);
+
             updateExplorationMission(userId, {
                 status: STATUS.TRAVELING_BACK,
                 phaseStartedAt: returnStart,
                 phaseEndsAt: returnStart + mission.travel_seconds * 1000,
+                coinsJson,
             });
             continue;
         }
@@ -502,13 +645,31 @@ const resolveExplorationMission = (userId, now = Date.now()) => {
                 resources = [];
             }
 
+            let coinsReward = null;
+            if (mission.coins_json) {
+                try {
+                    coinsReward = JSON.parse(mission.coins_json);
+                } catch {
+                    coinsReward = null;
+                }
+            }
+            if (!coinsReward) {
+                coinsReward = generateMissionCoins(mission.planet_rarity);
+            }
+
             addInventoryResources(userId, resources);
+            if (coinsReward && coinsReward.amount) {
+                addUserCoins(userId, coinsReward.amount);
+            }
+            const totalRecsCount = resources.reduce((sum, item) => sum + (item.amount ?? 0), 0);
+            addMissionCompletionStats(userId, mission.planet_distance_km, totalRecsCount);
 
             const alien = getUserAlien(userId);
             notice = {
                 alienName: alien?.name ?? 'Alienígena',
                 planetName: mission.planet_name,
                 resources,
+                coins: coinsReward,
             };
             setMissionNotice(userId, notice);
             clearExplorationMission(userId);
@@ -726,5 +887,12 @@ module.exports = {
     getGuildSettings,
     setGuildAllowedChannel,
     clearGuildAllowedChannel,
+    getUserCoins,
+    addUserCoins,
+    getDailyState,
+    claimDaily,
+    incrementPlanetsSeen,
+    addMissionCompletionStats,
+    getUserProfileStats,
 };
 

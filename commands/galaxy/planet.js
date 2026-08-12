@@ -11,6 +11,10 @@ const {
     ButtonStyle,
 } = require('discord.js');
 
+const path = require('path');
+const fs = require('fs');
+const { Resvg } = require('@resvg/resvg-js');
+
 const { tFor } = require('../../utils/i18n');
 const {
     getUserLanguage,
@@ -24,6 +28,7 @@ const {
     getExplorationMission,
     startExplorationMission,
     popMissionNotice,
+    incrementPlanetsSeen,
 } = require('../../utils/db');
 const { gerarDadosPlaneta } = require('../../utils/planet');
 const { gerarRecursosPlaneta } = require('../../utils/planetResources');
@@ -196,23 +201,52 @@ const buildPlanetPayload = (interaction, dados, usage, recursos, pngBuffer, arri
     return container;
 };
 
-const gerarSvgPlaneta = async (seed) => {
-    const { Style, Avatar } = await import('@dicebear/core');
-    const path = require('path');
-    const fs = require('fs');
-    const definitionPath = path.join(__dirname, '..', '..', 'node_modules', '@dicebear', 'styles', 'planets.json');
-    const altPath = path.join(__dirname, '..', '..', 'node_modules', '@dicebear', 'styles', 'dist', 'planets.min.json');
+let dicebearCorePromise = null;
+const getDicebearCore = () => {
+    if (!dicebearCorePromise) {
+        dicebearCorePromise = import('@dicebear/core');
+    }
+    return dicebearCorePromise;
+};
 
-    let definition = null;
-    if (fs.existsSync(definitionPath)) {
-        definition = JSON.parse(fs.readFileSync(definitionPath, 'utf-8'));
-    } else if (fs.existsSync(altPath)) {
-        definition = JSON.parse(fs.readFileSync(altPath, 'utf-8'));
-    } else {
-        throw new Error('Não foi possível encontrar planets.json em @dicebear/styles');
+let cachedDefinition = null;
+const getPlanetsDefinition = () => {
+    if (!cachedDefinition) {
+        const definitionPath = path.join(__dirname, '..', '..', 'node_modules', '@dicebear', 'styles', 'planets.json');
+        const altPath = path.join(__dirname, '..', '..', 'node_modules', '@dicebear', 'styles', 'dist', 'planets.min.json');
+
+        if (fs.existsSync(definitionPath)) {
+            cachedDefinition = JSON.parse(fs.readFileSync(definitionPath, 'utf-8'));
+        } else if (fs.existsSync(altPath)) {
+            cachedDefinition = JSON.parse(fs.readFileSync(altPath, 'utf-8'));
+        } else {
+            throw new Error('Não foi possível encontrar planets.json em @dicebear/styles');
+        }
+    }
+    return cachedDefinition;
+};
+
+let cachedStyle = null;
+const getPlanetsStyle = async () => {
+    if (!cachedStyle) {
+        const { Style } = await getDicebearCore();
+        const definition = getPlanetsDefinition();
+        cachedStyle = new Style(definition);
+    }
+    return cachedStyle;
+};
+
+const PLANET_CACHE_MAX = 200;
+const planetPngCache = new Map();
+
+const generatePlanetPng = async (seed) => {
+    if (planetPngCache.has(seed)) {
+        return planetPngCache.get(seed);
     }
 
-    const style = new Style(definition);
+    const { Avatar } = await getDicebearCore();
+    const style = await getPlanetsStyle();
+
     const avatar = new Avatar(style, {
         borderRadius: 10,
         shadeVariant: { hard: 1, soft: 1 },
@@ -232,13 +266,17 @@ const gerarSvgPlaneta = async (seed) => {
         seed,
     });
 
-    return avatar.toString();
-};
+    const svg = avatar.toString();
+    const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: 320 } });
+    const pngBuffer = resvg.render().asPng();
 
-const svgToPngBuffer = async (svg) => {
-    const { Resvg } = require('@resvg/resvg-js');
-    const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: 512 } });
-    return resvg.render().asPng();
+    if (planetPngCache.size >= PLANET_CACHE_MAX) {
+        const oldestKey = planetPngCache.keys().next().value;
+        planetPngCache.delete(oldestKey);
+    }
+    planetPngCache.set(seed, pngBuffer);
+
+    return pngBuffer;
 };
 
 const buildFuelEmptyMessage = (interaction, usage) => {
@@ -283,6 +321,7 @@ const buildMissionV2Payload = (userId, mission, arrivalNotice = null) => {
 };
 
 const generatePlanetReply = async (interaction, usage, arrivalNotice = null) => {
+    incrementPlanetsSeen(interaction.user.id);
     const dados = gerarDadosPlaneta();
     const recursos = gerarRecursosPlaneta(dados.seedDicebear, dados.raridadeCode);
 
@@ -295,7 +334,7 @@ const generatePlanetReply = async (interaction, usage, arrivalNotice = null) => 
 
     let pngBuffer = null;
     try {
-        pngBuffer = await svgToPngBuffer(await gerarSvgPlaneta(dados.seedDicebear));
+        pngBuffer = await generatePlanetPng(dados.seedDicebear);
     } catch (err) {
         logger.error(`Failed to generate planet image: ${err.message}`);
     }

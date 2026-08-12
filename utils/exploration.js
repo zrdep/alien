@@ -102,6 +102,22 @@ ${resourcesText}
     }
 
     if (mission.status === MISSION_STATUS.TRAVELING_BACK) {
+        let coinsText = '';
+        let coinsData = null;
+        if (mission.coins_json) {
+            try {
+                coinsData = JSON.parse(mission.coins_json);
+            } catch {}
+        }
+        if (!coinsData) {
+            const { generateMissionCoins } = require('./coins');
+            coinsData = generateMissionCoins(mission.planet_rarity);
+        }
+        if (coinsData && coinsData.amount) {
+            const amountStr = coinsData.amount.toLocaleString(lang === 'pt-BR' ? 'pt-BR' : 'en-US');
+            coinsText = `\n${coinsData.emoji} **+${amountStr}** ∩oins`;
+        }
+
         return `<:ovni:1536247726889762847> **${t(userId, 'commands.planet.missionReturningTitle')}**
 
 <:passionate:1536247742110634034> ${t(userId, 'commands.planet.missionReturningBody', {
@@ -109,7 +125,7 @@ ${resourcesText}
             planet: mission.planet_name,
         })}
 
-${resourcesText}
+${resourcesText}${coinsText}
 
 <:saturn:1536459943480270959> ${t(userId, 'commands.planet.missionEta', { time: eta })}`;
     }
@@ -122,6 +138,12 @@ const buildArrivalNotice = (userId, notice) => {
     const resources = notice.resources ?? [];
     const resourcesText = formatResourcesInline(lang, resources);
 
+    let coinsText = '';
+    if (notice.coins && notice.coins.amount) {
+        const amountStr = notice.coins.amount.toLocaleString(lang === 'pt-BR' ? 'pt-BR' : 'en-US');
+        coinsText = `\n${notice.coins.emoji} **+${amountStr}** ∩oins`;
+    }
+
     return `<:excited:1536247579061256252> **${t(userId, 'commands.planet.missionArrivedTitle')}**
 
 ${t(userId, 'commands.planet.missionArrivedBody', {
@@ -129,7 +151,7 @@ ${t(userId, 'commands.planet.missionArrivedBody', {
         planet: notice.planetName,
     })}
 
-${resourcesText}
+${resourcesText}${coinsText}
 
 <:registry:1536459835921530890> ${t(userId, 'commands.planet.missionArrivedTip')}`;
 };

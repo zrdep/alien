@@ -187,8 +187,43 @@
     "inventory": {
       "title": "Galactic Inventory",
       "subtitle": "All resources your aliens collected on expeditions.",
+      "coinsLabel": "∩oins Balance",
       "resourcesTitle": "Your Resources",
       "empty": "Your inventory is empty. Explore planets with </planet:1536804847142314076> and click **Explore**!"
+    },
+    "daily": {
+      "claimedTitle": "Daily Reward!",
+      "claimedBody": "You claimed your daily reward of **{emoji} +{amount} ∩oins**!",
+      "alreadyClaimedTitle": "Reward Already Claimed!",
+      "alreadyClaimedBody": "You already claimed your daily today. Come back when the clock strikes **00:00**!",
+      "balanceLabel": "Current Balance",
+      "nextResetLabel": "Next reward available in: **{time}**"
+    },
+    "wallet": {
+      "myTitle": "My Galactic Wallet",
+      "userTitle": "{user}'s Galactic Wallet",
+      "balanceLabel": "∩oins Balance",
+      "alienCompanion": "Companion",
+      "dailyStatusLabel": "Daily Status",
+      "dailyAvailable": "Available to claim! Use `/daily`",
+      "dailyClaimed": "Already claimed today (resets in `{time}`)"
+    },
+    "profile": {
+      "myTitle": "My Galactic Profile",
+      "userTitle": "{user}'s Galactic Profile",
+      "alienLabel": "Alien Companion",
+      "coinsLabel": "∩oins Balance",
+      "statsTitle": "Space Statistics",
+      "planetsSeen": "Planets seen",
+      "distanceTraveled": "Distance traveled",
+      "tripsCompleted": "Trips completed",
+      "resourcesCollected": "Resources collected",
+      "shipTitle": "Ship & Equipment",
+      "propulsor": "Propulsor",
+      "excavation": "Excavation Probe",
+      "scanner": "Star Scanner",
+      "botTitle": "This is not a user!",
+      "botBody": "**{user}** is a bot!"
     },
     "craft": {
       "title": "Crafting Workshop",
