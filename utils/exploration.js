@@ -102,7 +102,7 @@ const buildMissionStatusContent = (userId, mission) => {
         })}
 
 ${t(userId, 'commands.planet.missionCollectingFor')}
-${resourcesText}${coinsText}
+${resourcesText}
 
 <:saturn:1536459943480270959> ${t(userId, 'commands.planet.missionEta', { time: eta })}`;
     }
@@ -168,10 +168,6 @@ const buildExploreStartedContent = (userId, mission) => {
     const alienName = getAlienDisplayName(userId);
     const travelTime = formatDuration(mission.travel_seconds, lang);
     const eta = formatTimeRemaining(mission.phase_ends_at, lang);
-    const coinsData = mission.coins_json
-        ? JSON.parse(mission.coins_json)
-        : null;
-    const coinsText = formatCoinsText(lang, coinsData);
 
     return `<:ovni:1536247726889762847> **${t(userId, 'commands.planet.exploreStartedTitle')}**
 
@@ -180,8 +176,6 @@ ${t(userId, 'commands.planet.exploreStartedBody', {
         planet: mission.planet_name,
         travel: travelTime,
     })}
-
-${coinsText}
 
 <:saturn:1536459943480270959> ${t(userId, 'commands.planet.missionEta', { time: eta })}`;
 };
