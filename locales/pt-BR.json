@@ -163,6 +163,7 @@
       "rarityE": "Lendário",
       "resourcesTitle": "Recursos para Coletar",
       "resourcesEmpty": "Este planeta não tinha recursos úteis para coletar. A sorte fica pra próxima!",
+      "coinsLabel": "∩oins do Planeta",
       "footerTip": "Cada planeta é único! Rode o comando de novo para descobrir um novo mundo.",
       "footerLater": "Em breve você poderá nomear, explorar e fazer muito mais com este planeta!",
       "exploreLabel": "Explorar",
@@ -249,20 +250,20 @@
       "successBody": "Sua fabricação de **{item}** foi concluída e aplicada à sua nave!",
       "recipes": {
         "propulsor_b": {
-          "title": "Propulsor B — 4.000 km/s",
-          "desc": "Aumenta a velocidade de viagem para 4.000 km/s."
+          "title": "Propulsor B — 12.000 km/s",
+          "desc": "Aumenta a velocidade de viagem para 12.000 km/s."
         },
         "propulsor_c": {
-          "title": "Propulsor C — 12.000 km/s",
-          "desc": "Propulsor avançado para viagens de 12.000 km/s."
+          "title": "Propulsor C — 36.000 km/s",
+          "desc": "Propulsor avançado para viagens de 36.000 km/s."
         },
         "propulsor_d": {
-          "title": "Propulsor D — 20.000 km/s",
-          "desc": "Propulsor Épico capaz de cruzar a galáxia a 20.000 km/s."
+          "title": "Propulsor D — 60.000 km/s",
+          "desc": "Propulsor Épico capaz de cruzar a galáxia a 60.000 km/s."
         },
         "propulsor_e": {
-          "title": "Propulsor E — 40.000 km/s",
-          "desc": "Propulsor Lendário atinge velocidade máxima de 40.000 km/s."
+          "title": "Propulsor E — 120.000 km/s",
+          "desc": "Propulsor Lendário atinge velocidade máxima de 120.000 km/s."
         },
         "excavation_2": {
           "title": "Sonda de Escavação Nível 2",

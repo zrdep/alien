@@ -163,6 +163,7 @@
       "rarityE": "Legendary",
       "resourcesTitle": "Resources to Collect",
       "resourcesEmpty": "This planet had no useful resources to collect. Better luck next time!",
+      "coinsLabel": "Planet ∩oins",
       "footerTip": "Each planet is unique! Run the command again to discover a new world.",
       "footerLater": "Soon you will be able to name, explore and do much more with this planet!",
       "exploreLabel": "Explore",
@@ -249,20 +250,20 @@
       "successBody": "Your craft of **{item}** was completed and applied to your ship!",
       "recipes": {
         "propulsor_b": {
-          "title": "Propulsor B — 4,000 km/s",
-          "desc": "Increases travel speed to 4,000 km/s."
+          "title": "Propulsor B — 12,000 km/s",
+          "desc": "Increases travel speed to 12,000 km/s."
         },
         "propulsor_c": {
-          "title": "Propulsor C — 12,000 km/s",
-          "desc": "Advanced propulsor for 12,000 km/s travel."
+          "title": "Propulsor C — 36,000 km/s",
+          "desc": "Advanced propulsor for 36,000 km/s travel."
         },
         "propulsor_d": {
-          "title": "Propulsor D — 20,000 km/s",
-          "desc": "Epic propulsor capable of crossing the galaxy at 20,000 km/s."
+          "title": "Propulsor D — 60,000 km/s",
+          "desc": "Epic propulsor capable of crossing the galaxy at 60,000 km/s."
         },
         "propulsor_e": {
-          "title": "Propulsor E — 40,000 km/s",
-          "desc": "Legendary propulsor reaching top speed of 40,000 km/s."
+          "title": "Propulsor E — 120,000 km/s",
+          "desc": "Legendary propulsor reaching top speed of 120,000 km/s."
         },
         "excavation_2": {
           "title": "Excavation Probe Level 2",

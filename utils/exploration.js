@@ -4,7 +4,7 @@ const { getPropulsorTier } = require('./ship');
 const { formatResourcesInline } = require('./resourcesDisplay');
 
 const EXPLORE_OFFER_MS = 3 * 60 * 1000;
-const COLLECT_DURATION_MS = 30 * 60 * 1000;
+const COLLECT_DURATION_MS = 10 * 60 * 1000;
 
 const MISSION_STATUS = {
     TRAVELING_OUT: 'traveling_out',
@@ -66,12 +66,32 @@ const parseMissionResources = (mission) => {
     }
 };
 
+const formatCoinsText = (lang, coinsData) => {
+    if (!coinsData || !coinsData.amount) return '';
+    const amountStr = coinsData.amount.toLocaleString(lang === 'pt-BR' ? 'pt-BR' : 'en-US');
+    return `\n${coinsData.emoji} **+${amountStr}** ∩oins`;
+};
+
 const buildMissionStatusContent = (userId, mission) => {
     const lang = getUserLanguage(userId);
     const alienName = getAlienDisplayName(userId);
     const resources = parseMissionResources(mission);
     const resourcesText = formatResourcesInline(lang, resources);
     const eta = formatTimeRemaining(mission.phase_ends_at, lang);
+
+    const getMissionCoins = () => {
+        if (mission.coins_json) {
+            try {
+                return JSON.parse(mission.coins_json);
+            } catch {
+                return null;
+            }
+        }
+        const { generateMissionCoins } = require('./coins');
+        return generateMissionCoins(mission.planet_rarity);
+    };
+
+    const coinsText = formatCoinsText(lang, getMissionCoins());
 
     if (mission.status === MISSION_STATUS.TRAVELING_OUT) {
         return `<:ovni:1536247726889762847> **${t(userId, 'commands.planet.missionTravelingTitle')}**
@@ -82,7 +102,7 @@ const buildMissionStatusContent = (userId, mission) => {
         })}
 
 ${t(userId, 'commands.planet.missionCollectingFor')}
-${resourcesText}
+${resourcesText}${coinsText}
 
 <:saturn:1536459943480270959> ${t(userId, 'commands.planet.missionEta', { time: eta })}`;
     }
@@ -102,21 +122,8 @@ ${resourcesText}
     }
 
     if (mission.status === MISSION_STATUS.TRAVELING_BACK) {
-        let coinsText = '';
-        let coinsData = null;
-        if (mission.coins_json) {
-            try {
-                coinsData = JSON.parse(mission.coins_json);
-            } catch {}
-        }
-        if (!coinsData) {
-            const { generateMissionCoins } = require('./coins');
-            coinsData = generateMissionCoins(mission.planet_rarity);
-        }
-        if (coinsData && coinsData.amount) {
-            const amountStr = coinsData.amount.toLocaleString(lang === 'pt-BR' ? 'pt-BR' : 'en-US');
-            coinsText = `\n${coinsData.emoji} **+${amountStr}** ∩oins`;
-        }
+        const coinsData = getMissionCoins();
+        const coinsText = formatCoinsText(lang, coinsData);
 
         return `<:ovni:1536247726889762847> **${t(userId, 'commands.planet.missionReturningTitle')}**
 
@@ -161,6 +168,10 @@ const buildExploreStartedContent = (userId, mission) => {
     const alienName = getAlienDisplayName(userId);
     const travelTime = formatDuration(mission.travel_seconds, lang);
     const eta = formatTimeRemaining(mission.phase_ends_at, lang);
+    const coinsData = mission.coins_json
+        ? JSON.parse(mission.coins_json)
+        : null;
+    const coinsText = formatCoinsText(lang, coinsData);
 
     return `<:ovni:1536247726889762847> **${t(userId, 'commands.planet.exploreStartedTitle')}**
 
@@ -169,6 +180,8 @@ ${t(userId, 'commands.planet.exploreStartedBody', {
         planet: mission.planet_name,
         travel: travelTime,
     })}
+
+${coinsText}
 
 <:saturn:1536459943480270959> ${t(userId, 'commands.planet.missionEta', { time: eta })}`;
 };

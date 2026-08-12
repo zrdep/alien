@@ -492,8 +492,8 @@ const startExplorationMission = (userId, data) => {
     db.prepare(`
         INSERT INTO exploration_missions (
             user_id, status, planet_name, planet_seed, planet_distance_km,
-            planet_rarity, resources_json, travel_seconds, phase_started_at, phase_ends_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            planet_rarity, resources_json, travel_seconds, phase_started_at, phase_ends_at, coins_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(user_id) DO UPDATE SET
             status = excluded.status,
             planet_name = excluded.planet_name,
@@ -503,7 +503,8 @@ const startExplorationMission = (userId, data) => {
             resources_json = excluded.resources_json,
             travel_seconds = excluded.travel_seconds,
             phase_started_at = excluded.phase_started_at,
-            phase_ends_at = excluded.phase_ends_at
+            phase_ends_at = excluded.phase_ends_at,
+            coins_json = excluded.coins_json
     `).run(
         userId,
         data.status,
@@ -515,6 +516,7 @@ const startExplorationMission = (userId, data) => {
         data.travelSeconds,
         data.phaseStartedAt,
         data.phaseEndsAt,
+        data.coinsJson ?? null,
     );
 };
 
@@ -596,7 +598,7 @@ const popMissionNotice = (userId) => {
 };
 
 const resolveExplorationMission = (userId, now = Date.now()) => {
-    const COLLECT_DURATION_MS = 30 * 60 * 1000;
+    const COLLECT_DURATION_MS = 10 * 60 * 1000;
     const STATUS = {
         TRAVELING_OUT: 'traveling_out',
         COLLECTING: 'collecting',

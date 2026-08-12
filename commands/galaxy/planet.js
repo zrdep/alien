@@ -33,6 +33,7 @@ const {
 const { gerarDadosPlaneta } = require('../../utils/planet');
 const { gerarRecursosPlaneta } = require('../../utils/planetResources');
 const { formatResourcesInline } = require('../../utils/resourcesDisplay');
+const { generateMissionCoins } = require('../../utils/coins');
 const {
     EXPLORE_OFFER_MS,
     MISSION_STATUS,
@@ -106,6 +107,13 @@ ${emojiRarity} **${rarityLabel}**
 `
     );
 
+    const coinsLabel = tFor(interaction, 'commands.planet.coinsLabel');
+    const coinsAmount = dados.coins?.amount ?? 0;
+    const coinsEmoji = dados.coins?.emoji ?? '<:gold_coins:1536941656178298992>';
+    const coinsText = coinsAmount > 0
+        ? `${coinsEmoji} ${coinsLabel}: **\`+${coinsAmount.toLocaleString(lang === 'pt-BR' ? 'pt-BR' : 'en-US')}\`** ∩oins\n`
+        : '';
+
     const detailsTxt = new TextDisplayBuilder().setContent(
 `## <:saturn:1536459943480270959> ${tFor(interaction, 'commands.planet.detailsTitle')}
 ${tFor(interaction, 'commands.planet.idLabel')}: \`${dados.seedDicebear}\`
@@ -114,7 +122,7 @@ ${tFor(interaction, 'commands.planet.distanceLabel')}: **\`${dados.distanciaForm
 <:ovni:1536247726889762847> ${tFor(interaction, 'commands.planet.travelOneWayLabel')}: **\`${times.oneWay}\`**
 <:ovni:1536247726889762847> ${tFor(interaction, 'commands.planet.travelRoundTripLabel')}: **\`${times.roundTrip}\`**
 <:rock:1536579687407681596> ${tFor(interaction, 'commands.planet.miningTimeLabel')}: **\`${times.mining}\`**
-
+${coinsText}
 ${USAGE_EMOJI.uses} ${tFor(interaction, 'commands.planet.usageUsed')}: **\`${usage.uses}/${usage.limit}\`**
 ${USAGE_EMOJI.remaining} ${tFor(interaction, 'commands.planet.usageRemaining')}: **\`${usage.remaining}\`**
 `
@@ -325,11 +333,15 @@ const generatePlanetReply = async (interaction, usage, arrivalNotice = null) => 
     const dados = gerarDadosPlaneta();
     const recursos = gerarRecursosPlaneta(dados.seedDicebear, dados.raridadeCode);
 
+    const planetCoins = generateMissionCoins(dados.raridadeCode);
+    dados.coins = planetCoins;
+
     savePlanetOffer(interaction.user.id, dados.seedDicebear, {
         nome: dados.nome,
         distancia: dados.distancia,
         raridadeCode: dados.raridadeCode,
         recursos,
+        coins: planetCoins,
     }, Date.now() + EXPLORE_OFFER_MS);
 
     let pngBuffer = null;
@@ -448,6 +460,7 @@ module.exports = {
         const ship = getUserShip(userId);
         const travelSeconds = calculateTravelSeconds(offer.payload.distancia, ship.propulsorTier);
         const now = Date.now();
+        const coinsReward = generateMissionCoins(offer.payload.raridadeCode);
 
         startExplorationMission(userId, {
             status: MISSION_STATUS.TRAVELING_OUT,
@@ -459,6 +472,7 @@ module.exports = {
             travelSeconds,
             phaseStartedAt: now,
             phaseEndsAt: now + travelSeconds * 1000,
+            coinsJson: JSON.stringify(coinsReward),
         });
 
         deletePlanetOffer(userId, planetSeed);

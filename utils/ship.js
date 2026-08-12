@@ -10,11 +10,11 @@ const RARITY_EMOJI = {
 };
 
 const PROPULSOR_TIERS = [
-    { code: 'A', speedKms: 1500,  rarityKey: 'A' },
-    { code: 'B', speedKms: 4000,  rarityKey: 'B' },
-    { code: 'C', speedKms: 12000, rarityKey: 'C' },
-    { code: 'D', speedKms: 20000, rarityKey: 'D' },
-    { code: 'E', speedKms: 40000, rarityKey: 'E' },
+    { code: 'A', speedKms: 4500,  rarityKey: 'A' },
+    { code: 'B', speedKms: 12000, rarityKey: 'B' },
+    { code: 'C', speedKms: 36000, rarityKey: 'C' },
+    { code: 'D', speedKms: 60000, rarityKey: 'D' },
+    { code: 'E', speedKms: 120000, rarityKey: 'E' },
 ];
 
 const EXCAVATION_TIERS = [
