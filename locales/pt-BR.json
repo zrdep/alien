@@ -198,7 +198,16 @@
       "alreadyClaimedTitle": "Recompensa já Coletada!",
       "alreadyClaimedBody": "Você já resgatou seu daily hoje. Volte quando o relógio bater **00:00**!",
       "balanceLabel": "Saldo Atual",
-      "nextResetLabel": "Próxima recompensa disponível em: **{time}**"
+      "nextResetLabel": "Próxima recompensa disponível em: **{time}**",
+      "resourcesTitle": "Recursos",
+      "resources": {
+        "stone": "Pedra",
+        "wood": "Madeira",
+        "dirt": "Terra",
+        "iron": "Ferro",
+        "copper": "Cobre",
+        "metal": "Metal"
+      }
     },
     "wallet": {
       "myTitle": "Minha Carteira Galáctica",

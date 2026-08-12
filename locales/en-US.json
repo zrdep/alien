@@ -198,7 +198,16 @@
       "alreadyClaimedTitle": "Reward Already Claimed!",
       "alreadyClaimedBody": "You already claimed your daily today. Come back when the clock strikes **00:00**!",
       "balanceLabel": "Current Balance",
-      "nextResetLabel": "Next reward available in: **{time}**"
+      "nextResetLabel": "Next reward available in: **{time}**",
+      "resourcesTitle": "Resources",
+      "resources": {
+        "stone": "Rock",
+        "wood": "Wood",
+        "dirt": "Dirt",
+        "iron": "Iron",
+        "copper": "Copper",
+        "metal": "Metal"
+      }
     },
     "wallet": {
       "myTitle": "My Galactic Wallet",

@@ -17,8 +17,9 @@ const {
     getUserCoins,
     getDailyState,
     claimDaily,
+    addInventoryResources,
 } = require('../../utils/db');
-const { generateDailyCoins } = require('../../utils/coins');
+const { generateDailyCoins, generateDailyResources } = require('../../utils/coins');
 const { formatDuration } = require('../../utils/exploration');
 
 const GIFT_IMAGE_NAME = 'gift_coins.png';
@@ -98,8 +99,16 @@ module.exports = {
 
         // Generate daily reward & claim
         const reward = generateDailyCoins();
+        const dailyResources = generateDailyResources();
+        
         claimDaily(userId, state.today, reward.amount);
+        addInventoryResources(userId, dailyResources.map(r => ({ key: r.key, amount: r.amount })));
+        
         const totalCoins = getUserCoins(userId);
+
+        const resourcesText = dailyResources
+            .map(r => `${r.emoji} ${tFor(interaction, `commands.daily.resources.${r.key}`)} × ${r.amount}`)
+            .join('\n');
 
         const header = new TextDisplayBuilder().setContent(
             `# <:excited:1536247579061256252> ${tFor(interaction, 'commands.daily.claimedTitle')}`
@@ -111,6 +120,7 @@ module.exports = {
                 amount: reward.amount.toLocaleString(numLoc),
             })}\n\n` +
             `**${tFor(interaction, 'commands.daily.balanceLabel')}**: \`${totalCoins.toLocaleString(numLoc)}\` ∩oins\n\n` +
+            `## <:passionate:1536247742110634034> **${tFor(interaction, 'commands.daily.resourcesTitle')}:**\n${resourcesText}\n\n` +
             `<:saturn:1536459943480270959> ${tFor(interaction, 'commands.daily.nextResetLabel', { time: resetFormatted })}`
         );
 
