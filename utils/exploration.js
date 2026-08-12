@@ -102,12 +102,15 @@ const buildMissionStatusContent = (userId, mission) => {
         })}
 
 ${t(userId, 'commands.planet.missionCollectingFor')}
-${resourcesText}
+${resourcesText}${coinsText}
 
 <:saturn:1536459943480270959> ${t(userId, 'commands.planet.missionEta', { time: eta })}`;
     }
 
     if (mission.status === MISSION_STATUS.COLLECTING) {
+        const coinsData = getMissionCoins();
+        const coinsDisplayText = formatCoinsText(lang, coinsData);
+        
         return `<:earth:1536459925495087226> **${t(userId, 'commands.planet.missionCollectingTitle')}**
 
 <:excited:1536247579061256252> ${t(userId, 'commands.planet.missionCollectingBody', {
@@ -116,7 +119,7 @@ ${resourcesText}
         })}
 
 ${t(userId, 'commands.planet.missionCollectingFor')}
-${resourcesText}
+${resourcesText}${coinsDisplayText}
 
 <:loading:1536247662372982794> ${t(userId, 'commands.planet.missionCollectingEta', { time: eta })}`;
     }
