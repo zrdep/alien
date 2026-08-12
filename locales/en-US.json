@@ -30,7 +30,7 @@
     "generic": "An error occurred while executing this command! Contact support."
   },
   "guildGuard": {
-    "userInstall": "<:ovni:1536247726889762847> **User installation detected!**\n\nIn this server, **∩lien** must be used as the server app in the channel set by the staff. Ask a moderator to set it up with `/config server` or add the bot to the server normally.",
+    "userInstall": "<:ovni:1536247726889762847> **User installation detected!**\n\nIn this server, **∩lien** must be used as the server app in the channel set by the staff. Ask a moderator to set it up with </config server:1536804847142314078> or add the bot to the server normally.",
     "wrongChannel": "<:hmm:1536247599365890139> **Wrong channel!**\n\nIn this server, **∩lien** commands only work in {channel}.",
     "dmNotAllowed": "<:question:1536248373240270888> **This command only works in servers!**\n\nJoin a server with **∩lien** and use the channel allowed by the staff."
   },
@@ -167,7 +167,7 @@
       "footerLater": "Soon you will be able to name, explore and do much more with this planet!",
       "exploreLabel": "Explore",
       "nextLabel": "Next",
-      "exploreExpired": "This exploration opportunity expired! Generate a new planet with **/planet**.",
+      "exploreExpired": "This exploration opportunity expired! Generate a new planet with </planet:1536804847142314076>.",
       "exploreBusy": "Your alien is already on a mission! Wait for it to finish.",
       "exploreStartedTitle": "Mission started!",
       "exploreStartedBody": "**{alien}** launched toward **{planet}**! Travel time: **{travel}**.",
@@ -182,13 +182,13 @@
       "missionReturningBody": "**{alien}** is returning with resources from **{planet}**",
       "missionArrivedTitle": "Mission complete!",
       "missionArrivedBody": "**{alien}** returned from **{planet}** and deposited the resources in your inventory!",
-      "missionArrivedTip": "Use **/inventory** to see everything you collected."
+      "missionArrivedTip": "Use </inventory:1536804847142314075> to see everything you collected."
     },
     "inventory": {
       "title": "Galactic Inventory",
       "subtitle": "All resources your aliens collected on expeditions.",
       "resourcesTitle": "Your Resources",
-      "empty": "Your inventory is empty. Explore planets with **/planet** and click **Explore**!"
+      "empty": "Your inventory is empty. Explore planets with </planet:1536804847142314076> and click **Explore**!"
     },
     "craft": {
       "title": "Crafting Workshop",

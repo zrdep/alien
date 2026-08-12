@@ -30,7 +30,7 @@
     "generic": "Ocorreu um erro ao executar este comando! Contate o suporte."
   },
   "guildGuard": {
-    "userInstall": "<:ovni:1536247726889762847> **Instalação de usuário detectada!**\n\nNeste servidor, o **∩lien** precisa ser usado como app do servidor, no canal configurado pela equipe. Peça a um moderador para configurar em `/config server` ou adicione o bot ao servidor normalmente.",
+    "userInstall": "<:ovni:1536247726889762847> **Instalação de usuário detectada!**\n\nNeste servidor, o **∩lien** precisa ser usado como app do servidor, no canal configurado pela equipe. Peça a um moderador para configurar em </config server:1536804847142314078> ou adicione o bot ao servidor normalmente.",
     "wrongChannel": "<:hmm:1536247599365890139> **Canal errado!**\n\nNeste servidor, os comandos do **∩lien** só funcionam em {channel}.",
     "dmNotAllowed": "<:question:1536248373240270888> **Este comando só funciona em servidores!**\n\nEntre em um servidor com o **∩lien** e use o canal permitido pela equipe."
   },
@@ -167,7 +167,7 @@
       "footerLater": "Em breve você poderá nomear, explorar e fazer muito mais com este planeta!",
       "exploreLabel": "Explorar",
       "nextLabel": "Próximo",
-      "exploreExpired": "Essa oportunidade de exploração expirou! Gere um novo planeta com **/planet**.",
+      "exploreExpired": "Essa oportunidade de exploração expirou! Gere um novo planeta com </planet:1536804847142314076>.",
       "exploreBusy": "Seu alien já está em uma missão! Aguarde ele terminar.",
       "exploreStartedTitle": "Missão iniciada!",
       "exploreStartedBody": "**{alien}** decolou em direção a **{planet}**! Tempo de viagem: **{travel}**.",
@@ -182,7 +182,7 @@
       "missionReturningBody": "**{alien}** está voltando com os recursos de **{planet}**",
       "missionArrivedTitle": "Missão concluída!",
       "missionArrivedBody": "**{alien}** chegou da expedição em **{planet}** e depositou os recursos no inventário!",
-      "missionArrivedTip": "Use **/inventory** para ver tudo que você coletou."
+      "missionArrivedTip": "Use </inventory:1536804847142314075> para ver tudo que você coletou."
     },
     "inventory": {
       "title": "Inventário Galáctico",
