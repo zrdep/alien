@@ -19,8 +19,8 @@
       "privacyText": "We do not share any data with third parties. Everything is stored locally in the bot's database."
     },
     "tipConfig": "<:sunglasses:1536248455519801386> Want to change my language? Use </config user:1536804847142314078> anytime!",
-    "accepted": "**Terms accepted!** Now you can already use all **∩lien** commands.",
-    "alreadyAccepted": "You already accepted the terms! You can use all **∩lien** commands."
+    "accepted": "**Terms accepted!** Now you can use all **∩lien** commands.\n\n<:excited:1536247579061256252> **New here?** Use </tutorial:1536804847142314080> to view the step-by-step guide or </help:1536804847142314081> to see all commands!",
+    "alreadyAccepted": "You have already accepted the terms! Use </tutorial:1536804847142314080> to learn how to play or </help:1536804847142314081> to view the list of commands."
   },
   "cooldown": {
     "title": "Easy there, human!",
@@ -215,6 +215,36 @@
         "copper": "Copper",
         "metal": "Metal"
       }
+    },
+    "market": {
+      "title": "Galactic Market",
+      "subtitle": "Buy and sell resources on the global market or directly from the System Shop!",
+      "browseTitle": "Global Market — {resource}",
+      "shopTitle": "Official System Shop",
+      "myListingsTitle": "My Market Listings",
+      "noListings": "No active listings found for this resource at the moment.",
+      "noMyListings": "You have no active listings on the Global Market.",
+      "selectResourcePlaceholder": "Select a resource to browse market...",
+      "buyFromShopButton": "System Shop (Fixed High Price)",
+      "browseGlobalButton": "Global Market",
+      "myListingsButton": "My Listings",
+      "buyButton": "Buy Lowest Price",
+      "cancelButton": "Cancel Listing",
+      "systemPriceLabel": "Official System Price",
+      "lowestPriceLabel": "Lowest Price Found",
+      "sellerLabel": "Seller",
+      "pricePerUnit": "{price} ∩oins/unit",
+      "totalPrice": "{price} ∩oins total",
+      "availableQty": "Qty: `{qty}`",
+      "sellSuccess": "<:excited:1536247579061256252> **Listing created successfully!**\nYou put **{amount}x {emoji} {resource}** on sale for **{price} ∩oins** each (Total: **{total} ∩oins**).",
+      "buySuccess": "<:excited:1536247579061256252> **Purchase completed successfully!**\nYou bought **{amount}x {emoji} {resource}** for **{total} ∩oins**!",
+      "cancelSuccess": "<:restart:1536248409634246719> **Listing cancelled!**\nReturned **{amount}x {emoji} {resource}** back to your inventory.",
+      "insufficientResources": "<:sob:1536248436339376138> **Insufficient resources!** You do not have enough items in your inventory.",
+      "insufficientCoins": "<:sob:1536248436339376138> **Insufficient ∩oins!** You need **{total} ∩oins** for this purchase.",
+      "cannotBuyOwn": "<:hmm:1536247599365890139> You cannot buy your own listing. If you want your items back, cancel it in 'My Listings'.",
+      "listingNotFound": "<:error:1536247565006143528> This listing no longer exists or has already been sold out.",
+      "invalidValues": "<:error:1536247565006143528> Quantity and price per unit must be positive numbers greater than zero.",
+      "shopNote": "<:config:1536247533502734376> **Shop Note:** System Shop prices are set high to encourage player-to-player trading."
     },
     "wallet": {
       "myTitle": "My Galactic Wallet",

@@ -78,16 +78,33 @@ const termosConteudoCompleto = (interaction) => {
     };
 };
 
+const termosJaAceitoButtons = (interaction) => {
+    const isPt = tFor(interaction, 'terms.accepted').includes('Termos aceitos');
+    const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId('terms_open_tutorial')
+            .setLabel(isPt ? 'Ver Tutorial (/tutorial)' : 'View Tutorial (/tutorial)')
+            .setEmoji('<:book2:1536459861527756952>')
+            .setStyle(ButtonStyle.Success),
+        new ButtonBuilder()
+            .setCustomId('terms_open_help')
+            .setLabel(isPt ? 'Ver Comandos (/help)' : 'View Commands (/help)')
+            .setEmoji('<:book:1536247508181848134>')
+            .setStyle(ButtonStyle.Primary)
+    );
+    return [row];
+};
+
 const termosJaAceito = (interaction) => ({
     content: `<:excited:1536247579061256252> ${tFor(interaction, 'terms.accepted')}`,
-    components: [],
+    components: termosJaAceitoButtons(interaction),
     embeds: [],
     flags: MessageFlags.Ephemeral,
 });
 
 const termosViewJaAceito = (interaction) => ({
     content: `<:book:1536247508181848134> ${tFor(interaction, 'terms.alreadyAccepted')}`,
-    components: [],
+    components: termosJaAceitoButtons(interaction),
     embeds: [],
     flags: MessageFlags.Ephemeral,
 });
@@ -190,6 +207,22 @@ module.exports = {
                 return;
             }
 
+            if (interaction.customId === 'terms_open_tutorial') {
+                const tutorialCmd = interaction.client.commands.get('tutorial');
+                if (tutorialCmd && typeof tutorialCmd.renderTutorialContainer === 'function') {
+                    await interaction.update(tutorialCmd.renderTutorialContainer(interaction, 1));
+                }
+                return;
+            }
+
+            if (interaction.customId === 'terms_open_help') {
+                const helpCmd = interaction.client.commands.get('help');
+                if (helpCmd && typeof helpCmd.renderHelpContainer === 'function') {
+                    await interaction.update(helpCmd.renderHelpContainer(interaction, 'galaxy'));
+                }
+                return;
+            }
+
             for (const command of interaction.client.commands.values()) {
                 if (typeof command.handleButton === 'function') {
                     const handled = await command.handleButton(interaction);
@@ -225,7 +258,7 @@ module.exports = {
             return;
         }
 
-        const comandoLivre = ['config', 'painel'];
+        const comandoLivre = ['config', 'painel', 'help', 'tutorial'];
         const precisaDeTermos = !comandoLivre.includes(interaction.commandName);
 
         if (precisaDeTermos && !hasAcceptedTerms(interaction.user.id)) {

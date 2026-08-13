@@ -19,8 +19,8 @@
       "privacyText": "Não compartilhamos nenhum dado com terceiros. Tudo fica armazenado localmente no banco do bot."
     },
     "tipConfig": "<:sunglasses:1536248455519801386> Quer mudar meu idioma? Use </config user:1536804847142314078> a qualquer momento!",
-    "accepted": "**Termos aceitos!** Agora você já pode usar todos os comandos do **∩lien**.",
-    "alreadyAccepted": "Você já aceitou os termos! Pode usar todos os comandos do **∩lien**."
+    "accepted": "**Termos aceitos!** Agora você já pode usar todos os comandos do **∩lien**.\n\n<:excited:1536247579061256252> **Novo por aqui?** Use </tutorial:1536804847142314080> para ver o guia passo a passo ou </help:1536804847142314081> para ver todos os comandos!",
+    "alreadyAccepted": "Você já aceitou os termos! Use </tutorial:1536804847142314080> para aprender a jogar ou </help:1536804847142314081> para ver a lista de comandos."
   },
   "cooldown": {
     "title": "Calma aí, humano!",
@@ -215,6 +215,36 @@
         "copper": "Cobre",
         "metal": "Metal"
       }
+    },
+    "market": {
+      "title": "Mercado Galáctico",
+      "subtitle": "Compre e venda recursos no mercado global ou direto na Loja do Sistema!",
+      "browseTitle": "Mercado Global — {resource}",
+      "shopTitle": "Loja Oficial do Sistema",
+      "myListingsTitle": "Meus Anúncios no Mercado",
+      "noListings": "Nenhum anúncio ativo encontrado para este recurso no momento.",
+      "noMyListings": "Você não tem nenhum anúncio ativo no Mercado Global.",
+      "selectResourcePlaceholder": "Selecione um recurso para navegar no mercado...",
+      "buyFromShopButton": "Loja do Sistema (Preço Fixo)",
+      "browseGlobalButton": "Mercado Global",
+      "myListingsButton": "Meus Anúncios",
+      "buyButton": "Comprar do Menor Preço",
+      "cancelButton": "Cancelar Anúncio",
+      "systemPriceLabel": "Preço Oficial do Sistema",
+      "lowestPriceLabel": "Menor Preço Encontrado",
+      "sellerLabel": "Vendedor",
+      "pricePerUnit": "{price} ∩oins/un",
+      "totalPrice": "{price} ∩oins total",
+      "availableQty": "Qtd: `{qty}`",
+      "sellSuccess": "<:excited:1536247579061256252> **Anúncio criado com sucesso!**\nVocê colocou **{amount}x {emoji} {resource}** à venda por **{price} ∩oins** cada (Total: **{total} ∩oins**).",
+      "buySuccess": "<:excited:1536247579061256252> **Compra realizada com sucesso!**\nVocê comprou **{amount}x {emoji} {resource}** por **{total} ∩oins**!",
+      "cancelSuccess": "<:restart:1536248409634246719> **Anúncio cancelado!**\nRecuperados **{amount}x {emoji} {resource}** para o seu inventário.",
+      "insufficientResources": "<:sob:1536248436339376138> **Recursos insuficientes!** Você não possui a quantidade necessária no inventário.",
+      "insufficientCoins": "<:sob:1536248436339376138> **∩oins insuficientes!** Você precisa de **{total} ∩oins** para realizar esta compra.",
+      "cannotBuyOwn": "<:hmm:1536247599365890139> Você não pode comprar seu próprio anúncio. Se deseja recuperar os recursos, cancele-o em 'Meus Anúncios'.",
+      "listingNotFound": "<:error:1536247565006143528> Este anúncio não existe mais ou já foi totalmente vendido.",
+      "invalidValues": "<:error:1536247565006143528> Quantidade e preço unitário devem ser números positivos maiores que zero.",
+      "shopNote": "<:config:1536247533502734376> **Nota da Loja:** Os preços da Loja do Sistema são elevados para incentivar o comércio entre os próprios exploradores."
     },
     "wallet": {
       "myTitle": "Minha Carteira Galáctica",

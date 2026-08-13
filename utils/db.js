@@ -3,6 +3,7 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const logger = require('./logger');
 const { generateMissionCoins } = require('./coins');
+const { getResourceInfo } = require('./market');
 
 const dataDir = path.join(__dirname, '..', 'data');
 if (!fs.existsSync(dataDir)) {
@@ -225,6 +226,38 @@ db.exec(`
         user_id TEXT PRIMARY KEY,
         notice_json TEXT NOT NULL
     );
+`);
+
+db.exec(`
+    CREATE TABLE IF NOT EXISTS market_listings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        seller_id TEXT NOT NULL,
+        resource_key TEXT NOT NULL,
+        amount INTEGER NOT NULL,
+        price_per_unit INTEGER NOT NULL,
+        created_at INTEGER NOT NULL,
+        expires_at INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'active'
+    );
+`);
+
+const colunasMarket = db.prepare("PRAGMA table_info(market_listings)").all();
+const temExpiresAt = colunasMarket.some(c => c.name === 'expires_at');
+const temStatus = colunasMarket.some(c => c.name === 'status');
+
+if (!temExpiresAt) {
+    db.exec(`ALTER TABLE market_listings ADD COLUMN expires_at INTEGER NOT NULL DEFAULT 0;`);
+    logger.success('Coluna `expires_at` adicionada à tabela `market_listings`');
+}
+
+if (!temStatus) {
+    db.exec(`ALTER TABLE market_listings ADD COLUMN status TEXT NOT NULL DEFAULT 'active';`);
+    logger.success('Coluna `status` adicionada à tabela `market_listings`');
+}
+
+db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_market_resource_price
+    ON market_listings (resource_key, amount, price_per_unit, created_at);
 `);
 
 const getUser = (userId) => {
@@ -944,6 +977,219 @@ const resolveAllPendingCrafts = (now = Date.now()) => {
     return { total: rows.length, completed };
 };
 
+const MARKET_LISTING_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
+
+const processExpiredMarketListings = () => {
+    const now = Date.now();
+    db.prepare(`
+        UPDATE market_listings
+        SET status = 'expired'
+        WHERE status = 'active' AND (expires_at > 0 AND expires_at <= ?)
+    `).run(now);
+};
+
+const createMarketListing = (sellerId, resourceKey, amount, pricePerUnit) => {
+    const qty = Math.floor(Number(amount));
+    const price = Math.floor(Number(pricePerUnit));
+
+    if (qty <= 0 || price <= 0 || !Number.isFinite(qty) || !Number.isFinite(price)) {
+        return { success: false, reason: 'invalid_values' };
+    }
+
+    const currentInventory = db.prepare(`
+        SELECT amount FROM user_inventory
+        WHERE user_id = ? AND resource_key = ?
+    `).get(sellerId, resourceKey);
+
+    const available = currentInventory?.amount ?? 0;
+    if (available < qty) {
+        return { success: false, reason: 'insufficient_resources' };
+    }
+
+    const now = Date.now();
+    const expiresAt = now + MARKET_LISTING_LIFETIME_MS;
+
+    const tx = db.transaction(() => {
+        db.prepare(`
+            UPDATE user_inventory
+            SET amount = amount - ?
+            WHERE user_id = ? AND resource_key = ?
+        `).run(qty, sellerId, resourceKey);
+
+        const res = db.prepare(`
+            INSERT INTO market_listings (seller_id, resource_key, amount, price_per_unit, created_at, expires_at, status)
+            VALUES (?, ?, ?, ?, ?, ?, 'active')
+        `).run(sellerId, resourceKey, qty, price, now, expiresAt);
+
+        return res.lastInsertRowid;
+    });
+
+    const listingId = tx();
+    return { success: true, listingId, expiresAt };
+};
+
+const getMarketListingsByResource = (resourceKey, limit = 10, offset = 0) => {
+    processExpiredMarketListings();
+    const now = Date.now();
+
+    const rows = db.prepare(`
+        SELECT id, seller_id AS sellerId, resource_key AS resourceKey, amount, price_per_unit AS pricePerUnit, created_at AS createdAt, expires_at AS expiresAt, status
+        FROM market_listings
+        WHERE resource_key = ? AND amount > 0 AND status = 'active' AND (expires_at > ? OR expires_at = 0)
+        ORDER BY price_per_unit ASC, created_at ASC
+        LIMIT ? OFFSET ?
+    `).all(resourceKey, now, limit, offset);
+
+    const totalCountRow = db.prepare(`
+        SELECT COUNT(*) AS total
+        FROM market_listings
+        WHERE resource_key = ? AND amount > 0 AND status = 'active' AND (expires_at > ? OR expires_at = 0)
+    `).get(resourceKey, now);
+
+    return {
+        listings: rows,
+        total: totalCountRow?.total ?? 0,
+    };
+};
+
+const getUserMarketListings = (sellerId) => {
+    processExpiredMarketListings();
+    const now = Date.now();
+
+    return db.prepare(`
+        SELECT id, seller_id AS sellerId, resource_key AS resourceKey, amount, price_per_unit AS pricePerUnit, created_at AS createdAt, expires_at AS expiresAt, status
+        FROM market_listings
+        WHERE seller_id = ? AND amount > 0
+        ORDER BY CASE WHEN status = 'expired' OR (expires_at > 0 AND expires_at <= ?) THEN 0 ELSE 1 END ASC, created_at DESC
+    `).all(sellerId, now);
+};
+
+const getMarketListingById = (listingId) => {
+    return db.prepare(`
+        SELECT id, seller_id AS sellerId, resource_key AS resourceKey, amount, price_per_unit AS pricePerUnit, created_at AS createdAt, expires_at AS expiresAt, status
+        FROM market_listings
+        WHERE id = ?
+    `).get(listingId) ?? null;
+};
+
+const buyMarketListing = (buyerId, listingId, buyAmount) => {
+    processExpiredMarketListings();
+    const listing = getMarketListingById(listingId);
+    const now = Date.now();
+
+    if (!listing || listing.amount <= 0 || listing.status !== 'active' || (listing.expiresAt > 0 && listing.expiresAt <= now)) {
+        return { success: false, reason: 'listing_not_found' };
+    }
+
+    if (listing.sellerId === buyerId) {
+        return { success: false, reason: 'cannot_buy_own_listing' };
+    }
+
+    const qty = Math.floor(Number(buyAmount));
+    if (qty <= 0 || qty > listing.amount) {
+        return { success: false, reason: 'invalid_amount' };
+    }
+
+    const totalCost = qty * listing.pricePerUnit;
+    const buyerCoins = getUserCoins(buyerId);
+    if (buyerCoins < totalCost) {
+        return { success: false, reason: 'insufficient_coins', totalCost };
+    }
+
+    const tx = db.transaction(() => {
+        db.prepare('UPDATE users SET coins = coins - ? WHERE user_id = ?').run(totalCost, buyerId);
+
+        getUser(listing.sellerId);
+        db.prepare('UPDATE users SET coins = coins + ? WHERE user_id = ?').run(totalCost, listing.sellerId);
+
+        db.prepare(`
+            INSERT INTO user_inventory (user_id, resource_key, amount)
+            VALUES (?, ?, ?)
+            ON CONFLICT(user_id, resource_key) DO UPDATE SET amount = amount + excluded.amount
+        `).run(buyerId, listing.resourceKey, qty);
+
+        const newAmount = listing.amount - qty;
+        if (newAmount <= 0) {
+            db.prepare('DELETE FROM market_listings WHERE id = ?').run(listingId);
+        } else {
+            db.prepare('UPDATE market_listings SET amount = ? WHERE id = ?').run(newAmount, listingId);
+        }
+    });
+
+    tx();
+    return {
+        success: true,
+        totalCost,
+        sellerId: listing.sellerId,
+        resourceKey: listing.resourceKey,
+        buyAmount: qty,
+        pricePerUnit: listing.pricePerUnit,
+    };
+};
+
+const cancelMarketListing = (sellerId, listingId) => {
+    const listing = getMarketListingById(listingId);
+    if (!listing || listing.sellerId !== sellerId) {
+        return { success: false, reason: 'listing_not_found' };
+    }
+
+    const tx = db.transaction(() => {
+        db.prepare(`
+            INSERT INTO user_inventory (user_id, resource_key, amount)
+            VALUES (?, ?, ?)
+            ON CONFLICT(user_id, resource_key) DO UPDATE SET amount = amount + excluded.amount
+        `).run(sellerId, listing.resourceKey, listing.amount);
+
+        db.prepare('DELETE FROM market_listings WHERE id = ?').run(listingId);
+    });
+
+    tx();
+    return {
+        success: true,
+        resourceKey: listing.resourceKey,
+        amount: listing.amount,
+    };
+};
+
+const buyFromSystemShop = (buyerId, resourceKey, amount) => {
+    const resourceInfo = getResourceInfo(resourceKey);
+    if (!resourceInfo) {
+        return { success: false, reason: 'invalid_resource' };
+    }
+
+    const qty = Math.floor(Number(amount));
+    if (qty <= 0 || !Number.isFinite(qty)) {
+        return { success: false, reason: 'invalid_amount' };
+    }
+
+    const unitPrice = resourceInfo.systemShopPrice;
+    const totalCost = qty * unitPrice;
+
+    const buyerCoins = getUserCoins(buyerId);
+    if (buyerCoins < totalCost) {
+        return { success: false, reason: 'insufficient_coins', totalCost };
+    }
+
+    const tx = db.transaction(() => {
+        db.prepare('UPDATE users SET coins = coins - ? WHERE user_id = ?').run(totalCost, buyerId);
+
+        db.prepare(`
+            INSERT INTO user_inventory (user_id, resource_key, amount)
+            VALUES (?, ?, ?)
+            ON CONFLICT(user_id, resource_key) DO UPDATE SET amount = amount + excluded.amount
+        `).run(buyerId, resourceKey, qty);
+    });
+
+    tx();
+    return {
+        success: true,
+        resourceKey,
+        amount: qty,
+        unitPrice,
+        totalCost,
+    };
+};
+
 module.exports = {
     db,
     getUser,
@@ -995,4 +1241,11 @@ module.exports = {
     incrementPlanetsSeen,
     addMissionCompletionStats,
     getUserProfileStats,
+    createMarketListing,
+    getMarketListingsByResource,
+    getUserMarketListings,
+    getMarketListingById,
+    buyMarketListing,
+    cancelMarketListing,
+    buyFromSystemShop,
 };
