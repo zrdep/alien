@@ -96,7 +96,7 @@ const GLOBAL_COOLDOWN_MS = 5_000;
 const globalCooldowns = new Map();
 
 const getDeferOptions = (interaction) => {
-    if (interaction.commandName === 'config') {
+    if (interaction.commandName === 'config' || interaction.commandName === 'painel') {
         return { flags: MessageFlags.Ephemeral };
     }
 
@@ -212,7 +212,7 @@ module.exports = {
             return;
         }
 
-        const comandoLivre = ['config'];
+        const comandoLivre = ['config', 'painel'];
         const precisaDeTermos = !comandoLivre.includes(interaction.commandName);
 
         if (precisaDeTermos && !hasAcceptedTerms(interaction.user.id)) {

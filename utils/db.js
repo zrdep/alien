@@ -317,6 +317,16 @@ const addUserCoins = (userId, amount) => {
     `).run(amount, userId);
 };
 
+const setUserCoins = (userId, amount) => {
+    if (typeof amount !== 'number' || amount < 0 || !Number.isFinite(amount)) return;
+    getUser(userId);
+    db.prepare(`
+        UPDATE users
+        SET coins = ?
+        WHERE user_id = ?
+    `).run(Math.floor(amount), userId);
+};
+
 const getDailyState = (userId, date = new Date()) => {
     const user = getUser(userId);
     const { year, month, day, hour, minute, second } = getBraziliaDateParts(date);
@@ -576,6 +586,15 @@ const getUserInventory = (userId) => {
     }));
 };
 
+const setInventoryResource = (userId, resourceKey, amount) => {
+    const safeAmount = Math.max(0, Math.floor(Number(amount) || 0));
+    db.prepare(`
+        INSERT INTO user_inventory (user_id, resource_key, amount)
+        VALUES (?, ?, ?)
+        ON CONFLICT(user_id, resource_key) DO UPDATE SET amount = excluded.amount
+    `).run(userId, resourceKey, safeAmount);
+};
+
 const setMissionNotice = (userId, notice) => {
     db.prepare(`
         INSERT INTO mission_notices (user_id, notice_json)
@@ -595,6 +614,19 @@ const popMissionNotice = (userId) => {
     } catch {
         return null;
     }
+};
+
+const forceExpireMissionPhase = (userId) => {
+    const mission = getExplorationMission(userId);
+    if (!mission) return false;
+
+    db.prepare(`
+        UPDATE exploration_missions
+        SET phase_ends_at = ?
+        WHERE user_id = ?
+    `).run(Date.now() - 1000, userId);
+
+    return true;
 };
 
 const resolveExplorationMission = (userId, now = Date.now()) => {
@@ -874,6 +906,7 @@ module.exports = {
     clearExplorationMission,
     addInventoryResources,
     getUserInventory,
+    setInventoryResource,
     getActiveCraft,
     startCraftJob,
     resolveActiveCraft,
@@ -882,6 +915,7 @@ module.exports = {
     setMissionNotice,
     popMissionNotice,
     resolveExplorationMission,
+    forceExpireMissionPhase,
     resolveAllPendingMissions,
     cleanExpiredPlanetOffers,
     getGuildAllowedChannel,
@@ -890,10 +924,10 @@ module.exports = {
     clearGuildAllowedChannel,
     getUserCoins,
     addUserCoins,
+    setUserCoins,
     getDailyState,
     claimDaily,
     incrementPlanetsSeen,
     addMissionCompletionStats,
     getUserProfileStats,
 };
-
