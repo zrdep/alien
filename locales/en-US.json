@@ -200,6 +200,8 @@
       "claimedBody": "You claimed your daily reward of **{emoji} +{amount} ∩oins**!",
       "alreadyClaimedTitle": "Reward Already Claimed!",
       "alreadyClaimedBody": "You already claimed your daily today. Come back when the clock strikes **00:00**!",
+      "restrictedTitle": "Exclusive Daily Channel!",
+      "restrictedBody": "<:hmm:1536247599365890139> **Hey, space explorer!**\n\nThe daily **∩oins** reward can only be claimed in the channel <#1537511176324386917> inside our **official server**!\n\n<:excited:1536247579061256252> **How to join the server?**\nOur official server link is available right in the **bot's bio**! Open the **∩lien** profile, click the bio link, and claim your coins daily! <:gold_coins:1536941656178298992>",
       "balanceLabel": "Current Balance",
       "streakLabel": "Day streak",
       "streakBonusLabel": "streak bonus",

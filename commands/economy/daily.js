@@ -25,6 +25,9 @@ const { formatDuration } = require('../../utils/exploration');
 const GIFT_IMAGE_NAME = 'gift_coins.png';
 const GIFT_IMAGE_PATH = path.join(__dirname, '..', '..', 'images', 'moedas', GIFT_IMAGE_NAME);
 
+const DAILY_GUILD_ID = '1488000497658101923';
+const DAILY_CHANNEL_ID = '1537511176324386917';
+
 module.exports = {
     cooldown: 5,
 
@@ -41,6 +44,47 @@ module.exports = {
         const lang = getUserLanguage(userId);
         const numLoc = lang === 'pt-BR' ? 'pt-BR' : 'en-US';
 
+        const hasImage = fs.existsSync(GIFT_IMAGE_PATH);
+        const files = [];
+        if (hasImage) {
+            files.push({
+                attachment: GIFT_IMAGE_PATH,
+                name: GIFT_IMAGE_NAME,
+            });
+        }
+
+        if (interaction.guildId !== DAILY_GUILD_ID || interaction.channelId !== DAILY_CHANNEL_ID) {
+            const header = new TextDisplayBuilder().setContent(
+                `# <:ovni:1536247726889762847> ${tFor(interaction, 'commands.daily.restrictedTitle')}`
+            );
+
+            const bodyText = new TextDisplayBuilder().setContent(
+                tFor(interaction, 'commands.daily.restrictedBody')
+            );
+
+            let section;
+            if (hasImage) {
+                const thumbnail = new ThumbnailBuilder().setURL(`attachment://${GIFT_IMAGE_NAME}`);
+                section = new SectionBuilder()
+                    .addTextDisplayComponents(bodyText)
+                    .setThumbnailAccessory(thumbnail);
+            } else {
+                section = new SectionBuilder().addTextDisplayComponents(bodyText);
+            }
+
+            const container = new ContainerBuilder()
+                .addTextDisplayComponents(header)
+                .addSeparatorComponents(new SeparatorBuilder())
+                .addSectionComponents(section);
+
+            await interaction.editReply({
+                flags: MessageFlags.IsComponentsV2,
+                components: [container],
+                files,
+            });
+            return;
+        }
+
         const alien = getUserAlien(userId);
         if (!alien) {
             await interaction.editReply({
@@ -51,15 +95,6 @@ module.exports = {
 
         const state = getDailyState(userId);
         const resetFormatted = formatDuration(state.secondsUntilReset, lang);
-
-        const hasImage = fs.existsSync(GIFT_IMAGE_PATH);
-        const files = [];
-        if (hasImage) {
-            files.push({
-                attachment: GIFT_IMAGE_PATH,
-                name: GIFT_IMAGE_NAME,
-            });
-        }
 
         if (!state.canClaim) {
             const currentCoins = getUserCoins(userId);

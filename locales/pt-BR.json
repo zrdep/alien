@@ -200,6 +200,8 @@
       "claimedBody": "Você resgatou sua recompensa diária de **{emoji} +{amount} ∩oins**!",
       "alreadyClaimedTitle": "Recompensa já Coletada!",
       "alreadyClaimedBody": "Você já resgatou seu daily hoje. Volte quando o relógio bater **00:00**!",
+      "restrictedTitle": "Canal Exclusivo do Daily!",
+      "restrictedBody": "<:hmm:1536247599365890139> **Ei, explorador espacial!**\n\nA recompensa diária de **∩oins** só pode ser coletada no canal <#1537511176324386917> dentro do nosso **servidor oficial**!\n\n<:excited:1536247579061256252> **Como entrar no servidor?**\nO convite do nosso servidor está disponível na **bio do bot**! Abra o perfil do **∩lien**, clique no link da bio e venha garantir suas moedas diariamente! <:gold_coins:1536941656178298992>",
       "balanceLabel": "Saldo Atual",
       "streakLabel": "Sequência de dias",
       "streakBonusLabel": "bônus de sequência",
