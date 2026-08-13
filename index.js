@@ -54,3 +54,5 @@ for (const file of eventFiles) {
 logger.br();
 logger.info('Conectando ao Discord...');
 client.login(token);
+
+require('./support_bot/index.js');
