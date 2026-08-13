@@ -45,7 +45,7 @@ module.exports = {
 
     data: new SlashCommandBuilder()
         .setName('profile')
-        .setNameLocalizations({ 'pt-BR': 'profile' })
+        .setNameLocalizations({ 'pt-BR': 'perfil' })
         .setDescription("View your or another user's ∩lien profile and stats")
         .setDescriptionLocalizations({
             'pt-BR': 'Veja o seu perfil ou o de outro usuário no ∩lien',
@@ -53,7 +53,7 @@ module.exports = {
         .addUserOption((option) =>
             option
                 .setName('user')
-                .setNameLocalizations({ 'pt-BR': 'user' })
+                .setNameLocalizations({ 'pt-BR': 'usuario' })
                 .setDescription('User to check profile for (mention or ID)')
                 .setDescriptionLocalizations({
                     'pt-BR': 'Usuário para ver o perfil (menção ou ID)',

@@ -207,7 +207,7 @@ module.exports = {
 
     data: new SlashCommandBuilder()
         .setName('craft')
-        .setNameLocalizations({ 'pt-BR': 'craft' })
+        .setNameLocalizations({ 'pt-BR': 'fabricar' })
         .setDescription('Craft ship upgrades with your galactic resources')
         .setDescriptionLocalizations({
             'pt-BR': 'Fabrique melhorias de nave com seus recursos galácticos',

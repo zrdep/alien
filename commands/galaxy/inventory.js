@@ -27,7 +27,7 @@ module.exports = {
 
     data: new SlashCommandBuilder()
         .setName('inventory')
-        .setNameLocalizations({ 'pt-BR': 'inventory' })
+        .setNameLocalizations({ 'pt-BR': 'inventario' })
         .setDescription('View your collected galactic resources')
         .setDescriptionLocalizations({
             'pt-BR': 'Veja seus recursos galácticos coletados',

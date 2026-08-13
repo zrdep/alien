@@ -492,7 +492,7 @@ module.exports = {
 
         const subcommand = interaction.options.getSubcommand(false) ?? 'view';
 
-        if (subcommand === 'sell') {
+        if (subcommand === 'sell' || subcommand === 'vender') {
             const resourceKey = interaction.options.getString('resource', true);
             const amount = interaction.options.getInteger('amount', true);
             const pricePerUnit = interaction.options.getInteger('price', true);
@@ -524,7 +524,7 @@ module.exports = {
             return;
         }
 
-        if (subcommand === 'shop') {
+        if (subcommand === 'shop' || subcommand === 'loja') {
             const resourceKey = interaction.options.getString('resource', true);
             const amount = interaction.options.getInteger('amount', true);
 
@@ -556,7 +556,7 @@ module.exports = {
             return;
         }
 
-        if (subcommand === 'my_listings') {
+        if (subcommand === 'my_listings' || subcommand === 'meus_anuncios') {
             const payload = renderMyListingsContainer(interaction);
             await interaction.editReply(payload);
             return;

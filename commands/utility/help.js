@@ -31,9 +31,9 @@ function getCategoryData(lang, categoryKey) {
                 : 'Commands to travel through space, discover new worlds, and manage your items:',
             commands: [
                 { name: '/alien', desc: isPt ? 'Escolha ou altere a cor e o nome do seu alienígena companheiro.' : 'Choose or change your alien companion color and name.' },
-                { name: '/planet', desc: isPt ? 'Explore planetas misteriosos e envie seu alien em missões de coleta.' : 'Explore mysterious planets and send your alien on resource missions.' },
-                { name: '/inventory', desc: isPt ? 'Veja todos os recursos espaciais coletados nas expedições.' : 'View all space resources collected during expeditions.' },
-                { name: '/craft', desc: isPt ? 'Fabrique melhorias para a sua nave (Propulsores, Sondas, Scanners).' : 'Craft ship upgrades (Propulsors, Probes, Scanners).' },
+                { name: isPt ? '/planeta' : '/planet', desc: isPt ? 'Explore planetas misteriosos e envie seu alien em missões de coleta.' : 'Explore mysterious planets and send your alien on resource missions.' },
+                { name: isPt ? '/inventario' : '/inventory', desc: isPt ? 'Veja todos os recursos espaciais coletados nas expedições.' : 'View all space resources collected during expeditions.' },
+                { name: isPt ? '/fabricar' : '/craft', desc: isPt ? 'Fabrique melhorias para a sua nave (Propulsores, Sondas, Scanners).' : 'Craft ship upgrades (Propulsors, Probes, Scanners).' },
             ],
         },
         economy: {
@@ -43,8 +43,8 @@ function getCategoryData(lang, categoryKey) {
                 : 'Commands to manage your ∩oins balance and trade globally:',
             commands: [
                 { name: '/daily', desc: isPt ? 'Resgate sua recompensa diária de ∩oins e recursos (canal oficial).' : 'Claim your daily reward of ∩oins and resources (official channel).' },
-                { name: '/wallet', desc: isPt ? 'Consulte sua carteira de ∩oins ou a de outro explorador.' : 'Check your ∩oins wallet or another explorer balance.' },
-                { name: '/market', desc: isPt ? 'Compre e venda recursos no Mercado Global ou na Loja do Sistema.' : 'Buy and sell resources on the Global Market or System Shop.' },
+                { name: isPt ? '/carteira' : '/wallet', desc: isPt ? 'Consulte sua carteira de ∩oins ou a de outro explorador.' : 'Check your ∩oins wallet or another explorer balance.' },
+                { name: isPt ? '/mercado' : '/market', desc: isPt ? 'Compre e venda recursos no Mercado Global ou na Loja do Sistema.' : 'Buy and sell resources on the Global Market or System Shop.' },
             ],
         },
         utility: {
@@ -53,12 +53,12 @@ function getCategoryData(lang, categoryKey) {
                 ? 'Comandos de utilidade geral, estatísticas do jogador e preferências:'
                 : 'General utility commands, player statistics, and preferences:',
             commands: [
-                { name: '/profile', desc: isPt ? 'Veja suas estatísticas espaciais, nave e companheiro alien.' : 'View your space statistics, ship, and alien companion.' },
+                { name: isPt ? '/perfil' : '/profile', desc: isPt ? 'Veja suas estatísticas espaciais, nave e companheiro alien.' : 'View your space statistics, ship, and alien companion.' },
                 { name: '/config', desc: isPt ? 'Altere seu idioma pessoal ou configurações do servidor.' : 'Change your personal language or server settings.' },
                 { name: '/tutorial', desc: isPt ? 'Guia interativo passo a passo para aprender a jogar com o ∩lien.' : 'Interactive step-by-step tutorial guide to learn ∩lien.' },
                 { name: '/botinfo', desc: isPt ? 'Exibe informações sobre o bot ∩lien, desempenho e estatísticas.' : 'Displays information about ∩lien bot, performance, and stats.' },
                 { name: '/ping', desc: isPt ? 'Verifica o tempo de resposta e latência do bot.' : 'Checks bot response time and latency.' },
-                { name: '/help', desc: isPt ? 'Abre este painel de ajuda categorizado com comandos.' : 'Opens this categorized help menu with commands.' },
+                { name: isPt ? '/ajuda' : '/help', desc: isPt ? 'Abre este painel de ajuda categorizado com comandos.' : 'Opens this categorized help menu with commands.' },
             ],
         },
     };

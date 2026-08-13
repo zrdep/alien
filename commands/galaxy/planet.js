@@ -369,7 +369,7 @@ module.exports = {
 
     data: new SlashCommandBuilder()
         .setName('planet')
-        .setNameLocalizations({ 'pt-BR': 'planet' })
+        .setNameLocalizations({ 'pt-BR': 'planeta' })
         .setDescription('Generates a random planet in ∩lien galaxy')
         .setDescriptionLocalizations({
             'pt-BR': 'Gera um planeta aleatório na galáxia do ∩lien',

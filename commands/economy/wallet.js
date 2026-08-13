@@ -27,7 +27,7 @@ module.exports = {
 
     data: new SlashCommandBuilder()
         .setName('wallet')
-        .setNameLocalizations({ 'pt-BR': 'wallet' })
+        .setNameLocalizations({ 'pt-BR': 'carteira' })
         .setDescription("Check your or another user's ∩oins wallet")
         .setDescriptionLocalizations({
             'pt-BR': 'Veja a sua carteira ou a de outro usuário de ∩oins',
@@ -35,7 +35,7 @@ module.exports = {
         .addUserOption((option) =>
             option
                 .setName('user')
-                .setNameLocalizations({ 'pt-BR': 'user' })
+                .setNameLocalizations({ 'pt-BR': 'usuario' })
                 .setDescription('User to check wallet for')
                 .setDescriptionLocalizations({
                     'pt-BR': 'Usuário para ver a carteira',
