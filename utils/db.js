@@ -822,7 +822,9 @@ const resolveActiveCraft = (userId, now = Date.now()) => {
     if (recipe) {
         try {
             recipe.applyReward(db, userId);
-        } catch (_err) {}
+        } catch (err) {
+            logger.error(`Falha ao aplicar recompensa do craft "${active.recipe_id}" para o usuário ${userId}: ${err.message}`);
+        }
     }
 
     db.prepare('DELETE FROM active_crafts WHERE user_id = ?').run(userId);

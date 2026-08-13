@@ -268,16 +268,27 @@ module.exports = {
             logger.div();
             logger.br();
 
-            if (interaction.replied || interaction.deferred) {
-                logger.warn('Interação já foi respondida, pulando resposta de erro.');
-                return;
-            }
+            const errorContent = `<:dnd:1536247547193204766> ${tFor(interaction, 'errors.generic')}`;
 
             try {
-                await interaction.reply({
-                    content: `<:dnd:1536247547193204766> ${tFor(interaction, 'errors.generic')}`,
-                    flags: MessageFlags.Ephemeral,
-                });
+                if (interaction.deferred && !interaction.replied) {
+                    // A interação já foi deferida (caso comum, já que sempre fazemos deferReply
+                    // antes de executar o comando), então precisamos editar a resposta e não
+                    // criar uma nova - reply() falharia aqui.
+                    await interaction.editReply({
+                        content: errorContent,
+                        embeds: [],
+                        components: [],
+                        files: [],
+                    });
+                } else if (!interaction.replied) {
+                    await interaction.reply({
+                        content: errorContent,
+                        flags: MessageFlags.Ephemeral,
+                    });
+                } else {
+                    logger.warn('Interação já foi respondida, pulando resposta de erro.');
+                }
             } catch (replyError) {
                 logger.error('Falha ao responder a interação com erro: ' + replyError.message);
             }

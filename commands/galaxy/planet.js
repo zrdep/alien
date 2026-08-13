@@ -460,7 +460,9 @@ module.exports = {
         const ship = getUserShip(userId);
         const travelSeconds = calculateTravelSeconds(offer.payload.distancia, ship.propulsorTier);
         const now = Date.now();
-        const coinsReward = generateMissionCoins(offer.payload.raridadeCode);
+        // Reaproveita o valor de moedas já sorteado e exibido no /planet (offer.payload.coins).
+        // Só gera um novo caso, por algum motivo, a oferta salva não tenha esse valor.
+        const coinsReward = offer.payload.coins ?? generateMissionCoins(offer.payload.raridadeCode);
 
         startExplorationMission(userId, {
             status: MISSION_STATUS.TRAVELING_OUT,
