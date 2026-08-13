@@ -20,7 +20,7 @@ config.*.json
 # ============================================
 # Banco de Dados
 # ============================================
-data/
+data
 *.db
 *.db-journal
 *.db-shm
@@ -79,3 +79,4 @@ coverage/
 dist/
 build/
 *.tsbuildinfo
+images/planets
