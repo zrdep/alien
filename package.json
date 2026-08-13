@@ -9,22 +9,21 @@
   "scripts": {
     "start": "node index.js",
     "deploy-commands": "node scripts/deploy-commands.js",
+    "generate-planets": "node scripts/generate-planet-images.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "dependencies": {
-    "@dicebear/core": "^10.4.0",
-    "@dicebear/styles": "^10.4.0",
     "better-sqlite3": "^13.0.3",
     "discord.js": "^14.27.0",
     "figlet": "^1.11.4",
     "picocolors": "^1.1.1"
   },
   "devDependencies": {
+    "@dicebear/core": "^10.4.0",
+    "@dicebear/styles": "^10.4.0",
+    "@resvg/resvg-js": "^2.6.2",
     "@eslint/js": "^10.0.1",
     "eslint": "^10.8.0"
-  },
-  "optionalDependencies": {
-    "@resvg/resvg-js": "^2.6.2"
   }
 }

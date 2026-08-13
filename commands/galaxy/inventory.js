@@ -71,7 +71,7 @@ module.exports = {
                         key: item.key,
                         amount: item.amount,
                         rarity: meta?.rarity ?? 'A',
-                        emoji: meta?.emoji ?? '📦',
+                        emoji: meta?.emoji ?? '<:registry:1536459835921530890>',
                     };
                 })
                 .sort((a, b) => {

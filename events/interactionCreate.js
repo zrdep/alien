@@ -95,6 +95,19 @@ const termosViewJaAceito = (interaction) => ({
 const GLOBAL_COOLDOWN_MS = 5_000;
 const globalCooldowns = new Map();
 
+// Sem isso, globalCooldowns cresce para sempre (1 entrada por usuário único
+// que já rodou um comando, nunca removida) - com o tempo isso é memória
+// desperdiçada à toa. Limpa entradas expiradas periodicamente.
+const COOLDOWN_CLEANUP_INTERVAL_MS = 10 * 60 * 1000;
+setInterval(() => {
+    const agora = Date.now();
+    for (const [userId, timestamp] of globalCooldowns) {
+        if (agora - timestamp > GLOBAL_COOLDOWN_MS) {
+            globalCooldowns.delete(userId);
+        }
+    }
+}, COOLDOWN_CLEANUP_INTERVAL_MS).unref();
+
 const getDeferOptions = (interaction) => {
     if (interaction.commandName === 'config' || interaction.commandName === 'painel') {
         return { flags: MessageFlags.Ephemeral };

@@ -37,7 +37,7 @@ const EASTER_EGG_LINES = [
     'olá! você sabia que sou feito de puro código e **muito café espacial**?',
     'você quis saber sobre mim? que raro. geralmente sou eu quem fica curioso sobre humanos.',
     'ei, não sou um alien qualquer. sou o **alien** do bot. tem diferença.',
-    '⚠️ ATENÇÃO: perfil classificado. acesso autorizado. *bip boop*',
+    '<:dnd:1536247547193204766> ATENÇÃO: perfil classificado. acesso autorizado. *bip boop*',
 ];
 
 module.exports = {

@@ -34,9 +34,9 @@ const logger = require('../../utils/logger');
 const ID_REGEX = /^\d{15,25}$/;
 
 const STATUS_LABEL = {
-    traveling_out: '🚀 Indo até o planeta',
-    collecting: '⛏️ Minerando',
-    traveling_back: '🛬 Voltando para casa',
+    traveling_out: '<:ovni:1536247726889762847> Indo até o planeta',
+    collecting: '<:rock:1536579687407681596> Minerando',
+    traveling_back: '<:earth:1536459925495087226> Voltando para casa',
 };
 
 // Permite digitar tanto a chave interna (stone, blueCrystal...) quanto o nome em
@@ -104,7 +104,7 @@ const buildResourceList = (targetId) => {
             return formatResourceLine('pt-BR', {
                 key: item.key,
                 amount: item.amount,
-                emoji: meta.emoji ?? '📦',
+                emoji: meta.emoji ?? '<:registry:1536459835921530890>',
                 rarity: meta.rarity ?? 'A',
             });
         })
@@ -165,19 +165,19 @@ const buildPainelPayload = (interaction, targetId) => {
         new ButtonBuilder()
             .setCustomId(`painel_skip:${targetId}`)
             .setLabel('Pular fase atual')
-            .setEmoji('⏭️')
+            .setEmoji('<:loading:1536247662372982794>')
             .setStyle(ButtonStyle.Primary)
             .setDisabled(!mission),
         new ButtonBuilder()
             .setCustomId(`painel_skipall:${targetId}`)
             .setLabel('Pular até chegar')
-            .setEmoji('⏩')
+            .setEmoji('<:restart:1536248409634246719>')
             .setStyle(ButtonStyle.Primary)
             .setDisabled(!mission),
         new ButtonBuilder()
             .setCustomId(`painel_refresh:${targetId}`)
             .setLabel('Atualizar')
-            .setEmoji('🔄')
+            .setEmoji('<:online:1536247711169249391>')
             .setStyle(ButtonStyle.Secondary)
     );
 
@@ -185,12 +185,12 @@ const buildPainelPayload = (interaction, targetId) => {
         new ButtonBuilder()
             .setCustomId(`painel_setres:${targetId}`)
             .setLabel('Setar recurso')
-            .setEmoji('🎒')
+            .setEmoji('<:registry:1536459835921530890>')
             .setStyle(ButtonStyle.Success),
         new ButtonBuilder()
             .setCustomId(`painel_setcoins:${targetId}`)
             .setLabel('Setar moedas')
-            .setEmoji('💰')
+            .setEmoji('<:gold_coins:1536941656178298992>')
             .setStyle(ButtonStyle.Success)
     );
 

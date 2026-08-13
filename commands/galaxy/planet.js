@@ -13,7 +13,6 @@ const {
 
 const path = require('path');
 const fs = require('fs');
-const { Resvg } = require('@resvg/resvg-js');
 
 const { tFor } = require('../../utils/i18n');
 const {
@@ -209,82 +208,56 @@ const buildPlanetPayload = (interaction, dados, usage, recursos, pngBuffer, arri
     return container;
 };
 
-let dicebearCorePromise = null;
-const getDicebearCore = () => {
-    if (!dicebearCorePromise) {
-        dicebearCorePromise = import('@dicebear/core');
+// ---------------------------------------------------------------------------
+// Imagens de planeta: antes eram geradas ao vivo (dicebear -> SVG -> resvg ->
+// PNG) a cada /planet, o que é um trabalho síncrono e pesado de CPU e travava
+// o event loop do bot inteiro por um instante a cada exploração.
+//
+// Agora usamos um pool de imagens pré-geradas em disco (veja
+// scripts/generate-planet-images.js). O seed do planeta escolhe
+// deterministicamente uma imagem do pool via hash - nenhuma geração acontece
+// em tempo de execução.
+// ---------------------------------------------------------------------------
+
+const PLANETS_DIR = path.join(__dirname, '..', '..', 'images', 'planets');
+
+let planetImagePool = null;
+const loadPlanetImagePool = () => {
+    if (planetImagePool) return planetImagePool;
+
+    if (!fs.existsSync(PLANETS_DIR)) {
+        logger.warn('Pasta images/planets não encontrada. Rode "node scripts/generate-planet-images.js" para gerar o pool de imagens.');
+        planetImagePool = [];
+        return planetImagePool;
     }
-    return dicebearCorePromise;
+
+    const files = fs.readdirSync(PLANETS_DIR)
+        .filter((f) => f.toLowerCase().endsWith('.png'))
+        .sort();
+
+    planetImagePool = files.map((f) => fs.readFileSync(path.join(PLANETS_DIR, f)));
+
+    if (!planetImagePool.length) {
+        logger.warn('images/planets está vazia. Rode "node scripts/generate-planet-images.js" para gerar o pool de imagens.');
+    }
+
+    return planetImagePool;
 };
 
-let cachedDefinition = null;
-const getPlanetsDefinition = () => {
-    if (!cachedDefinition) {
-        const definitionPath = path.join(__dirname, '..', '..', 'node_modules', '@dicebear', 'styles', 'planets.json');
-        const altPath = path.join(__dirname, '..', '..', 'node_modules', '@dicebear', 'styles', 'dist', 'planets.min.json');
-
-        if (fs.existsSync(definitionPath)) {
-            cachedDefinition = JSON.parse(fs.readFileSync(definitionPath, 'utf-8'));
-        } else if (fs.existsSync(altPath)) {
-            cachedDefinition = JSON.parse(fs.readFileSync(altPath, 'utf-8'));
-        } else {
-            throw new Error('Não foi possível encontrar planets.json em @dicebear/styles');
-        }
+const hashSeedToIndex = (seed, max) => {
+    let h = 2166136261;
+    for (let i = 0; i < seed.length; i++) {
+        h ^= seed.charCodeAt(i);
+        h = Math.imul(h, 16777619);
     }
-    return cachedDefinition;
+    return (h >>> 0) % max;
 };
 
-let cachedStyle = null;
-const getPlanetsStyle = async () => {
-    if (!cachedStyle) {
-        const { Style } = await getDicebearCore();
-        const definition = getPlanetsDefinition();
-        cachedStyle = new Style(definition);
-    }
-    return cachedStyle;
-};
-
-const PLANET_CACHE_MAX = 200;
-const planetPngCache = new Map();
-
-const generatePlanetPng = async (seed) => {
-    if (planetPngCache.has(seed)) {
-        return planetPngCache.get(seed);
-    }
-
-    const { Avatar } = await getDicebearCore();
-    const style = await getPlanetsStyle();
-
-    const avatar = new Avatar(style, {
-        borderRadius: 10,
-        shadeVariant: { hard: 1, soft: 1 },
-        starProbability: 80,
-        starVariant: { faint: 2, large: 1, medium: 1, small: 1, sparkle: 1 },
-        surfaceVariant: {
-            banded: 1, belted: 2, cap: 2, cracked: 2, cratered: 2,
-            marbled: 2, speckled: 2, spotted: 1, swirl: 2, terra: 2,
-        },
-        backgroundColor: [
-            '17233f', '23244a', '2c1c45', '0f2336', '012e3a', '002a2e',
-            '0b3533', '361b34', '1c1f27', '1d1a2a', '2e1b20', '242424',
-        ],
-        backgroundColorFill: ['linear'],
-        backgroundColorAngle: 295,
-        backgroundColorFillStops: 3,
-        seed,
-    });
-
-    const svg = avatar.toString();
-    const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: 320 } });
-    const pngBuffer = resvg.render().asPng();
-
-    if (planetPngCache.size >= PLANET_CACHE_MAX) {
-        const oldestKey = planetPngCache.keys().next().value;
-        planetPngCache.delete(oldestKey);
-    }
-    planetPngCache.set(seed, pngBuffer);
-
-    return pngBuffer;
+const generatePlanetPng = (seed) => {
+    const pool = loadPlanetImagePool();
+    if (!pool.length) return null;
+    const idx = hashSeedToIndex(seed, pool.length);
+    return pool[idx];
 };
 
 const buildFuelEmptyMessage = (interaction, usage) => {
@@ -346,9 +319,9 @@ const generatePlanetReply = async (interaction, usage, arrivalNotice = null) => 
 
     let pngBuffer = null;
     try {
-        pngBuffer = await generatePlanetPng(dados.seedDicebear);
+        pngBuffer = generatePlanetPng(dados.seedDicebear);
     } catch (err) {
-        logger.error(`Failed to generate planet image: ${err.message}`);
+        logger.error(`Failed to load planet image: ${err.message}`);
     }
 
     const container = buildPlanetPayload(interaction, dados, usage, recursos, pngBuffer, arrivalNotice);

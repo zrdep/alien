@@ -150,7 +150,7 @@ const buildCraftPanel = (interaction, category = CATEGORIES.PROPULSOR, selectedR
             ? '<:online:1536247711169249391>'
             : '<:dnd:1536247547193204766>';
 
-        return `${checkEmoji} ${meta?.emoji ?? '📦'} **${name}**: \`${userHas}/${ing.amount}\``;
+        return `${checkEmoji} ${meta?.emoji ?? '<:registry:1536459835921530890>'} **${name}**: \`${userHas}/${ing.amount}\``;
     }).join('\n');
 
     let statusWarning = '';
