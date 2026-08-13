@@ -133,6 +133,12 @@ if (!temTotalResources) {
     logger.success('Coluna `total_resources_collected` adicionada à tabela `users`');
 }
 
+const temDailyStreak = colunas.some(c => c.name === 'daily_streak');
+if (!temDailyStreak) {
+    db.exec(`ALTER TABLE users ADD COLUMN daily_streak INTEGER NOT NULL DEFAULT 0;`);
+    logger.success('Coluna `daily_streak` adicionada à tabela `users`');
+}
+
 logger.success('Banco SQLite inicializado (data/bot.db)');
 
 db.exec(`
@@ -170,6 +176,15 @@ if (!temMissionCoins) {
         ADD COLUMN coins_json TEXT;
     `);
     logger.success('Coluna `coins_json` adicionada à tabela `exploration_missions`');
+}
+
+const temNotifyChannel = colunasMission.some(c => c.name === 'notify_channel_id');
+if (!temNotifyChannel) {
+    db.exec(`
+        ALTER TABLE exploration_missions
+        ADD COLUMN notify_channel_id TEXT;
+    `);
+    logger.success('Coluna `notify_channel_id` adicionada à tabela `exploration_missions`');
 }
 
 db.exec(`
@@ -336,22 +351,50 @@ const getDailyState = (userId, date = new Date()) => {
     const passedSeconds = hour * 3600 + minute * 60 + second;
     const secondsUntilReset = Math.max(0, 86400 - passedSeconds);
 
+    const yesterday = getYesterdayDateStr(today);
+    const streakWillContinue = user.last_daily_date === yesterday;
+
     return {
         canClaim,
         today,
         lastDailyDate: user.last_daily_date ?? null,
         secondsUntilReset,
+        currentStreak: user.daily_streak ?? 0,
+        nextStreak: canClaim ? (streakWillContinue ? (user.daily_streak ?? 0) + 1 : 1) : (user.daily_streak ?? 0),
     };
 };
 
+const getYesterdayDateStr = (dateStr) => {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    dt.setUTCDate(dt.getUTCDate() - 1);
+    return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, '0')}-${String(dt.getUTCDate()).padStart(2, '0')}`;
+};
+
 const claimDaily = (userId, dateStr, coinsAmount) => {
-    getUser(userId);
+    const user = getUser(userId);
+
+    const yesterday = getYesterdayDateStr(dateStr);
+    const newStreak = user.last_daily_date === yesterday ? (user.daily_streak ?? 0) + 1 : 1;
+
     db.prepare(`
         UPDATE users
         SET last_daily_date = ?,
-            coins = coins + ?
+            coins = coins + ?,
+            daily_streak = ?
         WHERE user_id = ?
-    `).run(dateStr, coinsAmount, userId);
+    `).run(dateStr, coinsAmount, newStreak, userId);
+
+    return { streak: newStreak };
+};
+
+const resetDailyClaim = (userId) => {
+    getUser(userId);
+    db.prepare(`
+        UPDATE users
+        SET last_daily_date = NULL
+        WHERE user_id = ?
+    `).run(userId);
 };
 
 const incrementPlanetsSeen = (userId, count = 1) => {
@@ -616,6 +659,17 @@ const popMissionNotice = (userId) => {
     }
 };
 
+const peekMissionNotice = (userId) => {
+    const row = db.prepare('SELECT notice_json FROM mission_notices WHERE user_id = ?').get(userId);
+    if (!row) return null;
+
+    try {
+        return JSON.parse(row.notice_json);
+    } catch {
+        return null;
+    }
+};
+
 const forceExpireMissionPhase = (userId) => {
     const mission = getExplorationMission(userId);
     if (!mission) return false;
@@ -627,6 +681,14 @@ const forceExpireMissionPhase = (userId) => {
     `).run(Date.now() - 1000, userId);
 
     return true;
+};
+
+const setMissionNotifyChannel = (userId, channelId) => {
+    db.prepare(`
+        UPDATE exploration_missions
+        SET notify_channel_id = ?
+        WHERE user_id = ?
+    `).run(channelId, userId);
 };
 
 const resolveExplorationMission = (userId, now = Date.now()) => {
@@ -914,8 +976,10 @@ module.exports = {
     resolveAllPendingCrafts,
     setMissionNotice,
     popMissionNotice,
+    peekMissionNotice,
     resolveExplorationMission,
     forceExpireMissionPhase,
+    setMissionNotifyChannel,
     resolveAllPendingMissions,
     cleanExpiredPlanetOffers,
     getGuildAllowedChannel,
@@ -927,6 +991,7 @@ module.exports = {
     setUserCoins,
     getDailyState,
     claimDaily,
+    resetDailyClaim,
     incrementPlanetsSeen,
     addMissionCompletionStats,
     getUserProfileStats,

@@ -70,7 +70,8 @@ module.exports = {
 
             const bodyText = new TextDisplayBuilder().setContent(
                 `${tFor(interaction, 'commands.daily.alreadyClaimedBody')}\n\n` +
-                `**${tFor(interaction, 'commands.daily.balanceLabel')}**: \`${currentCoins.toLocaleString(numLoc)}\` ∩oins\n\n` +
+                `**${tFor(interaction, 'commands.daily.balanceLabel')}**: \`${currentCoins.toLocaleString(numLoc)}\` ∩oins\n` +
+                `**${tFor(interaction, 'commands.daily.streakLabel')}**: \`${state.currentStreak}\` <:passionate:1536247742110634034>\n\n` +
                 `<:saturn:1536459943480270959> ${tFor(interaction, 'commands.daily.nextResetLabel', { time: resetFormatted })}`
             );
 
@@ -98,17 +99,21 @@ module.exports = {
         }
 
         // Generate daily reward & claim
-        const reward = generateDailyCoins();
+        const reward = generateDailyCoins(state.nextStreak);
         const dailyResources = generateDailyResources();
-        
-        claimDaily(userId, state.today, reward.amount);
+
+        const { streak } = claimDaily(userId, state.today, reward.amount);
         addInventoryResources(userId, dailyResources.map(r => ({ key: r.key, amount: r.amount })));
-        
+
         const totalCoins = getUserCoins(userId);
 
         const resourcesText = dailyResources
             .map(r => `${r.emoji} ${tFor(interaction, `commands.daily.resources.${r.key}`)} × ${r.amount}`)
             .join('\n');
+
+        const streakBonusText = reward.streakBonus > 0
+            ? ` (+${reward.streakBonus.toLocaleString(numLoc)} ${tFor(interaction, 'commands.daily.streakBonusLabel')})`
+            : '';
 
         const header = new TextDisplayBuilder().setContent(
             `# <:excited:1536247579061256252> ${tFor(interaction, 'commands.daily.claimedTitle')}`
@@ -118,8 +123,9 @@ module.exports = {
             `${tFor(interaction, 'commands.daily.claimedBody', {
                 emoji: reward.emoji,
                 amount: reward.amount.toLocaleString(numLoc),
-            })}\n\n` +
-            `**${tFor(interaction, 'commands.daily.balanceLabel')}**: \`${totalCoins.toLocaleString(numLoc)}\` ∩oins\n\n` +
+            })}${streakBonusText}\n\n` +
+            `**${tFor(interaction, 'commands.daily.balanceLabel')}**: \`${totalCoins.toLocaleString(numLoc)}\` ∩oins\n` +
+            `**${tFor(interaction, 'commands.daily.streakLabel')}**: \`${streak}\` <:passionate:1536247742110634034>\n\n` +
             `## <:passionate:1536247742110634034> **${tFor(interaction, 'commands.daily.resourcesTitle')}:**\n${resourcesText}\n\n` +
             `<:saturn:1536459943480270959> ${tFor(interaction, 'commands.daily.nextResetLabel', { time: resetFormatted })}`
         );

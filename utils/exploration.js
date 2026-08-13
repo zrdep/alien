@@ -196,6 +196,19 @@ const getExpeditionTimes = (userId, distanceKm, propulsorTier) => {
     };
 };
 
+// Calcula o timestamp (ms) em que a missão termina de vez, ou seja, quando o
+// alien chega de volta na Terra com os recursos - independente de qual fase
+// a missão está agora. Usado para agendar a notificação no chat.
+const getMissionFinalEndsAt = (mission) => {
+    if (mission.status === MISSION_STATUS.TRAVELING_OUT) {
+        return mission.phase_ends_at + COLLECT_DURATION_MS + mission.travel_seconds * 1000;
+    }
+    if (mission.status === MISSION_STATUS.COLLECTING) {
+        return mission.phase_ends_at + mission.travel_seconds * 1000;
+    }
+    return mission.phase_ends_at;
+};
+
 module.exports = {
     EXPLORE_OFFER_MS,
     COLLECT_DURATION_MS,
@@ -206,6 +219,7 @@ module.exports = {
     getAlienDisplayName,
     parseMissionResources,
     getExpeditionTimes,
+    getMissionFinalEndsAt,
     buildMissionStatusContent,
     buildArrivalNotice,
     buildExploreStartedContent,

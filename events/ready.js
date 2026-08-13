@@ -3,6 +3,7 @@ const figlet = require('figlet');
 const picocolors = require('picocolors');
 const logger = require('../utils/logger');
 const { resolveAllPendingMissions, cleanExpiredPlanetOffers, resolveAllPendingCrafts } = require('../utils/db');
+const { captureNotifyFlaggedMissions, processNotifyFlaggedMissions } = require('../utils/missionNotifier');
 const versao = require('../config.json').versao;
 
 const c = picocolors;
@@ -92,8 +93,13 @@ module.exports = {
         logger.br();
 
         const expiredOffers = cleanExpiredPlanetOffers();
+        // Precisa ser capturado ANTES de resolveAllPendingMissions, senão as
+        // missões concluídas offline já terão sumido da tabela.
+        const notifySnapshots = captureNotifyFlaggedMissions();
         const missions = resolveAllPendingMissions();
         const crafts = resolveAllPendingCrafts();
+        const notifyResult = await processNotifyFlaggedMissions(client, notifySnapshots);
+
         if (missions.total > 0) {
             logger.info(`Missões sincronizadas: ${missions.total} ativa(s), ${missions.completed} concluída(s) offline`);
         }
@@ -102,6 +108,9 @@ module.exports = {
         }
         if (expiredOffers > 0) {
             logger.info(`Ofertas de planeta expiradas removidas: ${expiredOffers}`);
+        }
+        if (notifyResult.rescheduled > 0 || notifyResult.firedNow > 0) {
+            logger.info(`Notificações de missão: ${notifyResult.rescheduled} reagendada(s), ${notifyResult.firedNow} enviada(s) agora`);
         }
 
         logger.br();

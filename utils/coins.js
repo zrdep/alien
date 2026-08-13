@@ -80,17 +80,18 @@ function generateMissionCoins(planetRarity) {
     };
 }
 
-/**
- * Generates a coin reward object for daily claim.
- */
-function generateDailyCoins() {
-    // Daily: 1000 to 2000 coins
-    const amount = Math.floor(Math.random() * (2000 - 1000 + 1)) + 1000;
+function generateDailyCoins(streak = 1) {
+    const base = getRandomStepValue(1000, 2000, 100);
+
+    const streakBonus = Math.min(Math.max(streak - 1, 0), 6) * 100;
+
+    const amount = base + streakBonus;
 
     return {
         type: 'daily',
         emoji: '<:gold_coins:1536941656178298992>',
         amount,
+        streakBonus,
     };
 }
 

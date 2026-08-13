@@ -183,7 +183,10 @@
       "missionReturningBody": "**{alien}** is returning with resources from **{planet}**",
       "missionArrivedTitle": "Mission complete!",
       "missionArrivedBody": "**{alien}** returned from **{planet}** and deposited the resources in your inventory!",
-      "missionArrivedTip": "Use </inventory:1536804847142314075> to see everything you collected."
+      "missionArrivedTip": "Use </inventory:1536804847142314075> to see everything you collected.",
+      "notifyButton": "Notify me when it arrives",
+      "notifyButtonActive": "Notification enabled",
+      "notifyNoMission": "You don't have any mission in progress to notify you about."
     },
     "inventory": {
       "title": "Galactic Inventory",
@@ -198,6 +201,8 @@
       "alreadyClaimedTitle": "Reward Already Claimed!",
       "alreadyClaimedBody": "You already claimed your daily today. Come back when the clock strikes **00:00**!",
       "balanceLabel": "Current Balance",
+      "streakLabel": "Day streak",
+      "streakBonusLabel": "streak bonus",
       "nextResetLabel": "Next reward available in: **{time}**",
       "resourcesTitle": "Resources",
       "resources": {

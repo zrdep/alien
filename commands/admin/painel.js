@@ -25,6 +25,8 @@ const {
     getExplorationMission,
     resolveExplorationMission,
     forceExpireMissionPhase,
+    getDailyState,
+    resetDailyClaim,
 } = require('../../utils/db');
 const { RESOURCES, getResourceMeta } = require('../../utils/planetResources');
 const { formatResourceLine } = require('../../utils/resourcesDisplay');
@@ -130,12 +132,23 @@ const buildMissionSection = (targetId) => {
 **Tempo restante:** \`${restante}\``;
 };
 
+const buildDailySection = (targetId) => {
+    const state = getDailyState(targetId);
+    const status = state.canClaim
+        ? '<:excited:1536247579061256252> disponível'
+        : '<:dnd:1536247547193204766> já resgatada hoje';
+
+    return `**Status:** ${status}
+**Sequência:** \`${state.currentStreak}\` dia(s)`;
+};
+
 const buildPainelPayload = (interaction, targetId) => {
     const user = getUser(targetId);
     const alien = getUserAlien(targetId);
     const coins = getUserCoins(targetId);
     const ship = getUserShip(targetId);
     const mission = getExplorationMission(targetId);
+    const dailyState = getDailyState(targetId);
 
     const header = new TextDisplayBuilder().setContent(
 `# <:settings:1536247760373088266> Painel administrativo
@@ -150,6 +163,10 @@ const buildPainelPayload = (interaction, targetId) => {
 `## <:ovni:1536247726889762847> Missão de exploração\n${buildMissionSection(targetId)}`
     );
 
+    const dailyTxt = new TextDisplayBuilder().setContent(
+`## <:gold_coins:1536941656178298992> Recompensa diária\n${buildDailySection(targetId)}`
+    );
+
     const inventoryTxt = new TextDisplayBuilder().setContent(
 `## <:registry:1536459835921530890> Inventário\n${buildResourceList(targetId)}`
     );
@@ -158,6 +175,8 @@ const buildPainelPayload = (interaction, targetId) => {
         .addTextDisplayComponents(header)
         .addSeparatorComponents(new SeparatorBuilder())
         .addTextDisplayComponents(missionTxt)
+        .addSeparatorComponents(new SeparatorBuilder())
+        .addTextDisplayComponents(dailyTxt)
         .addSeparatorComponents(new SeparatorBuilder())
         .addTextDisplayComponents(inventoryTxt);
 
@@ -191,7 +210,13 @@ const buildPainelPayload = (interaction, targetId) => {
             .setCustomId(`painel_setcoins:${targetId}`)
             .setLabel('Setar moedas')
             .setEmoji('<:gold_coins:1536941656178298992>')
+            .setStyle(ButtonStyle.Success),
+        new ButtonBuilder()
+            .setCustomId(`painel_skipdaily:${targetId}`)
+            .setLabel('Pular diária')
+            .setEmoji('<:restart:1536248409634246719>')
             .setStyle(ButtonStyle.Success)
+            .setDisabled(dailyState.canClaim)
     );
 
     container.addActionRowComponents(rowActions);
@@ -320,6 +345,11 @@ module.exports = {
                 forceExpireMissionPhase(targetId);
                 resolveExplorationMission(targetId);
             }
+        }
+
+        if (action === 'painel_skipdaily') {
+            resetDailyClaim(targetId);
+            logger.info(`${interaction.user.tag} pulou o cooldown da diária de ${targetId} via /painel`);
         }
 
         // painel_refresh cai direto aqui e só recarrega o payload.

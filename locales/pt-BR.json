@@ -183,7 +183,10 @@
       "missionReturningBody": "**{alien}** está voltando com os recursos de **{planet}**",
       "missionArrivedTitle": "Missão concluída!",
       "missionArrivedBody": "**{alien}** chegou da expedição em **{planet}** e depositou os recursos no inventário!",
-      "missionArrivedTip": "Use </inventory:1536804847142314075> para ver tudo que você coletou."
+      "missionArrivedTip": "Use </inventory:1536804847142314075> para ver tudo que você coletou.",
+      "notifyButton": "Notificar quando chegar",
+      "notifyButtonActive": "Notificação ativada",
+      "notifyNoMission": "Você não tem nenhuma missão em andamento pra notificar."
     },
     "inventory": {
       "title": "Inventário Galáctico",
@@ -198,6 +201,8 @@
       "alreadyClaimedTitle": "Recompensa já Coletada!",
       "alreadyClaimedBody": "Você já resgatou seu daily hoje. Volte quando o relógio bater **00:00**!",
       "balanceLabel": "Saldo Atual",
+      "streakLabel": "Sequência de dias",
+      "streakBonusLabel": "bônus de sequência",
       "nextResetLabel": "Próxima recompensa disponível em: **{time}**",
       "resourcesTitle": "Recursos",
       "resources": {

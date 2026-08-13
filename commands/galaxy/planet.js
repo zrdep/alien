@@ -42,6 +42,7 @@ const {
     buildArrivalNotice,
     buildExploreStartedContent,
 } = require('../../utils/exploration');
+const { enableMissionNotification } = require('../../utils/missionNotifier');
 const logger = require('../../utils/logger');
 
 const RARITY_EMOJI = {
@@ -268,18 +269,33 @@ const buildFuelEmptyMessage = (interaction, usage) => {
         : `<:sob:1536248436339376138> **Tanque de combustível vazio!** Você já fez todas as 10 explorações espaciais desta hora. Recarregue as energias e volte daqui **${mins} minutos** — até lá, a nave fica no hangar. <:ovni:1536247726889762847>`;
 };
 
-const buildV2TextPayload = (text) => ({
-    content: '',
-    flags: MessageFlags.IsComponentsV2,
-    components: [
-        new ContainerBuilder().addTextDisplayComponents(
-            new TextDisplayBuilder().setContent(text)
-        ),
-    ],
-    files: [],
-});
+const buildV2TextPayload = (text, extraRows = []) => {
+    const container = new ContainerBuilder().addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(text)
+    );
+    for (const row of extraRows) {
+        container.addActionRowComponents(row);
+    }
+    return {
+        content: '',
+        flags: MessageFlags.IsComponentsV2,
+        components: [container],
+        files: [],
+    };
+};
 
-const buildMissionV2Payload = (userId, mission, arrivalNotice = null) => {
+const buildNotifyButtonRow = (interaction, userId, mission) => {
+    const alreadyOn = Boolean(mission?.notify_channel_id);
+    const button = new ButtonBuilder()
+        .setCustomId(`planet_notify:${userId}`)
+        .setLabel(tFor(interaction, alreadyOn ? 'commands.planet.notifyButtonActive' : 'commands.planet.notifyButton'))
+        .setEmoji(alreadyOn ? '<:excited:1536247579061256252>' : '<:passionate:1536247742110634034>')
+        .setStyle(alreadyOn ? ButtonStyle.Secondary : ButtonStyle.Primary)
+        .setDisabled(alreadyOn);
+    return new ActionRowBuilder().addComponents(button);
+};
+
+const buildMissionV2Payload = (interaction, userId, mission, arrivalNotice = null) => {
     const container = new ContainerBuilder();
 
     if (arrivalNotice) {
@@ -292,6 +308,8 @@ const buildMissionV2Payload = (userId, mission, arrivalNotice = null) => {
     container.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(buildMissionStatusContent(userId, mission))
     );
+
+    container.addActionRowComponents(buildNotifyButtonRow(interaction, userId, mission));
 
     return {
         content: '',
@@ -370,7 +388,7 @@ module.exports = {
         const arrivalNotice = popMissionNotice(interaction.user.id);
 
         if (mission) {
-            await interaction.editReply(buildMissionV2Payload(interaction.user.id, mission, arrivalNotice));
+            await interaction.editReply(buildMissionV2Payload(interaction, interaction.user.id, mission, arrivalNotice));
             return;
         }
 
@@ -385,6 +403,26 @@ module.exports = {
     },
 
     async handleButton(interaction) {
+        if (interaction.customId.startsWith('planet_notify:')) {
+            await interaction.deferUpdate();
+
+            const userId = interaction.user.id;
+            const ok = enableMissionNotification(interaction.client, userId, interaction.channelId);
+
+            if (!ok) {
+                // Missão já não existe mais (terminou ou já foi coletada) -
+                // só recarrega a tela atual, sem quebrar nada.
+                await interaction.editReply(
+                    buildV2TextPayload(`<:hmm:1536247599365890139> ${tFor(interaction, 'commands.planet.notifyNoMission')}`)
+                );
+                return true;
+            }
+
+            const mission = getExplorationMission(userId);
+            await interaction.editReply(buildMissionV2Payload(interaction, userId, mission));
+            return true;
+        }
+
         if (interaction.customId === 'planet_next') {
             await interaction.deferUpdate();
 
@@ -393,7 +431,7 @@ module.exports = {
             const mission = getExplorationMission(userId);
 
             if (mission) {
-                await interaction.editReply(buildMissionV2Payload(userId, mission));
+                await interaction.editReply(buildMissionV2Payload(interaction, userId, mission));
                 return true;
             }
 
@@ -454,7 +492,10 @@ module.exports = {
 
         const mission = getExplorationMission(userId);
         await interaction.update(
-            buildV2TextPayload(buildExploreStartedContent(userId, mission))
+            buildV2TextPayload(
+                buildExploreStartedContent(userId, mission),
+                [buildNotifyButtonRow(interaction, userId, mission)]
+            )
         );
 
         return true;
