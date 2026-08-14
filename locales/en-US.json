@@ -236,7 +236,7 @@
             "pricePerUnit": "{price} ∩oins/unit",
             "totalPrice": "{price} ∩oins total",
             "availableQty": "Qty: `{qty}`",
-            "sellSuccess": "<:excited:1536247579061256252> **Listing created successfully!**\nYou put **{amount}x {emoji} {resource}** on sale for **{price} ∩oins** each (Total: **{total} ∩oins**).",
+            "sellSuccess": "<:excited:1536247579061256252> **Listing created successfully!**\nYou put **{amount}x {emoji} {resource}** on sale for **{price} ∩oins** each (Total: **{total} ∩oins**).\nReminder: a {feePercent}% fee applies when it sells — you'll receive **{netTotal} coins** for a full sale, not the full {total}.",
             "buySuccess": "<:excited:1536247579061256252> **Purchase completed successfully!**\nYou bought **{amount}x {emoji} {resource}** for **{total} ∩oins**!",
             "cancelSuccess": "<:restart:1536248409634246719> **Listing cancelled!**\nReturned **{amount}x {emoji} {resource}** back to your inventory.",
             "insufficientResources": "<:sob:1536248436339376138> **Insufficient resources!** You do not have enough items in your inventory.",

@@ -35,7 +35,7 @@ const {
     getResourceInfo,
     isValidResourceKey,
 } = require('../../utils/market');
-const { MARKET_CONFIG, getMinListingPrice } = require('../../gameConfig/market');
+const { MARKET_CONFIG, getMinListingPrice, getSellerProceeds } = require('../../gameConfig/market');
 
 const MARKET_IMAGE_NAME = 'bag_coins.png';
 const MARKET_IMAGE_PATH = path.join(__dirname, '..', '..', 'images', 'moedas', MARKET_IMAGE_NAME);
@@ -564,13 +564,18 @@ module.exports = {
             const resName = resInfo ? (lang === 'pt-BR' ? resInfo.namePt : resInfo.nameEn) : resourceKey;
             const emoji = resInfo?.emoji ?? '';
 
+            const numLoc = lang === 'pt-BR' ? 'pt-BR' : 'en-US';
+            const totalListed = amount * pricePerUnit;
+
             await interaction.editReply({
                 content: tFor(interaction, 'commands.market.sellSuccess', {
                     amount,
                     emoji,
                     resource: resName,
-                    price: pricePerUnit.toLocaleString(lang === 'pt-BR' ? 'pt-BR' : 'en-US'),
-                    total: (amount * pricePerUnit).toLocaleString(lang === 'pt-BR' ? 'pt-BR' : 'en-US'),
+                    price: pricePerUnit.toLocaleString(numLoc),
+                    total: totalListed.toLocaleString(numLoc),
+                    feePercent: MARKET_CONFIG.saleFeePercent,
+                    netTotal: getSellerProceeds(totalListed).toLocaleString(numLoc),
                 }),
             });
             return;

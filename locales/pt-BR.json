@@ -236,7 +236,7 @@
             "pricePerUnit": "{price} ∩oins/un",
             "totalPrice": "{price} ∩oins total",
             "availableQty": "Qtd: `{qty}`",
-            "sellSuccess": "<:excited:1536247579061256252> **Anúncio criado com sucesso!**\nVocê colocou **{amount}x {emoji} {resource}** à venda por **{price} ∩oins** cada (Total: **{total} ∩oins**).",
+            "sellSuccess": "<:excited:1536247579061256252> **Anúncio criado com sucesso!**\nVocê colocou **{amount}x {emoji} {resource}** à venda por **{price} ∩oins** cada (Total: **{total} ∩oins**).\nLembrete: ao vender, é descontada uma taxa de {feePercent}% — você vai receber **{netTotal} ∩oins** por venda completa, não os {total} cheios.",
             "buySuccess": "<:excited:1536247579061256252> **Compra realizada com sucesso!**\nVocê comprou **{amount}x {emoji} {resource}** por **{total} ∩oins**!",
             "cancelSuccess": "<:restart:1536248409634246719> **Anúncio cancelado!**\nRecuperados **{amount}x {emoji} {resource}** para o seu inventário.",
             "insufficientResources": "<:sob:1536248436339376138> **Recursos insuficientes!** Você não possui a quantidade necessária no inventário.",
