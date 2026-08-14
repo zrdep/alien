@@ -4,6 +4,7 @@ const path = require('path');
 const logger = require('./logger');
 const { generateMissionCoins } = require('./coins');
 const { getResourceInfo } = require('./market');
+const { MARKET_CONFIG, getMinListingPrice, getSellerProceeds } = require('../gameConfig/market');
 
 const dataDir = path.join(__dirname, '..', 'data');
 if (!fs.existsSync(dataDir)) {
@@ -244,7 +245,6 @@ db.exec(`
 const colunasMarket = db.prepare("PRAGMA table_info(market_listings)").all();
 const temExpiresAt = colunasMarket.some(c => c.name === 'expires_at');
 const temStatus = colunasMarket.some(c => c.name === 'status');
-const temSellerName = colunasMarket.some(c => c.name === 'seller_name');
 
 if (!temExpiresAt) {
     db.exec(`ALTER TABLE market_listings ADD COLUMN expires_at INTEGER NOT NULL DEFAULT 0;`);
@@ -256,8 +256,9 @@ if (!temStatus) {
     logger.success('Coluna `status` adicionada à tabela `market_listings`');
 }
 
+const temSellerName = colunasMarket.some(c => c.name === 'seller_name');
 if (!temSellerName) {
-    db.exec(`ALTER TABLE market_listings ADD COLUMN seller_name TEXT NOT NULL DEFAULT '';`);
+    db.exec(`ALTER TABLE market_listings ADD COLUMN seller_name TEXT;`);
     logger.success('Coluna `seller_name` adicionada à tabela `market_listings`');
 }
 
@@ -994,12 +995,33 @@ const processExpiredMarketListings = () => {
     `).run(now);
 };
 
-const createMarketListing = (sellerId, resourceKey, amount, pricePerUnit, sellerName = '') => {
+const createMarketListing = (sellerId, resourceKey, amount, pricePerUnit, sellerName = null) => {
     const qty = Math.floor(Number(amount));
     const price = Math.floor(Number(pricePerUnit));
 
     if (qty <= 0 || price <= 0 || !Number.isFinite(qty) || !Number.isFinite(price)) {
         return { success: false, reason: 'invalid_values' };
+    }
+
+    const resourceInfo = getResourceInfo(resourceKey);
+    if (!resourceInfo) {
+        return { success: false, reason: 'invalid_resource' };
+    }
+
+    const minPrice = getMinListingPrice(resourceInfo.systemShopPrice);
+    if (price < minPrice) {
+        return { success: false, reason: 'price_too_low', minPrice };
+    }
+
+    processExpiredMarketListings();
+    const activeCount = db.prepare(`
+        SELECT COUNT(*) AS total
+        FROM market_listings
+        WHERE seller_id = ? AND resource_key = ? AND status = 'active'
+    `).get(sellerId, resourceKey);
+
+    if ((activeCount?.total ?? 0) >= MARKET_CONFIG.maxActiveListingsPerResource) {
+        return { success: false, reason: 'too_many_listings', limit: MARKET_CONFIG.maxActiveListingsPerResource };
     }
 
     const currentInventory = db.prepare(`
@@ -1063,7 +1085,7 @@ const getUserMarketListings = (sellerId) => {
     const now = Date.now();
 
     return db.prepare(`
-        SELECT id, seller_id AS sellerId, resource_key AS resourceKey, amount, price_per_unit AS pricePerUnit, created_at AS createdAt, expires_at AS expiresAt, status
+        SELECT id, seller_id AS sellerId, seller_name AS sellerName, resource_key AS resourceKey, amount, price_per_unit AS pricePerUnit, created_at AS createdAt, expires_at AS expiresAt, status
         FROM market_listings
         WHERE seller_id = ? AND amount > 0
         ORDER BY CASE WHEN status = 'expired' OR (expires_at > 0 AND expires_at <= ?) THEN 0 ELSE 1 END ASC, created_at DESC
@@ -1072,7 +1094,7 @@ const getUserMarketListings = (sellerId) => {
 
 const getMarketListingById = (listingId) => {
     return db.prepare(`
-        SELECT id, seller_id AS sellerId, resource_key AS resourceKey, amount, price_per_unit AS pricePerUnit, created_at AS createdAt, expires_at AS expiresAt, status
+        SELECT id, seller_id AS sellerId, seller_name AS sellerName, resource_key AS resourceKey, amount, price_per_unit AS pricePerUnit, created_at AS createdAt, expires_at AS expiresAt, status
         FROM market_listings
         WHERE id = ?
     `).get(listingId) ?? null;
@@ -1097,6 +1119,7 @@ const buyMarketListing = (buyerId, listingId, buyAmount) => {
     }
 
     const totalCost = qty * listing.pricePerUnit;
+    const sellerProceeds = getSellerProceeds(totalCost);
     const buyerCoins = getUserCoins(buyerId);
     if (buyerCoins < totalCost) {
         return { success: false, reason: 'insufficient_coins', totalCost };
@@ -1106,7 +1129,7 @@ const buyMarketListing = (buyerId, listingId, buyAmount) => {
         db.prepare('UPDATE users SET coins = coins - ? WHERE user_id = ?').run(totalCost, buyerId);
 
         getUser(listing.sellerId);
-        db.prepare('UPDATE users SET coins = coins + ? WHERE user_id = ?').run(totalCost, listing.sellerId);
+        db.prepare('UPDATE users SET coins = coins + ? WHERE user_id = ?').run(sellerProceeds, listing.sellerId);
 
         db.prepare(`
             INSERT INTO user_inventory (user_id, resource_key, amount)
@@ -1126,6 +1149,8 @@ const buyMarketListing = (buyerId, listingId, buyAmount) => {
     return {
         success: true,
         totalCost,
+        sellerProceeds,
+        saleFee: totalCost - sellerProceeds,
         sellerId: listing.sellerId,
         resourceKey: listing.resourceKey,
         buyAmount: qty,

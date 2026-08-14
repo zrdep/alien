@@ -1,349 +1,356 @@
 {
-  "terms": {
-    "title": "Ei, humano!",
-    "introBefore": "Antes de usar o",
-    "introAfter": "você precisa aceitar nossos **Termos de Uso** e **Política de Privacidade**.",
-    "consent": "Ao continuar, você concorda com os termos do bot.",
-    "buttons": {
-      "view": "Ver termos",
-      "accept": "Aceitar",
-      "acceptFull": "Aceitar e continuar"
-    },
-    "embed": {
-      "title": "Termos de Uso ∩lien",
-      "responsible": "Uso Responsável",
-      "responsibleText": "Use este bot de forma respeitosa. Não abuse dos comandos.",
-      "data": "Dados Coletados",
-      "dataText": "Armazenamos apenas seu ID de usuário para salvar suas preferências, progresso e configurações dentro do bot.",
-      "privacy": "Privacidade",
-      "privacyText": "Não compartilhamos nenhum dado com terceiros. Tudo fica armazenado localmente no banco do bot."
-    },
-    "tipConfig": "<:sunglasses:1536248455519801386> Quer mudar meu idioma? Use </config user:1536804847142314078> a qualquer momento!",
-    "accepted": "**Termos aceitos!** Agora você já pode usar todos os comandos do **∩lien**.\n\n<:excited:1536247579061256252> **Novo por aqui?** Use </tutorial:1536804847142314080> para ver o guia passo a passo ou </help:1536804847142314081> para ver todos os comandos!",
-    "alreadyAccepted": "Você já aceitou os termos! Use </tutorial:1536804847142314080> para aprender a jogar ou </help:1536804847142314081> para ver a lista de comandos."
-  },
-  "cooldown": {
-    "title": "Calma aí, humano!",
-    "text": "Você só pode usar outro comando daqui a `{seconds}s`."
-  },
-  "errors": {
-    "generic": "Ocorreu um erro ao executar este comando! Contate o suporte."
-  },
-  "guildGuard": {
-    "userInstall": "<:ovni:1536247726889762847> **Instalação de usuário detectada!**\n\nNeste servidor, o **∩lien** precisa ser usado como app do servidor, no canal configurado pela equipe. Peça a um moderador para configurar em </config server:1536804847142314078> ou adicione o bot ao servidor normalmente.",
-    "wrongChannel": "<:hmm:1536247599365890139> **Canal errado!**\n\nNeste servidor, os comandos do **∩lien** só funcionam em {channel}.",
-    "dmNotAllowed": "<:question:1536248373240270888> **Este comando só funciona em servidores!**\n\nEntre em um servidor com o **∩lien** e use o canal permitido pela equipe."
-  },
-  "components": {
-    "notYourButton": {
-      "msg1": "<:ovni:1536247726889762847> **Ei!** Esse botão não é seu, humano curioso! <:sunglasses:1536248455519801386>",
-      "msg2": "<:hmm:1536247599365890139> **Hmm...** acho que você clicou no botão errado! Esse painel é de outra pessoa. <:question:1536248373240270888>",
-      "msg3": "<:sob:1536248436339376138> **Ops!** Esse botão é de outro explorador espacial. Usa seus próprios comandos! <:ovni:1536247726889762847>",
-      "msg4": "<:passionate:1536247742110634034> **Calma aí!** Só quem usou o comando pode mexer nisso. <:excited:1536247579061256252>"
-    }
-  },
-  "commands": {
-    "ping": {
-      "calculating": "Calculando...",
-      "title": "Pong!",
-      "botLatency": "Bot",
-      "wsLatency": "WebSocket"
-    },
-    "botinfo": {
-      "greetingTitle": "Olá humano!",
-      "cornerLine": "Você encontrou meu cantinho!",
-      "bioLine": "Eu sou só um alienígena **tentando entender os humanos** enquanto faço algumas coisinhas por aqui.",
-      "curiousIntro": "Já que você está curioso, aqui estão algumas informações sobre mim:",
-      "infoSectionTitle": "Informações do bot",
-      "servers": "Servidores",
-      "users": "Usuários",
-      "commands": "Comandos",
-      "performanceTitle": "Desempenho",
-      "pingWs": "Ping",
-      "uptime": "Uptime",
-      "statusLabel": "Status",
-      "statusOnline": "Online",
-      "closingLine1": "Hehe! Era isso que você queria saber sobre mim!",
-      "closingLine2": "Agora vai... tenho **planetas pra explorar**."
-    },
-    "config": {
-      "userGroup": "Preferências do usuário",
-      "serverGroup": "Preferências do servidor",
-      "userSubcommand": "Altere suas configurações pessoais",
-      "serverSubcommand": "Altere as configurações do servidor (apenas admins)",
-      "panelUserTitle": "Minhas Configurações",
-      "panelUserIntro": "Aqui você personaliza como eu interajo com você pessoalmente.",
-      "panelUserFooter": "Mais opções de personalização chegando em breve! <:loading:1536247662372982794>",
-      "languageLabel": "Idioma",
-      "languageDesc": "Escolha o idioma que o ∩lien usa quando for responder VOCÊ.",
-      "languagePlaceholder": "Selecione um idioma...",
-      "currentValue": "Selecionado agora:",
-      "languageSaved": "Preferências salvas! Idioma atualizado com sucesso. <:passionate:1536247742110634034>",
-      "invalidLanguage": "Idioma inválido.",
-      "panelServerTitle": "Configurações do Servidor",
-      "panelServerIntro": "Defina onde o ∩lien pode ser usado neste servidor. Requer permissão de **Gerenciar Servidor**.",
-      "serverChannelLabel": "Canal permitido",
-      "serverChannelDesc": "Quando definido, os comandos do bot só funcionam nesse canal. Botões de mensagens antigas em outros canais também são bloqueados.",
-      "serverChannelPlaceholder": "Selecione o canal do bot...",
-      "serverChannelAll": "Todos os canais (sem restrição)",
-      "serverChannelClear": "Liberar todos os canais",
-      "serverChannelSaved": "Canal definido: {channel}",
-      "serverChannelCleared": "Restrição removida! O bot funciona em todos os canais.",
-      "serverGuildOnly": "Este comando só pode ser usado dentro de um servidor.",
-      "serverNoPermission": "Você precisa da permissão **Gerenciar Servidor** para alterar estas configurações."
-    },
-    "alien": {
-      "onboardingTitle": "Escolha seu Alien",
-      "onboardingIntro": "Antes de explorar planetas, escolha a cor do seu companheiro intergaláctico.",
-      "colorPlaceholder": "Selecione a cor do seu alien...",
-      "colorChoice": {
-        "purple": "Alien roxo — misterioso e encantador",
-        "green": "Alien verde — curioso e aventureiro",
-        "blue": "Alien azul — calmo e sábio",
-        "pink": "Alien rosa — fofo e cheio de energia",
-        "orange": "Alien laranja — animado e destemido"
-      },
-      "panelTitle": "Meu Alien",
-      "panelGreeting": "Este é **{name}**, seu companheiro intergaláctico!",
-      "infoTitle": "Informações",
-      "nameLabel": "Nome",
-      "colorLabel": "Cor",
-      "defaultName": "Alienígena",
-      "renameLabel": "Mudar nome",
-      "hangarTitle": "Hangar — Nave",
-      "hangarUsageUsed": "Explorações desta hora: `{uses}/{limit}`",
-      "hangarUsageRemaining": "Restam: `{remaining}`",
-      "hangarUsageReset": "Recarga às: `{time}`",
-      "upgradesTitle": "Melhorias da Nave",
-      "upgrade": {
-        "excavation": {
-          "name": "Sonda de Escavação",
-          "stat": "{emoji} {rarity} — Profundidade: `{depth} m` · Bônus: `+{bonus}%`"
+    "terms": {
+        "title": "Ei, humano!",
+        "introBefore": "Antes de usar o",
+        "introAfter": "você precisa aceitar nossos **Termos de Uso** e **Política de Privacidade**.",
+        "consent": "Ao continuar, você concorda com os termos do bot.",
+        "buttons": {
+            "view": "Ver termos",
+            "accept": "Aceitar",
+            "acceptFull": "Aceitar e continuar"
         },
-        "propulsor": {
-          "name": "Propulsor",
-          "stat": "{emoji} {rarity} — `{speed}`"
+        "embed": {
+            "title": "Termos de Uso ∩lien",
+            "responsible": "Uso Responsável",
+            "responsibleText": "Use este bot de forma respeitosa. Não abuse dos comandos.",
+            "data": "Dados Coletados",
+            "dataText": "Armazenamos apenas seu ID de usuário para salvar suas preferências, progresso e configurações dentro do bot.",
+            "privacy": "Privacidade",
+            "privacyText": "Não compartilhamos nenhum dado com terceiros. Tudo fica armazenado localmente no banco do bot."
         },
-        "scanner": {
-          "name": "Scanner Estelar",
-          "stat": "{emoji} {rarity} — Alcance: `{range} anos-luz`"
+        "tipConfig": "<:sunglasses:1536248455519801386> Quer mudar meu idioma? Use </config user:1536804847142314078> a qualquer momento!",
+        "accepted": "**Termos aceitos!** Agora você já pode usar todos os comandos do **∩lien**.\n\n<:excited:1536247579061256252> **Novo por aqui?** Use </tutorial:1536804847142314080> para ver o guia passo a passo ou </help:1536804847142314081> para ver todos os comandos!",
+        "alreadyAccepted": "Você já aceitou os termos! Use </tutorial:1536804847142314080> para aprender a jogar ou </help:1536804847142314081> para ver a lista de comandos."
+    },
+    "cooldown": {
+        "title": "Calma aí, humano!",
+        "text": "Você só pode usar outro comando daqui a `{seconds}s`."
+    },
+    "errors": {
+        "generic": "Ocorreu um erro ao executar este comando! Contate o suporte."
+    },
+    "guildGuard": {
+        "userInstall": "<:ovni:1536247726889762847> **Instalação de usuário detectada!**\n\nNeste servidor, o **∩lien** precisa ser usado como app do servidor, no canal configurado pela equipe. Peça a um moderador para configurar em </config server:1536804847142314078> ou adicione o bot ao servidor normalmente.",
+        "wrongChannel": "<:hmm:1536247599365890139> **Canal errado!**\n\nNeste servidor, os comandos do **∩lien** só funcionam em {channel}.",
+        "dmNotAllowed": "<:question:1536248373240270888> **Este comando só funciona em servidores!**\n\nEntre em um servidor com o **∩lien** e use o canal permitido pela equipe."
+    },
+    "components": {
+        "notYourButton": {
+            "msg1": "<:ovni:1536247726889762847> **Ei!** Esse botão não é seu, humano curioso! <:sunglasses:1536248455519801386>",
+            "msg2": "<:hmm:1536247599365890139> **Hmm...** acho que você clicou no botão errado! Esse painel é de outra pessoa. <:question:1536248373240270888>",
+            "msg3": "<:sob:1536248436339376138> **Ops!** Esse botão é de outro explorador espacial. Usa seus próprios comandos! <:ovni:1536247726889762847>",
+            "msg4": "<:passionate:1536247742110634034> **Calma aí!** Só quem usou o comando pode mexer nisso. <:excited:1536247579061256252>"
         }
-      },
-      "renameModalTitle": "Renomear alien",
-      "renameInputLabel": "Novo nome",
-      "renameInputPlaceholder": "Digite o nome",
-      "savedLabel": "Salvo com sucesso!",
-      "invalidColor": "Cor inválida. Tente novamente.",
-      "invalidName": "Nome inválido. Use entre 1 e 12 caracteres.",
-      "noAlienButton": "Você ainda não tem um alien. Use </alien:1536760221983051816> primeiro."
     },
-    "planet": {
-      "alienRequired": "Você precisa de um alien para explorar planetas!",
-      "alienRequiredTip": "Use </alien:1536760221983051816> para escolher seu companheiro intergaláctico.",
-      "dmDisabled": "Este comando só funciona dentro de servidores.",
-      "title": "Planeta Gerado",
-      "subtitle": "Capturamos um planeta na sua órbita!",
-      "detailsTitle": "Detalhes",
-      "idLabel": "ID",
-      "distanceLabel": "Distância da Terra",
-      "travelOneWayLabel": "Tempo de ida",
-      "travelRoundTripLabel": "Tempo de ida e volta",
-      "miningTimeLabel": "Tempo para minerar",
-      "registryTitle": "Rastreamento",
-      "prefixLabel": "Prefixo",
-      "numberLabel": "Número",
-      "suffixLabel": "Sufixo",
-      "rarityLabel": "Raridade",
-      "usageUsed": "Usos desta hora",
-      "usageRemaining": "Restam",
-      "rarityA": "Comum",
-      "rarityB": "Incomum",
-      "rarityC": "Raro",
-      "rarityD": "Épico",
-      "rarityE": "Lendário",
-      "resourcesTitle": "Recursos para Coletar",
-      "resourcesEmpty": "Este planeta não tinha recursos úteis para coletar. A sorte fica pra próxima!",
-      "coinsLabel": "∩oins do Planeta",
-      "footerTip": "Cada planeta é único! Rode o comando de novo para descobrir um novo mundo.",
-      "footerLater": "Em breve você poderá nomear, explorar e fazer muito mais com este planeta!",
-      "exploreLabel": "Explorar",
-      "nextLabel": "Próximo",
-      "exploreExpired": "Essa oportunidade de exploração expirou! Gere um novo planeta com </planet:1536804847142314076>.",
-      "exploreBusy": "Seu alien já está em uma missão! Aguarde ele terminar.",
-      "exploreStartedTitle": "Missão iniciada!",
-      "exploreStartedBody": "**{alien}** decolou em direção a **{planet}**! Tempo de viagem: **{travel}**.",
-      "missionCollectingFor": "**Para coletar:**",
-      "missionEta": "Chega em: **{time}**",
-      "missionTravelingTitle": "Alien em viagem",
-      "missionTravelingBody": "**{alien}** está viajando até **{planet}**",
-      "missionCollectingTitle": "Coletando recursos",
-      "missionCollectingBody": "**{alien}** está coletando recursos em **{planet}**",
-      "missionCollectingEta": "Termina em: **{time}**",
-      "missionReturningTitle": "Retornando à base",
-      "missionReturningBody": "**{alien}** está voltando com os recursos de **{planet}**",
-      "missionArrivedTitle": "Missão concluída!",
-      "missionArrivedBody": "**{alien}** chegou da expedição em **{planet}** e depositou os recursos no inventário!",
-      "missionArrivedTip": "Use </inventory:1536804847142314075> para ver tudo que você coletou.",
-      "notifyButton": "Notificar quando chegar",
-      "notifyButtonActive": "Notificação ativada",
-      "notifyNoMission": "Você não tem nenhuma missão em andamento pra notificar."
-    },
-    "inventory": {
-      "title": "Inventário Galáctico",
-      "subtitle": "Todos os recursos que seus aliens coletaram nas expedições.",
-      "coinsLabel": "Saldo de ∩oins",
-      "resourcesTitle": "Seus Recursos",
-      "empty": "Seu inventário está vazio. Explore planetas com </planet:1536804847142314076> e clique em **Explorar**!"
-    },
-    "daily": {
-      "claimedTitle": "Recompensa Diária!",
-      "claimedBody": "Você resgatou sua recompensa diária de **{emoji} +{amount} ∩oins**!",
-      "alreadyClaimedTitle": "Recompensa já Coletada!",
-      "alreadyClaimedBody": "Você já resgatou seu daily hoje. Volte quando o relógio bater **00:00**!",
-      "restrictedTitle": "Canal Exclusivo do Daily!",
-      "restrictedBody": "<:hmm:1536247599365890139> **Ei, explorador espacial!**\n\nA recompensa diária de **∩oins** só pode ser coletada no canal <#1537511176324386917> dentro do nosso **servidor oficial**!\n\n<:excited:1536247579061256252> **Como entrar no servidor?**\nO convite do nosso servidor está disponível na **bio do bot**! Abra o perfil do **∩lien**, clique no link da bio e venha garantir suas moedas diariamente! <:gold_coins:1536941656178298992>",
-      "balanceLabel": "Saldo Atual",
-      "streakLabel": "Sequência de dias",
-      "streakBonusLabel": "bônus de sequência",
-      "nextResetLabel": "Próxima recompensa disponível em: **{time}**",
-      "resourcesTitle": "Recursos",
-      "resources": {
-        "stone": "Pedra",
-        "wood": "Madeira",
-        "dirt": "Terra",
-        "iron": "Ferro",
-        "copper": "Cobre",
-        "metal": "Metal"
-      }
-    },
-    "market": {
-      "title": "Mercado Galáctico",
-      "subtitle": "Compre e venda recursos no mercado global ou direto na Loja do Sistema!",
-      "browseTitle": "Mercado Global — {resource}",
-      "shopTitle": "Loja Oficial do Sistema",
-      "myListingsTitle": "Meus Anúncios no Mercado",
-      "noListings": "Nenhum anúncio ativo encontrado para este recurso no momento.",
-      "noMyListings": "Você não tem nenhum anúncio ativo no Mercado Global.",
-      "selectResourcePlaceholder": "Selecione um recurso para navegar no mercado...",
-      "buyFromShopButton": "Loja do Sistema (Preço Fixo)",
-      "browseGlobalButton": "Mercado Global",
-      "myListingsButton": "Meus Anúncios",
-      "buyButton": "Comprar do Menor Preço",
-      "cancelButton": "Cancelar Anúncio",
-      "systemPriceLabel": "Preço Oficial do Sistema",
-      "lowestPriceLabel": "Menor Preço Encontrado",
-      "sellerLabel": "Vendedor",
-      "pricePerUnit": "{price} ∩oins/un",
-      "totalPrice": "{price} ∩oins total",
-      "availableQty": "Qtd: `{qty}`",
-      "sellSuccess": "<:excited:1536247579061256252> **Anúncio criado com sucesso!**\nVocê colocou **{amount}x {emoji} {resource}** à venda por **{price} ∩oins** cada (Total: **{total} ∩oins**).",
-      "buySuccess": "<:excited:1536247579061256252> **Compra realizada com sucesso!**\nVocê comprou **{amount}x {emoji} {resource}** por **{total} ∩oins**!",
-      "cancelSuccess": "<:restart:1536248409634246719> **Anúncio cancelado!**\nRecuperados **{amount}x {emoji} {resource}** para o seu inventário.",
-      "insufficientResources": "<:sob:1536248436339376138> **Recursos insuficientes!** Você não possui a quantidade necessária no inventário.",
-      "insufficientCoins": "<:sob:1536248436339376138> **∩oins insuficientes!** Você precisa de **{total} ∩oins** para realizar esta compra.",
-      "cannotBuyOwn": "<:hmm:1536247599365890139> Você não pode comprar seu próprio anúncio. Se deseja recuperar os recursos, cancele-o em 'Meus Anúncios'.",
-      "listingNotFound": "<:error:1536247565006143528> Este anúncio não existe mais ou já foi totalmente vendido.",
-      "invalidValues": "<:error:1536247565006143528> Quantidade e preço unitário devem ser números positivos maiores que zero.",
-      "shopNote": "<:config:1536247533502734376> **Nota da Loja:** Os preços da Loja do Sistema são elevados para incentivar o comércio entre os próprios exploradores."
-    },
-    "wallet": {
-      "myTitle": "Minha Carteira Galáctica",
-      "userTitle": "Carteira Galáctica de {user}",
-      "balanceLabel": "Saldo de ∩oins",
-      "alienCompanion": "Companheiro",
-      "dailyStatusLabel": "Status do Daily",
-      "dailyAvailable": "Disponível para resgate! Use `/daily`",
-      "dailyClaimed": "Já resgatado hoje (reseta em `{time}`)"
-    },
-    "profile": {
-      "myTitle": "Meu Perfil Galáctico",
-      "userTitle": "Perfil Galáctico de {user}",
-      "alienLabel": "Companheiro Alien",
-      "coinsLabel": "Saldo de ∩oins",
-      "statsTitle": "Estatísticas Espaciais",
-      "planetsSeen": "Planetas vistos",
-      "distanceTraveled": "Distância percorrida",
-      "tripsCompleted": "Viagens concluídas",
-      "resourcesCollected": "Recursos coletados",
-      "shipTitle": "Nave & Equipamentos",
-      "propulsor": "Propulsor",
-      "excavation": "Sonda de Escavação",
-      "scanner": "Scanner Estelar",
-      "botTitle": "Este não é um usuário!",
-      "botBody": "**{user}** é um bot!"
-    },
-    "craft": {
-      "title": "Oficina de Fabricação",
-      "subtitle": "Use seus minérios galácticos para fabricar melhorias na sua nave!",
-      "categoryPlaceholder": "Selecione uma categoria de itens...",
-      "recipePlaceholder": "Selecione uma receita para fabricar...",
-      "categories": {
-        "propulsor": "Propulsores de Velocidade",
-        "excavation": "Sondas de Escavação",
-        "scanner": "Scanners Estelares"
-      },
-      "ingredientsTitle": "Ingredientes Necessários",
-      "craftTimeLabel": "Tempo de fabricação",
-      "buttonCraft": "Iniciar Fabricação",
-      "alreadyMaxLevel": "Você já possui este nível ou melhoria!",
-      "requirementNotMet": "Você precisa fabricar a melhoria anterior primeiro!",
-      "insufficientResources": "Recursos insuficientes no inventário para esta receita.",
-      "busyError": "Seu alien já está fabricando um item na oficina! Aguarde ele terminar.",
-      "inProgressTitle": "Fabricação em Andamento!",
-      "inProgressBody": "Seu alien está construindo **{item}** na oficina da nave.",
-      "inProgressEta": "Conclui em: **{time}**",
-      "successTitle": "Item Fabricado com Sucesso!",
-      "successBody": "Sua fabricação de **{item}** foi concluída e aplicada à sua nave!",
-      "recipes": {
-        "propulsor_b": {
-          "title": "Propulsor B — 12.000 km/s",
-          "desc": "Aumenta a velocidade de viagem para 12.000 km/s."
+    "commands": {
+        "ping": {
+            "calculating": "Calculando...",
+            "title": "Pong!",
+            "botLatency": "Bot",
+            "wsLatency": "WebSocket"
         },
-        "propulsor_c": {
-          "title": "Propulsor C — 36.000 km/s",
-          "desc": "Propulsor avançado para viagens de 36.000 km/s."
+        "botinfo": {
+            "greetingTitle": "Olá humano!",
+            "cornerLine": "Você encontrou meu cantinho!",
+            "bioLine": "Eu sou só um alienígena **tentando entender os humanos** enquanto faço algumas coisinhas por aqui.",
+            "curiousIntro": "Já que você está curioso, aqui estão algumas informações sobre mim:",
+            "infoSectionTitle": "Informações do bot",
+            "servers": "Servidores",
+            "users": "Usuários",
+            "commands": "Comandos",
+            "performanceTitle": "Desempenho",
+            "pingWs": "Ping",
+            "uptime": "Uptime",
+            "statusLabel": "Status",
+            "statusOnline": "Online",
+            "closingLine1": "Hehe! Era isso que você queria saber sobre mim!",
+            "closingLine2": "Agora vai... tenho **planetas pra explorar**."
         },
-        "propulsor_d": {
-          "title": "Propulsor D — 60.000 km/s",
-          "desc": "Propulsor Épico capaz de cruzar a galáxia a 60.000 km/s."
+        "config": {
+            "userGroup": "Preferências do usuário",
+            "serverGroup": "Preferências do servidor",
+            "userSubcommand": "Altere suas configurações pessoais",
+            "serverSubcommand": "Altere as configurações do servidor (apenas admins)",
+            "panelUserTitle": "Minhas Configurações",
+            "panelUserIntro": "Aqui você personaliza como eu interajo com você pessoalmente.",
+            "panelUserFooter": "Mais opções de personalização chegando em breve! <:loading:1536247662372982794>",
+            "languageLabel": "Idioma",
+            "languageDesc": "Escolha o idioma que o ∩lien usa quando for responder VOCÊ.",
+            "languagePlaceholder": "Selecione um idioma...",
+            "currentValue": "Selecionado agora:",
+            "languageSaved": "Preferências salvas! Idioma atualizado com sucesso. <:passionate:1536247742110634034>",
+            "invalidLanguage": "Idioma inválido.",
+            "panelServerTitle": "Configurações do Servidor",
+            "panelServerIntro": "Defina onde o ∩lien pode ser usado neste servidor. Requer permissão de **Gerenciar Servidor**.",
+            "serverChannelLabel": "Canal permitido",
+            "serverChannelDesc": "Quando definido, os comandos do bot só funcionam nesse canal. Botões de mensagens antigas em outros canais também são bloqueados.",
+            "serverChannelPlaceholder": "Selecione o canal do bot...",
+            "serverChannelAll": "Todos os canais (sem restrição)",
+            "serverChannelClear": "Liberar todos os canais",
+            "serverChannelSaved": "Canal definido: {channel}",
+            "serverChannelCleared": "Restrição removida! O bot funciona em todos os canais.",
+            "serverGuildOnly": "Este comando só pode ser usado dentro de um servidor.",
+            "serverNoPermission": "Você precisa da permissão **Gerenciar Servidor** para alterar estas configurações."
         },
-        "propulsor_e": {
-          "title": "Propulsor E — 120.000 km/s",
-          "desc": "Propulsor Lendário atinge velocidade máxima de 120.000 km/s."
+        "alien": {
+            "onboardingTitle": "Escolha seu Alien",
+            "onboardingIntro": "Antes de explorar planetas, escolha a cor do seu companheiro intergaláctico.",
+            "colorPlaceholder": "Selecione a cor do seu alien...",
+            "colorChoice": {
+                "purple": "Alien roxo — misterioso e encantador",
+                "green": "Alien verde — curioso e aventureiro",
+                "blue": "Alien azul — calmo e sábio",
+                "pink": "Alien rosa — fofo e cheio de energia",
+                "orange": "Alien laranja — animado e destemido"
+            },
+            "panelTitle": "Meu Alien",
+            "panelGreeting": "Este é **{name}**, seu companheiro intergaláctico!",
+            "infoTitle": "Informações",
+            "nameLabel": "Nome",
+            "colorLabel": "Cor",
+            "defaultName": "Alienígena",
+            "renameLabel": "Mudar nome",
+            "hangarTitle": "Hangar — Nave",
+            "hangarUsageUsed": "Explorações desta hora: `{uses}/{limit}`",
+            "hangarUsageRemaining": "Restam: `{remaining}`",
+            "hangarUsageReset": "Recarga às: `{time}`",
+            "upgradesTitle": "Melhorias da Nave",
+            "upgrade": {
+                "excavation": {
+                    "name": "Sonda de Escavação",
+                    "stat": "{emoji} {rarity} — Profundidade: `{depth} m` · Bônus: `+{bonus}%`"
+                },
+                "propulsor": {
+                    "name": "Propulsor",
+                    "stat": "{emoji} {rarity} — `{speed}`"
+                },
+                "scanner": {
+                    "name": "Scanner Estelar",
+                    "stat": "{emoji} {rarity} — Alcance: `{range} anos-luz`"
+                }
+            },
+            "renameModalTitle": "Renomear alien",
+            "renameInputLabel": "Novo nome",
+            "renameInputPlaceholder": "Digite o nome",
+            "savedLabel": "Salvo com sucesso!",
+            "invalidColor": "Cor inválida. Tente novamente.",
+            "invalidName": "Nome inválido. Use entre 1 e 12 caracteres.",
+            "noAlienButton": "Você ainda não tem um alien. Use </alien:1536760221983051816> primeiro."
         },
-        "excavation_2": {
-          "title": "Sonda de Escavação Nível 2",
-          "desc": "Profundidade de 80m e +5% de recursos bônus."
+        "planet": {
+            "alienRequired": "Você precisa de um alien para explorar planetas!",
+            "alienRequiredTip": "Use </alien:1536760221983051816> para escolher seu companheiro intergaláctico.",
+            "dmDisabled": "Este comando só funciona dentro de servidores.",
+            "title": "Planeta Gerado",
+            "subtitle": "Capturamos um planeta na sua órbita!",
+            "detailsTitle": "Detalhes",
+            "idLabel": "ID",
+            "distanceLabel": "Distância da Terra",
+            "travelOneWayLabel": "Tempo de ida",
+            "travelRoundTripLabel": "Tempo de ida e volta",
+            "miningTimeLabel": "Tempo para minerar",
+            "registryTitle": "Rastreamento",
+            "prefixLabel": "Prefixo",
+            "numberLabel": "Número",
+            "suffixLabel": "Sufixo",
+            "rarityLabel": "Raridade",
+            "usageUsed": "Usos desta hora",
+            "usageRemaining": "Restam",
+            "rarityA": "Comum",
+            "rarityB": "Incomum",
+            "rarityC": "Raro",
+            "rarityD": "Épico",
+            "rarityE": "Lendário",
+            "resourcesTitle": "Recursos para Coletar",
+            "resourcesEmpty": "Este planeta não tinha recursos úteis para coletar. A sorte fica pra próxima!",
+            "coinsLabel": "∩oins do Planeta",
+            "footerTip": "Cada planeta é único! Rode o comando de novo para descobrir um novo mundo.",
+            "footerLater": "Em breve você poderá nomear, explorar e fazer muito mais com este planeta!",
+            "exploreLabel": "Explorar",
+            "nextLabel": "Próximo",
+            "exploreExpired": "Essa oportunidade de exploração expirou! Gere um novo planeta com </planet:1536804847142314076>.",
+            "exploreBusy": "Seu alien já está em uma missão! Aguarde ele terminar.",
+            "exploreStartedTitle": "Missão iniciada!",
+            "exploreStartedBody": "**{alien}** decolou em direção a **{planet}**! Tempo de viagem: **{travel}**.",
+            "missionCollectingFor": "**Para coletar:**",
+            "missionEta": "Chega em: **{time}**",
+            "missionTravelingTitle": "Alien em viagem",
+            "missionTravelingBody": "**{alien}** está viajando até **{planet}**",
+            "missionCollectingTitle": "Coletando recursos",
+            "missionCollectingBody": "**{alien}** está coletando recursos em **{planet}**",
+            "missionCollectingEta": "Termina em: **{time}**",
+            "missionReturningTitle": "Retornando à base",
+            "missionReturningBody": "**{alien}** está voltando com os recursos de **{planet}**",
+            "missionArrivedTitle": "Missão concluída!",
+            "missionArrivedBody": "**{alien}** chegou da expedição em **{planet}** e depositou os recursos no inventário!",
+            "missionArrivedTip": "Use </inventory:1536804847142314075> para ver tudo que você coletou.",
+            "notifyButton": "Notificar quando chegar",
+            "notifyButtonActive": "Notificação ativada",
+            "notifyNoMission": "Você não tem nenhuma missão em andamento pra notificar."
         },
-        "excavation_3": {
-          "title": "Sonda de Escavação Nível 3",
-          "desc": "Profundidade de 120m e +10% de recursos bônus."
+        "inventory": {
+            "title": "Inventário Galáctico",
+            "subtitle": "Todos os recursos que seus aliens coletaram nas expedições.",
+            "coinsLabel": "Saldo de ∩oins",
+            "resourcesTitle": "Seus Recursos",
+            "empty": "Seu inventário está vazio. Explore planetas com </planet:1536804847142314076> e clique em **Explorar**!"
         },
-        "excavation_4": {
-          "title": "Sonda de Escavação Nível 4",
-          "desc": "Profundidade de 180m e +18% de recursos bônus."
+        "daily": {
+            "claimedTitle": "Recompensa Diária!",
+            "claimedBody": "Você resgatou sua recompensa diária de **{emoji} +{amount} ∩oins**!",
+            "alreadyClaimedTitle": "Recompensa já Coletada!",
+            "alreadyClaimedBody": "Você já resgatou seu daily hoje. Volte quando o relógio bater **00:00**!",
+            "restrictedTitle": "Canal Exclusivo do Daily!",
+            "restrictedBody": "<:hmm:1536247599365890139> **Ei, explorador espacial!**\n\nA recompensa diária de **∩oins** só pode ser coletada no canal <#1537511176324386917> dentro do nosso **servidor oficial**!\n\n<:excited:1536247579061256252> **Como entrar no servidor?**\nO convite do nosso servidor está disponível na **bio do bot**! Abra o perfil do **∩lien**, clique no link da bio e venha garantir suas moedas diariamente! <:gold_coins:1536941656178298992>",
+            "balanceLabel": "Saldo Atual",
+            "streakLabel": "Sequência de dias",
+            "streakBonusLabel": "bônus de sequência",
+            "nextResetLabel": "Próxima recompensa disponível em: **{time}**",
+            "resourcesTitle": "Recursos",
+            "resources": {
+                "stone": "Pedra",
+                "wood": "Madeira",
+                "dirt": "Terra",
+                "iron": "Ferro",
+                "copper": "Cobre",
+                "metal": "Metal"
+            }
         },
-        "excavation_5": {
-          "title": "Sonda de Escavação Nível 5",
-          "desc": "Sonda Lendária com profundidade de 250m e +28% de bônus."
+        "market": {
+            "title": "Mercado Galáctico",
+            "subtitle": "Compre e venda recursos no mercado global ou direto na Loja do Sistema!",
+            "browseTitle": "Mercado Global — {resource}",
+            "shopTitle": "Loja Oficial do Sistema",
+            "myListingsTitle": "Meus Anúncios no Mercado",
+            "noListings": "Nenhum anúncio ativo encontrado para este recurso no momento.",
+            "noMyListings": "Você não tem nenhum anúncio ativo no Mercado Global.",
+            "selectResourcePlaceholder": "Selecione um recurso para navegar no mercado...",
+            "buyFromShopButton": "Loja do Sistema (Preço Fixo)",
+            "browseGlobalButton": "Mercado Global",
+            "myListingsButton": "Meus Anúncios",
+            "buyButton": "Comprar do Menor Preço",
+            "cancelButton": "Cancelar Anúncio",
+            "systemPriceLabel": "Preço Oficial do Sistema",
+            "lowestPriceLabel": "Menor Preço Encontrado",
+            "sellerLabel": "Vendedor",
+            "pricePerUnit": "{price} ∩oins/un",
+            "totalPrice": "{price} ∩oins total",
+            "availableQty": "Qtd: `{qty}`",
+            "sellSuccess": "<:excited:1536247579061256252> **Anúncio criado com sucesso!**\nVocê colocou **{amount}x {emoji} {resource}** à venda por **{price} ∩oins** cada (Total: **{total} ∩oins**).",
+            "buySuccess": "<:excited:1536247579061256252> **Compra realizada com sucesso!**\nVocê comprou **{amount}x {emoji} {resource}** por **{total} ∩oins**!",
+            "cancelSuccess": "<:restart:1536248409634246719> **Anúncio cancelado!**\nRecuperados **{amount}x {emoji} {resource}** para o seu inventário.",
+            "insufficientResources": "<:sob:1536248436339376138> **Recursos insuficientes!** Você não possui a quantidade necessária no inventário.",
+            "insufficientCoins": "<:sob:1536248436339376138> **∩oins insuficientes!** Você precisa de **{total} ∩oins** para realizar esta compra.",
+            "cannotBuyOwn": "<:hmm:1536247599365890139> Você não pode comprar seu próprio anúncio. Se deseja recuperar os recursos, cancele-o em 'Meus Anúncios'.",
+            "listingNotFound": "<:error:1536247565006143528> Este anúncio não existe mais ou já foi totalmente vendido.",
+            "invalidValues": "<:error:1536247565006143528> Quantidade e preço unitário devem ser números positivos maiores que zero.",
+            "shopNote": "<:config:1536247533502734376> **Nota da Loja:** Os preços da Loja do Sistema são elevados para incentivar o comércio entre os próprios exploradores.",
+            "buyByIdButton": "Comprar por ID",
+            "buyModalTitle": "Comprar no Mercado",
+            "buyModalListingIdLabel": "ID do Anúncio (ex: 42)",
+            "buyModalAmountLabel": "Quantidade que deseja comprar",
+            "invalidModalInput": "<:error:1536247565006143528> Digite um ID de anúncio e uma quantidade válidos (números inteiros positivos).",
+            "priceTooLow": "<:error:1536247565006143528> Preço muito baixo! O preço mínimo para vender este recurso é **{minPrice} ∩oins/un** ({percent}% do preço da Loja do Sistema).",
+            "tooManyListings": "<:error:1536247565006143528> Você já tem um anúncio ativo deste recurso. Cancele-o ou espere ele vender antes de criar outro (máximo: {limit} anúncio por recurso)."
         },
-        "scanner_2": {
-          "title": "Scanner Estelar Nível 2",
-          "desc": "Alcance de detecção planetária de 6 anos-luz."
+        "wallet": {
+            "myTitle": "Minha Carteira Galáctica",
+            "userTitle": "Carteira Galáctica de {user}",
+            "balanceLabel": "Saldo de ∩oins",
+            "alienCompanion": "Companheiro",
+            "dailyStatusLabel": "Status do Daily",
+            "dailyAvailable": "Disponível para resgate! Use `/daily`",
+            "dailyClaimed": "Já resgatado hoje (reseta em `{time}`)"
         },
-        "scanner_3": {
-          "title": "Scanner Estelar Nível 3",
-          "desc": "Alcance de detecção planetária de 10 anos-luz."
+        "profile": {
+            "myTitle": "Meu Perfil Galáctico",
+            "userTitle": "Perfil Galáctico de {user}",
+            "alienLabel": "Companheiro Alien",
+            "coinsLabel": "Saldo de ∩oins",
+            "statsTitle": "Estatísticas Espaciais",
+            "planetsSeen": "Planetas vistos",
+            "distanceTraveled": "Distância percorrida",
+            "tripsCompleted": "Viagens concluídas",
+            "resourcesCollected": "Recursos coletados",
+            "shipTitle": "Nave & Equipamentos",
+            "propulsor": "Propulsor",
+            "excavation": "Sonda de Escavação",
+            "scanner": "Scanner Estelar",
+            "botTitle": "Este não é um usuário!",
+            "botBody": "**{user}** é um bot!"
         },
-        "scanner_4": {
-          "title": "Scanner Estelar Nível 4",
-          "desc": "Scanner Épico com alcance de 15 anos-luz."
-        },
-        "scanner_5": {
-          "title": "Scanner Estelar Nível 5",
-          "desc": "Scanner Lendário com alcance máximo de 25 anos-luz."
+        "craft": {
+            "title": "Oficina de Fabricação",
+            "subtitle": "Use seus minérios galácticos para fabricar melhorias na sua nave!",
+            "categoryPlaceholder": "Selecione uma categoria de itens...",
+            "recipePlaceholder": "Selecione uma receita para fabricar...",
+            "categories": {
+                "propulsor": "Propulsores de Velocidade",
+                "excavation": "Sondas de Escavação",
+                "scanner": "Scanners Estelares"
+            },
+            "ingredientsTitle": "Ingredientes Necessários",
+            "craftTimeLabel": "Tempo de fabricação",
+            "buttonCraft": "Iniciar Fabricação",
+            "alreadyMaxLevel": "Você já possui este nível ou melhoria!",
+            "requirementNotMet": "Você precisa fabricar a melhoria anterior primeiro!",
+            "insufficientResources": "Recursos insuficientes no inventário para esta receita.",
+            "busyError": "Seu alien já está fabricando um item na oficina! Aguarde ele terminar.",
+            "inProgressTitle": "Fabricação em Andamento!",
+            "inProgressBody": "Seu alien está construindo **{item}** na oficina da nave.",
+            "inProgressEta": "Conclui em: **{time}**",
+            "successTitle": "Item Fabricado com Sucesso!",
+            "successBody": "Sua fabricação de **{item}** foi concluída e aplicada à sua nave!",
+            "recipes": {
+                "propulsor_b": {
+                    "title": "Propulsor B — 12.000 km/s",
+                    "desc": "Aumenta a velocidade de viagem para 12.000 km/s."
+                },
+                "propulsor_c": {
+                    "title": "Propulsor C — 36.000 km/s",
+                    "desc": "Propulsor avançado para viagens de 36.000 km/s."
+                },
+                "propulsor_d": {
+                    "title": "Propulsor D — 60.000 km/s",
+                    "desc": "Propulsor Épico capaz de cruzar a galáxia a 60.000 km/s."
+                },
+                "propulsor_e": {
+                    "title": "Propulsor E — 120.000 km/s",
+                    "desc": "Propulsor Lendário atinge velocidade máxima de 120.000 km/s."
+                },
+                "excavation_2": {
+                    "title": "Sonda de Escavação Nível 2",
+                    "desc": "Profundidade de 80m e +5% de recursos bônus."
+                },
+                "excavation_3": {
+                    "title": "Sonda de Escavação Nível 3",
+                    "desc": "Profundidade de 120m e +10% de recursos bônus."
+                },
+                "excavation_4": {
+                    "title": "Sonda de Escavação Nível 4",
+                    "desc": "Profundidade de 180m e +18% de recursos bônus."
+                },
+                "excavation_5": {
+                    "title": "Sonda de Escavação Nível 5",
+                    "desc": "Sonda Lendária com profundidade de 250m e +28% de bônus."
+                },
+                "scanner_2": {
+                    "title": "Scanner Estelar Nível 2",
+                    "desc": "Alcance de detecção planetária de 6 anos-luz."
+                },
+                "scanner_3": {
+                    "title": "Scanner Estelar Nível 3",
+                    "desc": "Alcance de detecção planetária de 10 anos-luz."
+                },
+                "scanner_4": {
+                    "title": "Scanner Estelar Nível 4",
+                    "desc": "Scanner Épico com alcance de 15 anos-luz."
+                },
+                "scanner_5": {
+                    "title": "Scanner Estelar Nível 5",
+                    "desc": "Scanner Lendário com alcance máximo de 25 anos-luz."
+                }
+            }
         }
-      }
     }
-  }
 }

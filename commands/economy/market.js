@@ -12,6 +12,9 @@ const {
     StringSelectMenuBuilder,
     ButtonBuilder,
     ButtonStyle,
+    ModalBuilder,
+    TextInputBuilder,
+    TextInputStyle,
 } = require('discord.js');
 
 const { tFor } = require('../../utils/i18n');
@@ -32,6 +35,7 @@ const {
     getResourceInfo,
     isValidResourceKey,
 } = require('../../utils/market');
+const { MARKET_CONFIG, getMinListingPrice } = require('../../gameConfig/market');
 
 const MARKET_IMAGE_NAME = 'bag_coins.png';
 const MARKET_IMAGE_PATH = path.join(__dirname, '..', '..', 'images', 'moedas', MARKET_IMAGE_NAME);
@@ -143,6 +147,18 @@ function renderGlobalMarketContainer(interaction, selectedResourceKey = 'stone',
                         .setLabel(`Tudo (${cheapest.amount}x • ${(cheapest.pricePerUnit * cheapest.amount).toLocaleString(numLoc)} ∩oins)`)
                         .setEmoji('<:gold_coins:1536941656178298992>')
                         .setStyle(ButtonStyle.Primary)
+                )
+            );
+        }
+
+        if (listings.length > 0) {
+            actionRows.push(
+                new ActionRowBuilder().addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('market_open_buy_modal')
+                        .setLabel(tFor(interaction, 'commands.market.buyByIdButton'))
+                        .setEmoji('<:registry:1536459835921530890>')
+                        .setStyle(ButtonStyle.Secondary)
                 )
             );
         }
@@ -366,6 +382,31 @@ function renderMyListingsContainer(interaction) {
     return { components, files, flags: MessageFlags.IsComponentsV2 };
 }
 
+function buildBuyByIdModal(interaction) {
+    const modal = new ModalBuilder()
+        .setCustomId('market_buy_modal')
+        .setTitle(tFor(interaction, 'commands.market.buyModalTitle'));
+
+    const listingIdInput = new TextInputBuilder()
+        .setCustomId('listingId')
+        .setLabel(tFor(interaction, 'commands.market.buyModalListingIdLabel'))
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true);
+
+    const amountInput = new TextInputBuilder()
+        .setCustomId('amount')
+        .setLabel(tFor(interaction, 'commands.market.buyModalAmountLabel'))
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true);
+
+    modal.addComponents(
+        new ActionRowBuilder().addComponents(listingIdInput),
+        new ActionRowBuilder().addComponents(amountInput)
+    );
+
+    return modal;
+}
+
 module.exports = {
     cooldown: 3,
 
@@ -498,11 +539,21 @@ module.exports = {
             const amount = interaction.options.getInteger('amount', true);
             const pricePerUnit = interaction.options.getInteger('price', true);
 
-            const result = createMarketListing(interaction.user.id, resourceKey, amount, pricePerUnit, interaction.user.username);
+            const sellerName = interaction.user.globalName ?? interaction.user.username;
+            const result = createMarketListing(interaction.user.id, resourceKey, amount, pricePerUnit, sellerName);
             if (!result.success) {
                 let errorMsg = tFor(interaction, 'commands.market.invalidValues');
                 if (result.reason === 'insufficient_resources') {
                     errorMsg = tFor(interaction, 'commands.market.insufficientResources');
+                } else if (result.reason === 'price_too_low') {
+                    errorMsg = tFor(interaction, 'commands.market.priceTooLow', {
+                        minPrice: result.minPrice.toLocaleString(getUserLanguage(interaction.user.id)),
+                        percent: MARKET_CONFIG.minPricePercentOfShop,
+                    });
+                } else if (result.reason === 'too_many_listings') {
+                    errorMsg = tFor(interaction, 'commands.market.tooManyListings', {
+                        limit: result.limit,
+                    });
                 }
                 await interaction.editReply({ content: errorMsg });
                 return;
@@ -620,6 +671,11 @@ module.exports = {
             return true;
         }
 
+        if (interaction.customId === 'market_open_buy_modal') {
+            await interaction.showModal(buildBuyByIdModal(interaction));
+            return true;
+        }
+
         if (interaction.customId.startsWith('market_buy_listing_')) {
             const parts = interaction.customId.replace('market_buy_listing_', '').split('_');
             const listingId = parseInt(parts[0], 10);
@@ -723,5 +779,61 @@ module.exports = {
         }
 
         return false;
+    },
+
+    async handleModalSubmit(interaction) {
+        if (interaction.customId !== 'market_buy_modal') return false;
+
+        const lang = getUserLanguage(interaction.user.id);
+        const numLoc = lang === 'pt-BR' ? 'pt-BR' : 'en-US';
+
+        const listingId = parseInt(interaction.fields.getTextInputValue('listingId').trim(), 10);
+        const buyAmount = parseInt(interaction.fields.getTextInputValue('amount').trim(), 10);
+
+        if (!Number.isFinite(listingId) || !Number.isFinite(buyAmount) || buyAmount <= 0) {
+            await interaction.reply({
+                content: tFor(interaction, 'commands.market.invalidModalInput'),
+                flags: MessageFlags.Ephemeral,
+            });
+            return true;
+        }
+
+        const result = buyMarketListing(interaction.user.id, listingId, buyAmount);
+        if (!result.success) {
+            let errorMsg = tFor(interaction, 'commands.market.listingNotFound');
+            if (result.reason === 'cannot_buy_own_listing') {
+                errorMsg = tFor(interaction, 'commands.market.cannotBuyOwn');
+            } else if (result.reason === 'insufficient_coins') {
+                errorMsg = tFor(interaction, 'commands.market.insufficientCoins', {
+                    total: result.totalCost.toLocaleString(numLoc),
+                });
+            } else if (result.reason === 'invalid_amount') {
+                errorMsg = tFor(interaction, 'commands.market.invalidModalInput');
+            }
+            await interaction.reply({ content: errorMsg, flags: MessageFlags.Ephemeral });
+            return true;
+        }
+
+        const resInfo = getResourceInfo(result.resourceKey);
+        const resName = resInfo ? (lang === 'pt-BR' ? resInfo.namePt : resInfo.nameEn) : result.resourceKey;
+        const emoji = resInfo?.emoji ?? '';
+
+        await interaction.reply({
+            content: tFor(interaction, 'commands.market.buySuccess', {
+                amount: result.buyAmount,
+                emoji,
+                resource: resName,
+                total: result.totalCost.toLocaleString(numLoc),
+            }),
+            flags: MessageFlags.Ephemeral,
+        });
+
+        // Se o modal foi aberto a partir da visão do mercado, atualiza a mensagem original.
+        if (interaction.message) {
+            const payload = renderGlobalMarketContainer(interaction, result.resourceKey, 1);
+            await interaction.message.edit(payload).catch(() => {});
+        }
+
+        return true;
     },
 };
