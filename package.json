@@ -10,6 +10,7 @@
     "start": "node index.js",
     "deploy-commands": "node scripts/deploy-commands.js",
     "generate-planets": "node scripts/generate-planet-images.js",
+    "check-config": "node scripts/check-config.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

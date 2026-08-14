@@ -5,6 +5,16 @@ const { token } = require('./config.json');
 const logger = require('./utils/logger');
 require('./utils/db');
 
+const { validateGameConfig } = require('./gameConfig');
+try {
+    validateGameConfig();
+    logger.success('Configuração do jogo validada (gameConfig/)');
+} catch (err) {
+    logger.error('Configuração do jogo inválida — corrija antes de continuar:');
+    console.error(err.message);
+    process.exit(1);
+}
+
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 client.commands = new Collection();
