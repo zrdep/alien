@@ -44,14 +44,7 @@ const {
 } = require('../../utils/exploration');
 const { enableMissionNotification } = require('../../utils/missionNotifier');
 const logger = require('../../utils/logger');
-
-const RARITY_EMOJI = {
-    A: '<:comum:1536459746364760215>',
-    B: '<:incomum:1536459764492533800>',
-    C: '<:rare:1536459780166647878>',
-    D: '<:epic:1536459798269395044>',
-    E: '<:legendary:1536459814475927653>',
-};
+const { getRarityEmoji, getRarityLabelKey } = require('../../gameConfig/rarities');
 
 const USAGE_EMOJI = {
     uses: '<:loading:1536247662372982794>',
@@ -60,7 +53,6 @@ const USAGE_EMOJI = {
 
 const ATTACHMENT_NAME = 'planet.png';
 
-const rarityKey = (code) => `commands.planet.rarity${code}`;
 
 const buildResourcesContent = (interaction, recursos) => {
     const title = tFor(interaction, 'commands.planet.resourcesTitle');
@@ -93,8 +85,8 @@ const buildPlanetButtons = (interaction, planetSeed) => {
 };
 
 const buildPlanetContainer = (interaction, dados, usage, recursos, { withThumbnail = true, exploreSeed = null } = {}) => {
-    const emojiRarity = RARITY_EMOJI[dados.raridadeCode] ?? RARITY_EMOJI.A;
-    const rarityLabel = tFor(interaction, rarityKey(dados.raridadeCode));
+    const emojiRarity = getRarityEmoji(dados.raridadeCode);
+    const rarityLabel = tFor(interaction, getRarityLabelKey(dados.raridadeCode));
     const lang = getUserLanguage(interaction.user.id);
     const ship = getUserShip(interaction.user.id);
     const times = getExpeditionTimes(interaction.user.id, dados.distancia, ship.propulsorTier);
@@ -132,7 +124,7 @@ ${USAGE_EMOJI.remaining} ${tFor(interaction, 'commands.planet.usageRemaining')}:
 `## <:registry:1536459835921530890> ${tFor(interaction, 'commands.planet.registryTitle')}
 ${tFor(interaction, 'commands.planet.prefixLabel')}: \`${dados.prefixo}\`
 ${tFor(interaction, 'commands.planet.numberLabel')}: \`${dados.numeroStr}\`
-${tFor(interaction, 'commands.planet.suffixLabel')}: \`${dados.sufixo.code}\`
+${tFor(interaction, 'commands.planet.suffixLabel')}: \`${dados.raridadeCode}\`
 ${tFor(interaction, 'commands.planet.rarityLabel')}: ${emojiRarity} ${rarityLabel}
 `
     );

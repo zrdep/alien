@@ -1,3 +1,6 @@
+const { getRarity } = require('../gameConfig/rarities');
+const { getDailyEligibleResources } = require('../gameConfig/resources');
+
 const COIN_TYPES = {
     BRONZE: {
         type: 'bronze',
@@ -36,39 +39,22 @@ function getRandomStepValue(min, max, step) {
 
 /**
  * Generates a coin reward object for missions based on planet rarity.
+ * As chances por raridade vêm de gameConfig/rarities.js (`missionCoinChances`) —
+ * ao adicionar uma raridade nova lá, ela já funciona aqui automaticamente.
  */
-function generateMissionCoins(planetRarity) {
-    let chanceBronze = 60;
-    let chanceSilver = 30;
-    let chanceGold = 10;
-
-    if (planetRarity === 'B' || planetRarity === 'Incomum') {
-        chanceBronze = 55;
-        chanceSilver = 33;
-        chanceGold = 12;
-    } else if (planetRarity === 'C' || planetRarity === 'Raro') {
-        chanceBronze = 45;
-        chanceSilver = 38;
-        chanceGold = 17;
-    } else if (planetRarity === 'D' || planetRarity === 'Épico') {
-        chanceBronze = 35;
-        chanceSilver = 42;
-        chanceGold = 23;
-    } else if (planetRarity === 'E' || planetRarity === 'Lendário') {
-        chanceBronze = 25;
-        chanceSilver = 45;
-        chanceGold = 30;
-    }
+function generateMissionCoins(planetRarityCode) {
+    const { bronze, silver, gold } = getRarity(planetRarityCode).missionCoinChances;
 
     const roll = Math.random() * 100;
     let selectedTier;
 
-    if (roll < chanceBronze) {
+    if (roll < bronze) {
         selectedTier = COIN_TYPES.BRONZE;
-    } else if (roll < chanceBronze + chanceSilver) {
+    } else if (roll < bronze + silver) {
         selectedTier = COIN_TYPES.SILVER;
     } else {
         selectedTier = COIN_TYPES.GOLD;
+        void gold; // gold é o restante da faixa (100 - bronze - silver); mantido no config por clareza.
     }
 
     const amount = getRandomStepValue(selectedTier.min, selectedTier.max, selectedTier.step);
@@ -95,24 +81,21 @@ function generateDailyCoins(streak = 1) {
     };
 }
 
+/**
+ * Sorteia 3 recursos elegíveis para o /daily (gameConfig/resources.js, campo
+ * `daily.eligible`), cada um com quantidade dentro da faixa configurada
+ * (`daily.min`/`daily.max`) para aquele recurso.
+ */
 function generateDailyResources() {
-    const BASIC_RESOURCES = [
-        { key: 'stone', emoji: '<:rock:1536579687407681596>', min: 15, max: 30 },
-        { key: 'wood', emoji: '<:wood:1536579684706418698>', min: 15, max: 30 },
-        { key: 'dirt', emoji: '<:dirt:1536579675172904960>', min: 15, max: 30 },
-        { key: 'iron', emoji: '<:iron:1536579671871856681>', min: 15, max: 30 },
-        { key: 'copper', emoji: '<:copper:1536579668986306581>', min: 15, max: 30 },
-        { key: 'metal', emoji: '<:metal:1536579666385567774>', min: 5, max: 15 },
-    ];
+    const eligible = getDailyEligibleResources();
 
-    // Shuffle array to pick 3 random resources
-    const shuffled = [...BASIC_RESOURCES].sort(() => Math.random() - 0.5);
+    const shuffled = [...eligible].sort(() => Math.random() - 0.5);
     const selected = shuffled.slice(0, 3);
 
-    return selected.map(resource => ({
+    return selected.map((resource) => ({
         key: resource.key,
         emoji: resource.emoji,
-        amount: Math.floor(Math.random() * (resource.max - resource.min + 1)) + resource.min,
+        amount: Math.floor(Math.random() * (resource.daily.max - resource.daily.min + 1)) + resource.daily.min,
     }));
 }
 

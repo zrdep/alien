@@ -28,7 +28,8 @@ const {
     getDailyState,
     resetDailyClaim,
 } = require('../../utils/db');
-const { RESOURCES, getResourceMeta } = require('../../utils/planetResources');
+const { getResourceMeta } = require('../../utils/planetResources');
+const { RESOURCES } = require('../../gameConfig/resources');
 const { formatResourceLine } = require('../../utils/resourcesDisplay');
 const { formatDuration, formatTimeRemaining } = require('../../utils/exploration');
 const logger = require('../../utils/logger');
@@ -42,32 +43,24 @@ const STATUS_LABEL = {
 };
 
 // Permite digitar tanto a chave interna (stone, blueCrystal...) quanto o nome em
-// português (pedra, cristal azul...) no modal de "setar recursos".
+// português (pedra, cristal azul...) no modal de "setar recursos". Os nomes em
+// português vêm de gameConfig/resources.js — não precisa mais manter uma lista
+// separada aqui: ao adicionar um recurso na config central, ele já fica
+// digitável no painel automaticamente.
 const RESOURCE_ALIASES = (() => {
     const map = new Map();
-    const ptNames = {
-        stone: 'pedra',
-        wood: 'madeira',
-        dirt: 'terra',
-        iron: 'ferro',
-        copper: 'cobre',
-        metal: 'metal',
-        blueCrystal: 'cristal azul',
-        starFragment: 'fragmento estelar',
-        purpleCrystal: 'cristal roxo',
-        glowingOre: 'minerio luminoso',
-        planetCore: 'nucleo de planeta',
-        cosmicPearl: 'perola cosmica',
-        starEssence: 'essencia estelar',
-    };
 
-    for (const key of Object.keys(RESOURCES)) {
-        map.set(key.toLowerCase(), key);
+    for (const resource of RESOURCES) {
+        map.set(resource.key.toLowerCase(), resource.key);
+
+        const ptName = resource.name['pt-BR']
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase();
+        map.set(ptName, resource.key);
+        map.set(ptName.replace(/\s+/g, ''), resource.key);
     }
-    for (const [key, ptName] of Object.entries(ptNames)) {
-        map.set(ptName.replace(/\s+/g, ''), key);
-        map.set(ptName, key);
-    }
+
     return map;
 })();
 
