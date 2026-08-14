@@ -20,8 +20,21 @@ const {
 } = require('discord.js');
 
 const { tFor } = require('../../utils/i18n');
-const { getUserLanguage, getUserAlien, setUserAlien, getUserShip, getPlanetUsageState, resolveActiveCraft } = require('../../utils/db');
+const {
+    getUserLanguage,
+    getUserAlien,
+    setUserAlien,
+    getUserShip,
+    getPlanetUsageState,
+    resolveActiveCraft,
+    getUserHats,
+    getEquippedHat,
+    setEquippedHat,
+} = require('../../utils/db');
 const { buildHangarContent } = require('../../utils/ship');
+const { getHat, getHatName } = require('../../gameConfig/hats');
+const { getRarityEmoji } = require('../../gameConfig/rarities');
+const { composeAlienWithHat } = require('../../utils/hatImage');
 
 const ALIEN_COLORS = [
     { key: 'purple', file: 'purple.png' },
@@ -86,6 +99,13 @@ const buildAttachment = (fileName) => ({
     name: fileName,
 });
 
+const COMPOSED_ATTACHMENT_NAME = 'alien_hat.png';
+
+const buildBufferAttachment = (buffer) => ({
+    attachment: buffer,
+    name: COMPOSED_ATTACHMENT_NAME,
+});
+
 const buildColorMenu = (interaction) => {
     const lang = getUserLanguage(interaction.user.id);
     const options = ALIEN_COLORS.map((c) => ({
@@ -131,8 +151,102 @@ const buildRenameModal = (interaction) => {
         );
 };
 
-const buildSectionWithThumbnail = (textDisplay, fileName) => {
+const parseCustomEmoji = (emojiString) => {
+    const match = /^<a?:(\w+):(\d+)>$/.exec(emojiString ?? '');
+    if (!match) return undefined;
+    return { id: match[2], name: match[1] };
+};
+
+const HAT_NONE_VALUE = '__no_hat__';
+const HAT_TEXT = {
+    'pt-BR': {
+        title: 'Chapéus',
+        equippedLabel: 'Equipado',
+        noneEquipped: 'Nenhum chapéu equipado',
+        placeholder: 'Equipar um chapéu...',
+        noneOption: 'Nenhum (tirar chapéu)',
+        emptyInventory: 'Você ainda não achou nenhum chapéu. Explore planetas com `/planet` pra ter chance de encontrar um!',
+    },
+    'en-US': {
+        title: 'Hats',
+        equippedLabel: 'Equipped',
+        noneEquipped: 'No hat equipped',
+        placeholder: 'Equip a hat...',
+        noneOption: 'None (remove hat)',
+        emptyInventory: "You haven't found any hats yet. Explore planets with `/planet` for a chance to find one!",
+    },
+};
+
+const getHatText = (lang) => HAT_TEXT[lang] ?? HAT_TEXT['pt-BR'];
+
+const buildHatSectionContent = (interaction) => {
+    const lang = getUserLanguage(interaction.user.id);
+    const t = getHatText(lang);
+    const equippedKey = getEquippedHat(interaction.user.id);
+    const owned = getUserHats(interaction.user.id);
+
+    let body;
+    if (!owned.length) {
+        body = `<:hmm:1536247599365890139> ${t.emptyInventory}`;
+    } else if (equippedKey) {
+        const hat = getHat(equippedKey);
+        const emoji = hat ? getRarityEmoji(hat.rarity) : '';
+        body = `${emoji} **${t.equippedLabel}:** ${getHatName(equippedKey, lang)}`;
+    } else {
+        body = `<:hmm:1536247599365890139> ${t.noneEquipped}`;
+    }
+
+    return `\n## <:king:1536459814475927653> ${t.title}\n\n${body}\n`;
+};
+
+const buildHatEquipMenu = (interaction) => {
+    const lang = getUserLanguage(interaction.user.id);
+    const t = getHatText(lang);
+    const owned = getUserHats(interaction.user.id);
+    if (!owned.length) return null;
+
+    const equippedKey = getEquippedHat(interaction.user.id);
+
+    const options = [
+        {
+            label: t.noneOption,
+            value: HAT_NONE_VALUE,
+            emoji: { name: '❌' },
+            default: !equippedKey,
+        },
+        ...owned.slice(0, 24).map((o) => {
+            const hat = getHat(o.hatKey);
+            return {
+                label: `${getHatName(o.hatKey, lang)} (x${o.quantity})`,
+                value: o.hatKey,
+                emoji: hat ? parseCustomEmoji(getRarityEmoji(hat.rarity)) : undefined,
+                default: equippedKey === o.hatKey,
+            };
+        }),
+    ];
+
+    return new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+            .setCustomId('alien_hat_equip')
+            .setPlaceholder(t.placeholder)
+            .addOptions(options)
+    );
+};
+
+const buildSectionWithThumbnail = (textDisplay, fileName, composedBuffer = null) => {
     const files = [];
+
+    if (composedBuffer) {
+        const thumb = new ThumbnailBuilder().setURL(`attachment://${COMPOSED_ATTACHMENT_NAME}`);
+        files.push(buildBufferAttachment(composedBuffer));
+        return {
+            section: new SectionBuilder()
+                .addTextDisplayComponents(textDisplay)
+                .setThumbnailAccessory(thumb),
+            files,
+        };
+    }
+
     if (fileName && imageExists(fileName)) {
         const thumb = new ThumbnailBuilder().setURL(`attachment://${fileName}`);
         files.push(buildAttachment(fileName));
@@ -150,8 +264,8 @@ const buildSectionWithThumbnail = (textDisplay, fileName) => {
     };
 };
 
-const addTextWithOptionalThumbnail = (container, textDisplay, fileName) => {
-    const { section, textDisplay: fallback, files } = buildSectionWithThumbnail(textDisplay, fileName);
+const addTextWithOptionalThumbnail = (container, textDisplay, fileName, composedBuffer = null) => {
+    const { section, textDisplay: fallback, files } = buildSectionWithThumbnail(textDisplay, fileName, composedBuffer);
     if (section) {
         container.addSectionComponents(section);
     } else {
@@ -221,6 +335,16 @@ ${colorLine}
         buildHangarContent(interaction.user.id, usage, ship)
     );
 
+    const equippedHatKey = getEquippedHat(interaction.user.id);
+    const equippedHat = equippedHatKey ? getHat(equippedHatKey) : null;
+    const alienFile = getAlienFile(alien.color);
+    const composedBuffer = (alienFile && equippedHat)
+        ? composeAlienWithHat(alienFile, equippedHat.file)
+        : null;
+
+    const hatTxt = new TextDisplayBuilder().setContent(buildHatSectionContent(interaction));
+    const hatMenu = buildHatEquipMenu(interaction);
+
     const container = new ContainerBuilder();
 
     if (saved) {
@@ -234,9 +358,17 @@ ${colorLine}
         .addTextDisplayComponents(header)
         .addSeparatorComponents(new SeparatorBuilder());
 
-    const files = addTextWithOptionalThumbnail(container, infoTxt, getAlienFile(alien.color));
+    const files = addTextWithOptionalThumbnail(container, infoTxt, alienFile, composedBuffer);
 
     container.addActionRowComponents(buildRenameButton(interaction));
+
+    container
+        .addSeparatorComponents(new SeparatorBuilder())
+        .addTextDisplayComponents(hatTxt);
+
+    if (hatMenu) {
+        container.addActionRowComponents(hatMenu);
+    }
 
     container
         .addSeparatorComponents(new SeparatorBuilder())
@@ -273,6 +405,25 @@ module.exports = {
     },
 
     async handleSelectMenu(interaction) {
+        if (interaction.customId === 'alien_hat_equip') {
+            const value = interaction.values[0];
+            const hatKey = value === HAT_NONE_VALUE ? null : value;
+
+            const result = setEquippedHat(interaction.user.id, hatKey);
+            if (!result.success) {
+                await interaction.reply({
+                    content: `<:error:1536247565006143528> ${tFor(interaction, 'commands.alien.invalidColor')}`,
+                    flags: MessageFlags.Ephemeral,
+                });
+                return true;
+            }
+
+            const alien = getUserAlien(interaction.user.id);
+            const panel = buildAlienPanel(interaction, alien, { saved: true });
+            await interaction.update(panel);
+            return true;
+        }
+
         if (interaction.customId !== 'alien_color_pick') return false;
 
         const color = interaction.values[0];

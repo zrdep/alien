@@ -14,6 +14,7 @@ const resources = require('./resources');
 const planetDropTables = require('./planetDropTables');
 const shipUpgrades = require('./shipUpgrades');
 const market = require('./market');
+const hats = require('./hats');
 
 const validateGameConfig = ({ throwOnError = true } = {}) => {
     const errors = [];
@@ -79,6 +80,34 @@ const validateGameConfig = ({ throwOnError = true } = {}) => {
         }
     }
 
+    // -- Chapéus referenciam raridades válidas e têm arquivo de imagem ------
+    const path = require('path');
+    const fs = require('fs');
+    const hatsDir = path.join(__dirname, '..', 'images', 'hats');
+    const seenHatKeys = new Set();
+    for (const hat of hats.HATS) {
+        if (seenHatKeys.has(hat.key)) {
+            errors.push(`gameConfig/hats.js: chave de chapéu duplicada "${hat.key}"`);
+        }
+        seenHatKeys.add(hat.key);
+
+        if (!rarityCodes.has(hat.rarity)) {
+            errors.push(`gameConfig/hats.js: chapéu "${hat.key}" usa raridade "${hat.rarity}", que não existe em gameConfig/rarities.js`);
+        }
+        if (!hat.name?.['pt-BR'] || !hat.name?.['en-US']) {
+            errors.push(`gameConfig/hats.js: chapéu "${hat.key}" está sem nome em pt-BR e/ou en-US`);
+        }
+        if (!Number.isFinite(hat.findChance) || hat.findChance <= 0) {
+            errors.push(`gameConfig/hats.js: chapéu "${hat.key}" tem findChance inválido (${hat.findChance})`);
+        }
+        if (!Number.isFinite(hat.marketBasePrice) || hat.marketBasePrice <= 0) {
+            errors.push(`gameConfig/hats.js: chapéu "${hat.key}" tem marketBasePrice inválido (${hat.marketBasePrice})`);
+        }
+        if (fs.existsSync(hatsDir) && !fs.existsSync(path.join(hatsDir, hat.file))) {
+            warnings.push(`gameConfig/hats.js: chapéu "${hat.key}" referencia o arquivo "${hat.file}", que não existe em images/hats/`);
+        }
+    }
+
     // -- Regras do mercado fazem sentido -------------------------------------
     const { MARKET_CONFIG } = market;
     if (MARKET_CONFIG.saleFeePercent < 0 || MARKET_CONFIG.saleFeePercent >= 100) {
@@ -135,5 +164,6 @@ module.exports = {
     ...planetDropTables,
     ...shipUpgrades,
     ...market,
+    ...hats,
     validateGameConfig,
 };

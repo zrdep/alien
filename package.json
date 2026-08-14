@@ -18,12 +18,12 @@
     "better-sqlite3": "^13.0.3",
     "discord.js": "^14.27.0",
     "figlet": "^1.11.4",
-    "picocolors": "^1.1.1"
+    "picocolors": "^1.1.1",
+    "@resvg/resvg-js": "^2.6.2"
   },
   "devDependencies": {
     "@dicebear/core": "^10.4.0",
     "@dicebear/styles": "^10.4.0",
-    "@resvg/resvg-js": "^2.6.2",
     "@eslint/js": "^10.0.1",
     "eslint": "^10.8.0"
   }

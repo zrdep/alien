@@ -5,6 +5,7 @@ const logger = require('./logger');
 const { generateMissionCoins } = require('./coins');
 const { getResourceInfo } = require('./market');
 const { MARKET_CONFIG, getMinListingPrice, getSellerProceeds } = require('../gameConfig/market');
+const { getHat, HAT_MARKET_CONFIG, getMinHatListingPrice, getHatSellerProceeds } = require('../gameConfig/hats');
 
 const dataDir = path.join(__dirname, '..', 'data');
 if (!fs.existsSync(dataDir)) {
@@ -265,6 +266,41 @@ if (!temSellerName) {
 db.exec(`
     CREATE INDEX IF NOT EXISTS idx_market_resource_price
     ON market_listings (resource_key, amount, price_per_unit, created_at);
+`);
+
+// -- Chapéus (achados no /planet, equipados no /alien, comercializados no
+// -- /hatmarket) ---------------------------------------------------------
+const temEquippedHat = colunas.some(c => c.name === 'equipped_hat');
+if (!temEquippedHat) {
+    db.exec(`ALTER TABLE users ADD COLUMN equipped_hat TEXT;`);
+    logger.success('Coluna `equipped_hat` adicionada à tabela `users`');
+}
+
+db.exec(`
+    CREATE TABLE IF NOT EXISTS user_hats (
+        user_id TEXT NOT NULL,
+        hat_key TEXT NOT NULL,
+        quantity INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (user_id, hat_key)
+    );
+`);
+
+db.exec(`
+    CREATE TABLE IF NOT EXISTS hat_market_listings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        seller_id TEXT NOT NULL,
+        seller_name TEXT,
+        hat_key TEXT NOT NULL,
+        price INTEGER NOT NULL,
+        created_at INTEGER NOT NULL,
+        expires_at INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'active'
+    );
+`);
+
+db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_hat_market_key_price
+    ON hat_market_listings (hat_key, price, created_at);
 `);
 
 const getUser = (userId) => {
@@ -1273,6 +1309,212 @@ const sellToSystemShop = (sellerId, resourceKey, amount) => {
     };
 };
 
+// =============================================================================
+// CHAPÉUS — inventário, equipar e /hatmarket
+// =============================================================================
+
+const getUserHats = (userId) => {
+    return db.prepare(`
+        SELECT hat_key AS hatKey, quantity
+        FROM user_hats
+        WHERE user_id = ? AND quantity > 0
+        ORDER BY hat_key ASC
+    `).all(userId);
+};
+
+const getUserHatQuantity = (userId, hatKey) => {
+    const row = db.prepare(`
+        SELECT quantity FROM user_hats WHERE user_id = ? AND hat_key = ?
+    `).get(userId, hatKey);
+    return row?.quantity ?? 0;
+};
+
+const addUserHat = (userId, hatKey, qty = 1) => {
+    if (!getHat(hatKey) || qty <= 0) return;
+    db.prepare(`
+        INSERT INTO user_hats (user_id, hat_key, quantity)
+        VALUES (?, ?, ?)
+        ON CONFLICT(user_id, hat_key) DO UPDATE SET quantity = quantity + excluded.quantity
+    `).run(userId, hatKey, qty);
+};
+
+const removeUserHat = (userId, hatKey, qty = 1) => {
+    const current = getUserHatQuantity(userId, hatKey);
+    if (current < qty) return false;
+
+    db.prepare(`
+        UPDATE user_hats SET quantity = quantity - ?
+        WHERE user_id = ? AND hat_key = ?
+    `).run(qty, userId, hatKey);
+
+    // Se ficou sem nenhuma unidade e era o chapéu equipado, desequipa.
+    if (current - qty <= 0) {
+        const user = getUser(userId);
+        if (user.equipped_hat === hatKey) {
+            setEquippedHat(userId, null);
+        }
+    }
+    return true;
+};
+
+const getEquippedHat = (userId) => {
+    const user = getUser(userId);
+    return user.equipped_hat || null;
+};
+
+const setEquippedHat = (userId, hatKey) => {
+    if (hatKey !== null && (!getHat(hatKey) || getUserHatQuantity(userId, hatKey) <= 0)) {
+        return { success: false, reason: 'hat_not_owned' };
+    }
+    db.prepare(`UPDATE users SET equipped_hat = ? WHERE user_id = ?`).run(hatKey, userId);
+    return { success: true };
+};
+
+const processExpiredHatListings = () => {
+    const now = Date.now();
+    db.prepare(`
+        UPDATE hat_market_listings
+        SET status = 'expired'
+        WHERE status = 'active' AND expires_at > 0 AND expires_at <= ?
+    `).run(now);
+};
+
+const createHatMarketListing = (sellerId, hatKey, price, sellerName = null) => {
+    const hat = getHat(hatKey);
+    if (!hat) return { success: false, reason: 'invalid_hat' };
+
+    const priceInt = Math.floor(Number(price));
+    if (!Number.isFinite(priceInt) || priceInt <= 0) {
+        return { success: false, reason: 'invalid_values' };
+    }
+
+    const minPrice = getMinHatListingPrice(hatKey);
+    if (priceInt < minPrice) {
+        return { success: false, reason: 'price_too_low', minPrice };
+    }
+
+    if (getUserHatQuantity(sellerId, hatKey) < 1) {
+        return { success: false, reason: 'hat_not_owned' };
+    }
+
+    processExpiredHatListings();
+    const activeCount = db.prepare(`
+        SELECT COUNT(*) AS total FROM hat_market_listings
+        WHERE seller_id = ? AND hat_key = ? AND status = 'active'
+    `).get(sellerId, hatKey);
+
+    if ((activeCount?.total ?? 0) >= HAT_MARKET_CONFIG.maxActiveListingsPerHat) {
+        return { success: false, reason: 'too_many_listings', limit: HAT_MARKET_CONFIG.maxActiveListingsPerHat };
+    }
+
+    const now = Date.now();
+    const expiresAt = now + HAT_MARKET_CONFIG.listingLifetimeMs;
+
+    const tx = db.transaction(() => {
+        removeUserHat(sellerId, hatKey, 1);
+        const res = db.prepare(`
+            INSERT INTO hat_market_listings (seller_id, seller_name, hat_key, price, created_at, expires_at, status)
+            VALUES (?, ?, ?, ?, ?, ?, 'active')
+        `).run(sellerId, sellerName, hatKey, priceInt, now, expiresAt);
+        return res.lastInsertRowid;
+    });
+
+    return { success: true, listingId: tx(), expiresAt };
+};
+
+const getHatMarketListings = (hatKey = null, limit = 10, offset = 0) => {
+    processExpiredHatListings();
+    const now = Date.now();
+
+    const where = hatKey
+        ? `WHERE hat_key = ? AND status = 'active' AND (expires_at > ? OR expires_at = 0)`
+        : `WHERE status = 'active' AND (expires_at > ? OR expires_at = 0)`;
+    const params = hatKey ? [hatKey, now] : [now];
+
+    const rows = db.prepare(`
+        SELECT id, seller_id AS sellerId, seller_name AS sellerName, hat_key AS hatKey,
+               price, created_at AS createdAt, expires_at AS expiresAt, status
+        FROM hat_market_listings
+        ${where}
+        ORDER BY price ASC, created_at ASC
+        LIMIT ? OFFSET ?
+    `).all(...params, limit, offset);
+
+    const totalRow = db.prepare(`
+        SELECT COUNT(*) AS total FROM hat_market_listings ${where}
+    `).get(...params);
+
+    return { listings: rows, total: totalRow?.total ?? 0 };
+};
+
+const getUserHatMarketListings = (userId) => {
+    processExpiredHatListings();
+    return db.prepare(`
+        SELECT id, hat_key AS hatKey, price, created_at AS createdAt, expires_at AS expiresAt, status
+        FROM hat_market_listings
+        WHERE seller_id = ? AND status = 'active'
+        ORDER BY created_at DESC
+    `).all(userId);
+};
+
+const getHatMarketListingById = (listingId) => {
+    return db.prepare(`
+        SELECT id, seller_id AS sellerId, seller_name AS sellerName, hat_key AS hatKey,
+               price, created_at AS createdAt, expires_at AS expiresAt, status
+        FROM hat_market_listings
+        WHERE id = ?
+    `).get(listingId);
+};
+
+const buyHatMarketListing = (buyerId, listingId) => {
+    processExpiredHatListings();
+    const listing = getHatMarketListingById(listingId);
+
+    if (!listing || listing.status !== 'active' || (listing.expiresAt > 0 && Date.now() > listing.expiresAt)) {
+        return { success: false, reason: 'listing_not_found' };
+    }
+    if (listing.sellerId === buyerId) {
+        return { success: false, reason: 'cannot_buy_own_listing' };
+    }
+
+    const buyerCoins = getUserCoins(buyerId);
+    if (buyerCoins < listing.price) {
+        return { success: false, reason: 'insufficient_coins', totalCost: listing.price };
+    }
+
+    const proceeds = getHatSellerProceeds(listing.price);
+
+    const tx = db.transaction(() => {
+        db.prepare(`UPDATE hat_market_listings SET status = 'sold' WHERE id = ?`).run(listingId);
+        db.prepare(`UPDATE users SET coins = coins - ? WHERE user_id = ?`).run(listing.price, buyerId);
+        db.prepare(`UPDATE users SET coins = coins + ? WHERE user_id = ?`).run(proceeds, listing.sellerId);
+        addUserHat(buyerId, listing.hatKey, 1);
+    });
+    tx();
+
+    return {
+        success: true,
+        hatKey: listing.hatKey,
+        totalCost: listing.price,
+        sellerId: listing.sellerId,
+    };
+};
+
+const cancelHatMarketListing = (userId, listingId) => {
+    const listing = getHatMarketListingById(listingId);
+    if (!listing || listing.sellerId !== userId || listing.status !== 'active') {
+        return { success: false, reason: 'listing_not_found' };
+    }
+
+    const tx = db.transaction(() => {
+        db.prepare(`UPDATE hat_market_listings SET status = 'cancelled' WHERE id = ?`).run(listingId);
+        addUserHat(userId, listing.hatKey, 1);
+    });
+    tx();
+
+    return { success: true, hatKey: listing.hatKey };
+};
+
 module.exports = {
     db,
     getUser,
@@ -1332,4 +1574,16 @@ module.exports = {
     cancelMarketListing,
     buyFromSystemShop,
     sellToSystemShop,
+    getUserHats,
+    getUserHatQuantity,
+    addUserHat,
+    removeUserHat,
+    getEquippedHat,
+    setEquippedHat,
+    createHatMarketListing,
+    getHatMarketListings,
+    getUserHatMarketListings,
+    getHatMarketListingById,
+    buyHatMarketListing,
+    cancelHatMarketListing,
 };

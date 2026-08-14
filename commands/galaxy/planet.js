@@ -28,6 +28,7 @@ const {
     startExplorationMission,
     popMissionNotice,
     incrementPlanetsSeen,
+    addUserHat,
 } = require('../../utils/db');
 const { gerarDadosPlaneta } = require('../../utils/planet');
 const { gerarRecursosPlaneta } = require('../../utils/planetResources');
@@ -45,6 +46,7 @@ const {
 const { enableMissionNotification } = require('../../utils/missionNotifier');
 const logger = require('../../utils/logger');
 const { getRarityEmoji, getRarityLabelKey } = require('../../gameConfig/rarities');
+const { rollHatDrop, getHatName } = require('../../gameConfig/hats');
 
 const USAGE_EMOJI = {
     uses: '<:loading:1536247662372982794>',
@@ -69,6 +71,18 @@ const buildResourcesContent = (interaction, recursos) => {
     return `\n## <:excited:1536247579061256252> ${title}\n\n${body}\n`;
 };
 
+const buildHatFoundContent = (interaction, hat) => {
+    if (!hat) return '';
+    const lang = getUserLanguage(interaction.user.id);
+    const emoji = getRarityEmoji(hat.rarity);
+    const hatName = getHatName(hat.key, lang);
+    const title = lang === 'en-US' ? 'Hat found!' : 'Chapéu encontrado!';
+    const line = lang === 'en-US'
+        ? `You found a **${hatName}** ${emoji} — check it out with \`/alien\`!`
+        : `Você encontrou um(a) **${hatName}** ${emoji} — dá uma olhada com \`/alien\`!`;
+    return `\n## <:excited:1536247579061256252> ${title}\n\n${line}\n`;
+};
+
 const buildPlanetButtons = (interaction, planetSeed) => {
     return new ActionRowBuilder().addComponents(
         new ButtonBuilder()
@@ -84,7 +98,7 @@ const buildPlanetButtons = (interaction, planetSeed) => {
     );
 };
 
-const buildPlanetContainer = (interaction, dados, usage, recursos, { withThumbnail = true, exploreSeed = null } = {}) => {
+const buildPlanetContainer = (interaction, dados, usage, recursos, { withThumbnail = true, exploreSeed = null, hatFound = null } = {}) => {
     const emojiRarity = getRarityEmoji(dados.raridadeCode);
     const rarityLabel = tFor(interaction, getRarityLabelKey(dados.raridadeCode));
     const lang = getUserLanguage(interaction.user.id);
@@ -130,6 +144,9 @@ ${tFor(interaction, 'commands.planet.rarityLabel')}: ${emojiRarity} ${rarityLabe
     );
 
     const resourcesTxt = new TextDisplayBuilder().setContent(buildResourcesContent(interaction, recursos));
+    const hatTxt = hatFound
+        ? new TextDisplayBuilder().setContent(buildHatFoundContent(interaction, hatFound))
+        : null;
 
     let section;
     if (withThumbnail) {
@@ -157,6 +174,10 @@ ${tFor(interaction, 'commands.planet.rarityLabel')}: ${emojiRarity} ${rarityLabe
         .addSeparatorComponents(new SeparatorBuilder())
         .addTextDisplayComponents(resourcesTxt);
 
+    if (hatTxt) {
+        container.addSeparatorComponents(new SeparatorBuilder()).addTextDisplayComponents(hatTxt);
+    }
+
     if (exploreSeed) {
         container.addActionRowComponents(buildPlanetButtons(interaction, exploreSeed));
     }
@@ -164,10 +185,11 @@ ${tFor(interaction, 'commands.planet.rarityLabel')}: ${emojiRarity} ${rarityLabe
     return container;
 };
 
-const buildPlanetPayload = (interaction, dados, usage, recursos, pngBuffer, arrivalNotice = null) => {
+const buildPlanetPayload = (interaction, dados, usage, recursos, pngBuffer, arrivalNotice = null, hatFound = null) => {
     const container = buildPlanetContainer(interaction, dados, usage, recursos, {
         withThumbnail: pngBuffer !== null,
         exploreSeed: dados.seedDicebear,
+        hatFound,
     });
 
     if (arrivalNotice) {
@@ -319,6 +341,11 @@ const generatePlanetReply = async (interaction, usage, arrivalNotice = null) => 
     const planetCoins = generateMissionCoins(dados.raridadeCode);
     dados.coins = planetCoins;
 
+    const hatFound = rollHatDrop(dados.raridadeCode);
+    if (hatFound) {
+        addUserHat(interaction.user.id, hatFound.key, 1);
+    }
+
     savePlanetOffer(interaction.user.id, dados.seedDicebear, {
         nome: dados.nome,
         distancia: dados.distancia,
@@ -334,7 +361,7 @@ const generatePlanetReply = async (interaction, usage, arrivalNotice = null) => 
         logger.error(`Failed to load planet image: ${err.message}`);
     }
 
-    const container = buildPlanetPayload(interaction, dados, usage, recursos, pngBuffer, arrivalNotice);
+    const container = buildPlanetPayload(interaction, dados, usage, recursos, pngBuffer, arrivalNotice, hatFound);
     const files = pngBuffer ? [{ attachment: pngBuffer, name: ATTACHMENT_NAME }] : [];
 
     return {
