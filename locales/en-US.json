@@ -1,356 +1,360 @@
 {
-    "terms": {
-        "title": "Hey, human!",
-        "introBefore": "Before using",
-        "introAfter": "you need to accept our **Terms of Service** and **Privacy Policy**.",
-        "consent": "By continuing, you agree to the bot's terms.",
-        "buttons": {
-            "view": "View terms",
-            "accept": "Accept",
-            "acceptFull": "Accept and continue"
-        },
-        "embed": {
-            "title": "∩lien Terms of Service",
-            "responsible": "Responsible Use",
-            "responsibleText": "Use this bot respectfully. Do not abuse the commands.",
-            "data": "Collected Data",
-            "dataText": "We only store your user ID to save your preferences, progress and settings within the bot.",
-            "privacy": "Privacy",
-            "privacyText": "We do not share any data with third parties. Everything is stored locally in the bot's database."
-        },
-        "tipConfig": "<:sunglasses:1536248455519801386> Want to change my language? Use </config user:1536804847142314078> anytime!",
-        "accepted": "**Terms accepted!** Now you can use all **∩lien** commands.\n\n<:excited:1536247579061256252> **New here?** Use </tutorial:1536804847142314080> to view the step-by-step guide or </help:1536804847142314081> to see all commands!",
-        "alreadyAccepted": "You have already accepted the terms! Use </tutorial:1536804847142314080> to learn how to play or </help:1536804847142314081> to view the list of commands."
+  "terms": {
+    "title": "Hey, human!",
+    "introBefore": "Before using",
+    "introAfter": "you need to accept our **Terms of Service** and **Privacy Policy**.",
+    "consent": "By continuing, you agree to the bot's terms.",
+    "buttons": {
+      "view": "View terms",
+      "accept": "Accept",
+      "acceptFull": "Accept and continue"
     },
-    "cooldown": {
-        "title": "Easy there, human!",
-        "text": "You can only use another command in `{seconds}s`."
+    "embed": {
+      "title": "∩lien Terms of Service",
+      "responsible": "Responsible Use",
+      "responsibleText": "Use this bot respectfully. Do not abuse the commands.",
+      "data": "Collected Data",
+      "dataText": "We only store your user ID to save your preferences, progress and settings within the bot.",
+      "privacy": "Privacy",
+      "privacyText": "We do not share any data with third parties. Everything is stored locally in the bot's database."
     },
-    "errors": {
-        "generic": "An error occurred while executing this command! Contact support."
-    },
-    "guildGuard": {
-        "userInstall": "<:ovni:1536247726889762847> **User installation detected!**\n\nIn this server, **∩lien** must be used as the server app in the channel set by the staff. Ask a moderator to set it up with </config server:1536804847142314078> or add the bot to the server normally.",
-        "wrongChannel": "<:hmm:1536247599365890139> **Wrong channel!**\n\nIn this server, **∩lien** commands only work in {channel}.",
-        "dmNotAllowed": "<:question:1536248373240270888> **This command only works in servers!**\n\nJoin a server with **∩lien** and use the channel allowed by the staff."
-    },
-    "components": {
-        "notYourButton": {
-            "msg1": "<:ovni:1536247726889762847> **Hey!** That button isn't yours, curious human! <:sunglasses:1536248455519801386>",
-            "msg2": "<:hmm:1536247599365890139> **Hmm...** I think you clicked the wrong button! This panel belongs to someone else. <:question:1536248373240270888>",
-            "msg3": "<:sob:1536248436339376138> **Oops!** That button belongs to another space explorer. Use your own commands! <:ovni:1536247726889762847>",
-            "msg4": "<:passionate:1536247742110634034> **Easy there!** Only whoever ran the command can touch this. <:excited:1536247579061256252>"
-        }
-    },
-    "commands": {
-        "ping": {
-            "calculating": "Calculating...",
-            "title": "Pong!",
-            "botLatency": "Bot",
-            "wsLatency": "WebSocket"
-        },
-        "botinfo": {
-            "greetingTitle": "Hello, human!",
-            "cornerLine": "You found my little corner!",
-            "bioLine": "I'm just an alien **trying to understand humans** while doing a few little things around here.",
-            "curiousIntro": "Since you're curious, here's some info about me:",
-            "infoSectionTitle": "Bot information",
-            "servers": "Servers",
-            "users": "Users",
-            "commands": "Commands",
-            "performanceTitle": "Performance",
-            "pingWs": "Ping",
-            "uptime": "Uptime",
-            "statusLabel": "Status",
-            "statusOnline": "Online",
-            "closingLine1": "Hehe! That's all you wanted to know about me!",
-            "closingLine2": "Now go... I have **planets to explore**."
-        },
-        "config": {
-            "userGroup": "User preferences",
-            "serverGroup": "Server preferences",
-            "userSubcommand": "Change your personal settings",
-            "serverSubcommand": "Change server settings (admins only)",
-            "panelUserTitle": "My Settings",
-            "panelUserIntro": "Here you customize how I interact with you personally.",
-            "panelUserFooter": "More customization options coming soon! <:loading:1536247662372982794>",
-            "languageLabel": "Language",
-            "languageDesc": "Choose the language ∩lien uses when responding to YOU.",
-            "languagePlaceholder": "Select a language...",
-            "currentValue": "Selected now:",
-            "languageSaved": "Preferences saved! Language updated successfully. <:passionate:1536247742110634034>",
-            "invalidLanguage": "Invalid language.",
-            "panelServerTitle": "Server Settings",
-            "panelServerIntro": "Choose where ∩lien can be used in this server. Requires **Manage Server** permission.",
-            "serverChannelLabel": "Allowed channel",
-            "serverChannelDesc": "When set, bot commands only work in that channel. Buttons on old messages in other channels are blocked too.",
-            "serverChannelPlaceholder": "Select the bot channel...",
-            "serverChannelAll": "All channels (no restriction)",
-            "serverChannelClear": "Allow all channels",
-            "serverChannelSaved": "Channel set: {channel}",
-            "serverChannelCleared": "Restriction removed! The bot works in all channels.",
-            "serverGuildOnly": "This command can only be used inside a server.",
-            "serverNoPermission": "You need **Manage Server** permission to change these settings."
-        },
-        "alien": {
-            "onboardingTitle": "Choose Your Alien",
-            "onboardingIntro": "Before exploring planets, pick your intergalactic companion's color.",
-            "colorPlaceholder": "Select your alien's color...",
-            "colorChoice": {
-                "purple": "Purple alien — mysterious and charming",
-                "green": "Green alien — curious and adventurous",
-                "blue": "Blue alien — calm and wise",
-                "pink": "Pink alien — cute and energetic",
-                "orange": "Orange alien — lively and fearless"
-            },
-            "panelTitle": "My Alien",
-            "panelGreeting": "This is **{name}**, your intergalactic companion!",
-            "infoTitle": "Information",
-            "nameLabel": "Name",
-            "colorLabel": "Color",
-            "defaultName": "Alien",
-            "renameLabel": "Change name",
-            "hangarTitle": "Hangar — Ship",
-            "hangarUsageUsed": "Explorations this hour: `{uses}/{limit}`",
-            "hangarUsageRemaining": "Remaining: `{remaining}`",
-            "hangarUsageReset": "Recharges at: `{time}`",
-            "upgradesTitle": "Ship Upgrades",
-            "upgrade": {
-                "excavation": {
-                    "name": "Excavation Probe",
-                    "stat": "{emoji} {rarity} — Depth: `{depth} m` · Bonus: `+{bonus}%`"
-                },
-                "propulsor": {
-                    "name": "Propulsor",
-                    "stat": "{emoji} {rarity} — `{speed}`"
-                },
-                "scanner": {
-                    "name": "Star Scanner",
-                    "stat": "{emoji} {rarity} — Range: `{range} light-years`"
-                }
-            },
-            "renameModalTitle": "Rename alien",
-            "renameInputLabel": "New name",
-            "renameInputPlaceholder": "Enter a name",
-            "savedLabel": "Saved successfully!",
-            "invalidColor": "Invalid color. Please try again.",
-            "invalidName": "Invalid name. Use between 1 and 12 characters.",
-            "noAlienButton": "You don't have an alien yet. Use </alien:1536760221983051816> first."
-        },
-        "planet": {
-            "alienRequired": "You need an alien to explore planets!",
-            "alienRequiredTip": "Use </alien:1536760221983051816> to choose your intergalactic companion.",
-            "dmDisabled": "This command only works inside servers.",
-            "title": "Generated Planet",
-            "subtitle": "We captured a planet in your orbit!",
-            "detailsTitle": "Details",
-            "idLabel": "ID",
-            "distanceLabel": "Distance from Earth",
-            "travelOneWayLabel": "One-way travel",
-            "travelRoundTripLabel": "Round trip",
-            "miningTimeLabel": "Mining time",
-            "registryTitle": "Registry",
-            "prefixLabel": "Prefix",
-            "numberLabel": "Number",
-            "suffixLabel": "Suffix",
-            "rarityLabel": "Rarity",
-            "usageUsed": "Uses this hour",
-            "usageRemaining": "Remaining",
-            "rarityA": "Common",
-            "rarityB": "Uncommon",
-            "rarityC": "Rare",
-            "rarityD": "Epic",
-            "rarityE": "Legendary",
-            "resourcesTitle": "Resources to Collect",
-            "resourcesEmpty": "This planet had no useful resources to collect. Better luck next time!",
-            "coinsLabel": "Planet ∩oins",
-            "footerTip": "Each planet is unique! Run the command again to discover a new world.",
-            "footerLater": "Soon you will be able to name, explore and do much more with this planet!",
-            "exploreLabel": "Explore",
-            "nextLabel": "Next",
-            "exploreExpired": "This exploration opportunity expired! Generate a new planet with </planet:1536804847142314076>.",
-            "exploreBusy": "Your alien is already on a mission! Wait for it to finish.",
-            "exploreStartedTitle": "Mission started!",
-            "exploreStartedBody": "**{alien}** launched toward **{planet}**! Travel time: **{travel}**.",
-            "missionCollectingFor": "**To collect:**",
-            "missionEta": "Arrives in: **{time}**",
-            "missionTravelingTitle": "Alien traveling",
-            "missionTravelingBody": "**{alien}** is traveling to **{planet}**",
-            "missionCollectingTitle": "Collecting resources",
-            "missionCollectingBody": "**{alien}** is collecting resources on **{planet}**",
-            "missionCollectingEta": "Finishes in: **{time}**",
-            "missionReturningTitle": "Returning to base",
-            "missionReturningBody": "**{alien}** is returning with resources from **{planet}**",
-            "missionArrivedTitle": "Mission complete!",
-            "missionArrivedBody": "**{alien}** returned from **{planet}** and deposited the resources in your inventory!",
-            "missionArrivedTip": "Use </inventory:1536804847142314075> to see everything you collected.",
-            "notifyButton": "Notify me when it arrives",
-            "notifyButtonActive": "Notification enabled",
-            "notifyNoMission": "You don't have any mission in progress to notify you about."
-        },
-        "inventory": {
-            "title": "Galactic Inventory",
-            "subtitle": "All resources your aliens collected on expeditions.",
-            "coinsLabel": "∩oins Balance",
-            "resourcesTitle": "Your Resources",
-            "empty": "Your inventory is empty. Explore planets with </planet:1536804847142314076> and click **Explore**!"
-        },
-        "daily": {
-            "claimedTitle": "Daily Reward!",
-            "claimedBody": "You claimed your daily reward of **{emoji} +{amount} ∩oins**!",
-            "alreadyClaimedTitle": "Reward Already Claimed!",
-            "alreadyClaimedBody": "You already claimed your daily today. Come back when the clock strikes **00:00**!",
-            "restrictedTitle": "Exclusive Daily Channel!",
-            "restrictedBody": "<:hmm:1536247599365890139> **Hey, space explorer!**\n\nThe daily **∩oins** reward can only be claimed in the channel <#1537511176324386917> inside our **official server**!\n\n<:excited:1536247579061256252> **How to join the server?**\nOur official server link is available right in the **bot's bio**! Open the **∩lien** profile, click the bio link, and claim your coins daily! <:gold_coins:1536941656178298992>",
-            "balanceLabel": "Current Balance",
-            "streakLabel": "Day streak",
-            "streakBonusLabel": "streak bonus",
-            "nextResetLabel": "Next reward available in: **{time}**",
-            "resourcesTitle": "Resources",
-            "resources": {
-                "stone": "Rock",
-                "wood": "Wood",
-                "dirt": "Dirt",
-                "iron": "Iron",
-                "copper": "Copper",
-                "metal": "Metal"
-            }
-        },
-        "market": {
-            "title": "Galactic Market",
-            "subtitle": "Buy and sell resources on the global market or directly from the System Shop!",
-            "browseTitle": "Global Market — {resource}",
-            "shopTitle": "Official System Shop",
-            "myListingsTitle": "My Market Listings",
-            "noListings": "No active listings found for this resource at the moment.",
-            "noMyListings": "You have no active listings on the Global Market.",
-            "selectResourcePlaceholder": "Select a resource to browse market...",
-            "buyFromShopButton": "System Shop (Fixed High Price)",
-            "browseGlobalButton": "Global Market",
-            "myListingsButton": "My Listings",
-            "buyButton": "Buy Lowest Price",
-            "cancelButton": "Cancel Listing",
-            "systemPriceLabel": "Official System Price",
-            "lowestPriceLabel": "Lowest Price Found",
-            "sellerLabel": "Seller",
-            "pricePerUnit": "{price} ∩oins/unit",
-            "totalPrice": "{price} ∩oins total",
-            "availableQty": "Qty: `{qty}`",
-            "sellSuccess": "<:excited:1536247579061256252> **Listing created successfully!**\nYou put **{amount}x {emoji} {resource}** on sale for **{price} ∩oins** each (Total: **{total} ∩oins**).\nReminder: a {feePercent}% fee applies when it sells — you'll receive **{netTotal} coins** for a full sale, not the full {total}.",
-            "buySuccess": "<:excited:1536247579061256252> **Purchase completed successfully!**\nYou bought **{amount}x {emoji} {resource}** for **{total} ∩oins**!",
-            "cancelSuccess": "<:restart:1536248409634246719> **Listing cancelled!**\nReturned **{amount}x {emoji} {resource}** back to your inventory.",
-            "insufficientResources": "<:sob:1536248436339376138> **Insufficient resources!** You do not have enough items in your inventory.",
-            "insufficientCoins": "<:sob:1536248436339376138> **Insufficient ∩oins!** You need **{total} ∩oins** for this purchase.",
-            "cannotBuyOwn": "<:hmm:1536247599365890139> You cannot buy your own listing. If you want your items back, cancel it in 'My Listings'.",
-            "listingNotFound": "<:error:1536247565006143528> This listing no longer exists or has already been sold out.",
-            "invalidValues": "<:error:1536247565006143528> Quantity and price per unit must be positive numbers greater than zero.",
-            "shopNote": "<:config:1536247533502734376> **Shop Note:** System Shop prices are set high to encourage player-to-player trading.",
-            "buyByIdButton": "Buy by ID",
-            "buyModalTitle": "Buy from Market",
-            "buyModalListingIdLabel": "Listing ID (e.g. 42)",
-            "buyModalAmountLabel": "Quantity you want to buy",
-            "invalidModalInput": "<:error:1536247565006143528> Enter a valid listing ID and quantity (positive whole numbers).",
-            "priceTooLow": "<:error:1536247565006143528> Price too low! The minimum price to sell this resource is **{minPrice} coins/unit** ({percent}% of the System Shop price).",
-            "tooManyListings": "<:error:1536247565006143528> You already have an active listing for this resource. Cancel it or wait for it to sell before creating another (limit: {limit} listing per resource)."
-        },
-        "wallet": {
-            "myTitle": "My Galactic Wallet",
-            "userTitle": "{user}'s Galactic Wallet",
-            "balanceLabel": "∩oins Balance",
-            "alienCompanion": "Companion",
-            "dailyStatusLabel": "Daily Status",
-            "dailyAvailable": "Available to claim! Use `/daily`",
-            "dailyClaimed": "Already claimed today (resets in `{time}`)"
-        },
-        "profile": {
-            "myTitle": "My Galactic Profile",
-            "userTitle": "{user}'s Galactic Profile",
-            "alienLabel": "Alien Companion",
-            "coinsLabel": "∩oins Balance",
-            "statsTitle": "Space Statistics",
-            "planetsSeen": "Planets seen",
-            "distanceTraveled": "Distance traveled",
-            "tripsCompleted": "Trips completed",
-            "resourcesCollected": "Resources collected",
-            "shipTitle": "Ship & Equipment",
-            "propulsor": "Propulsor",
-            "excavation": "Excavation Probe",
-            "scanner": "Star Scanner",
-            "botTitle": "This is not a user!",
-            "botBody": "**{user}** is a bot!"
-        },
-        "craft": {
-            "title": "Crafting Workshop",
-            "subtitle": "Use your galactic ores to craft ship upgrades!",
-            "categoryPlaceholder": "Select an item category...",
-            "recipePlaceholder": "Select a recipe to craft...",
-            "categories": {
-                "propulsor": "Speed Propulsors",
-                "excavation": "Excavation Probes",
-                "scanner": "Star Scanners"
-            },
-            "ingredientsTitle": "Required Ingredients",
-            "craftTimeLabel": "Crafting time",
-            "buttonCraft": "Start Crafting",
-            "alreadyMaxLevel": "You already own this level or upgrade!",
-            "requirementNotMet": "You need to craft the previous upgrade first!",
-            "insufficientResources": "Insufficient resources in inventory for this recipe.",
-            "busyError": "Your alien is already crafting an item in the workshop! Wait for it to finish.",
-            "inProgressTitle": "Crafting in Progress!",
-            "inProgressBody": "Your alien is constructing **{item}** in the ship workshop.",
-            "inProgressEta": "Finishes in: **{time}**",
-            "successTitle": "Item Crafted Successfully!",
-            "successBody": "Your craft of **{item}** was completed and applied to your ship!",
-            "recipes": {
-                "propulsor_b": {
-                    "title": "Propulsor B — 12,000 km/s",
-                    "desc": "Increases travel speed to 12,000 km/s."
-                },
-                "propulsor_c": {
-                    "title": "Propulsor C — 36,000 km/s",
-                    "desc": "Advanced propulsor for 36,000 km/s travel."
-                },
-                "propulsor_d": {
-                    "title": "Propulsor D — 60,000 km/s",
-                    "desc": "Epic propulsor capable of crossing the galaxy at 60,000 km/s."
-                },
-                "propulsor_e": {
-                    "title": "Propulsor E — 120,000 km/s",
-                    "desc": "Legendary propulsor reaching top speed of 120,000 km/s."
-                },
-                "excavation_2": {
-                    "title": "Excavation Probe Level 2",
-                    "desc": "80m depth and +5% bonus resources."
-                },
-                "excavation_3": {
-                    "title": "Excavation Probe Level 3",
-                    "desc": "120m depth and +10% bonus resources."
-                },
-                "excavation_4": {
-                    "title": "Excavation Probe Level 4",
-                    "desc": "180m depth and +18% bonus resources."
-                },
-                "excavation_5": {
-                    "title": "Excavation Probe Level 5",
-                    "desc": "Legendary probe with 250m depth and +28% bonus."
-                },
-                "scanner_2": {
-                    "title": "Star Scanner Level 2",
-                    "desc": "6 light-years planetary detection range."
-                },
-                "scanner_3": {
-                    "title": "Star Scanner Level 3",
-                    "desc": "10 light-years planetary detection range."
-                },
-                "scanner_4": {
-                    "title": "Star Scanner Level 4",
-                    "desc": "Epic scanner with 15 light-years range."
-                },
-                "scanner_5": {
-                    "title": "Star Scanner Level 5",
-                    "desc": "Legendary scanner with maximum 25 light-years range."
-                }
-            }
-        }
+    "tipConfig": "<:sunglasses:1536248455519801386> Want to change my language? Use </config user:1536804847142314078> anytime!",
+    "accepted": "**Terms accepted!** Now you can use all **∩lien** commands.\n\n<:excited:1536247579061256252> **New here?** Use </tutorial:1536804847142314080> to view the step-by-step guide or </help:1536804847142314081> to see all commands!",
+    "alreadyAccepted": "You have already accepted the terms! Use </tutorial:1536804847142314080> to learn how to play or </help:1536804847142314081> to view the list of commands."
+  },
+  "cooldown": {
+    "title": "Easy there, human!",
+    "text": "You can only use another command in `{seconds}s`."
+  },
+  "errors": {
+    "generic": "An error occurred while executing this command! Contact support."
+  },
+  "guildGuard": {
+    "userInstall": "<:ovni:1536247726889762847> **User installation detected!**\n\nIn this server, **∩lien** must be used as the server app in the channel set by the staff. Ask a moderator to set it up with </config server:1536804847142314078> or add the bot to the server normally.",
+    "wrongChannel": "<:hmm:1536247599365890139> **Wrong channel!**\n\nIn this server, **∩lien** commands only work in {channel}.",
+    "dmNotAllowed": "<:question:1536248373240270888> **This command only works in servers!**\n\nJoin a server with **∩lien** and use the channel allowed by the staff."
+  },
+  "components": {
+    "notYourButton": {
+      "msg1": "<:ovni:1536247726889762847> **Hey!** That button isn't yours, curious human! <:sunglasses:1536248455519801386>",
+      "msg2": "<:hmm:1536247599365890139> **Hmm...** I think you clicked the wrong button! This panel belongs to someone else. <:question:1536248373240270888>",
+      "msg3": "<:sob:1536248436339376138> **Oops!** That button belongs to another space explorer. Use your own commands! <:ovni:1536247726889762847>",
+      "msg4": "<:passionate:1536247742110634034> **Easy there!** Only whoever ran the command can touch this. <:excited:1536247579061256252>"
     }
+  },
+  "commands": {
+    "ping": {
+      "calculating": "Calculating...",
+      "title": "Pong!",
+      "botLatency": "Bot",
+      "wsLatency": "WebSocket"
+    },
+    "botinfo": {
+      "greetingTitle": "Hello, human!",
+      "cornerLine": "You found my little corner!",
+      "bioLine": "I'm just an alien **trying to understand humans** while doing a few little things around here.",
+      "curiousIntro": "Since you're curious, here's some info about me:",
+      "infoSectionTitle": "Bot information",
+      "servers": "Servers",
+      "users": "Users",
+      "commands": "Commands",
+      "performanceTitle": "Performance",
+      "pingWs": "Ping",
+      "uptime": "Uptime",
+      "statusLabel": "Status",
+      "statusOnline": "Online",
+      "closingLine1": "Hehe! That's all you wanted to know about me!",
+      "closingLine2": "Now go... I have **planets to explore**."
+    },
+    "config": {
+      "userGroup": "User preferences",
+      "serverGroup": "Server preferences",
+      "userSubcommand": "Change your personal settings",
+      "serverSubcommand": "Change server settings (admins only)",
+      "panelUserTitle": "My Settings",
+      "panelUserIntro": "Here you customize how I interact with you personally.",
+      "panelUserFooter": "More customization options coming soon! <:loading:1536247662372982794>",
+      "languageLabel": "Language",
+      "languageDesc": "Choose the language ∩lien uses when responding to YOU.",
+      "languagePlaceholder": "Select a language...",
+      "currentValue": "Selected now:",
+      "languageSaved": "Preferences saved! Language updated successfully. <:passionate:1536247742110634034>",
+      "invalidLanguage": "Invalid language.",
+      "panelServerTitle": "Server Settings",
+      "panelServerIntro": "Choose where ∩lien can be used in this server. Requires **Manage Server** permission.",
+      "serverChannelLabel": "Allowed channel",
+      "serverChannelDesc": "When set, bot commands only work in that channel. Buttons on old messages in other channels are blocked too.",
+      "serverChannelPlaceholder": "Select the bot channel...",
+      "serverChannelAll": "All channels (no restriction)",
+      "serverChannelClear": "Allow all channels",
+      "serverChannelSaved": "Channel set: {channel}",
+      "serverChannelCleared": "Restriction removed! The bot works in all channels.",
+      "serverGuildOnly": "This command can only be used inside a server.",
+      "serverNoPermission": "You need **Manage Server** permission to change these settings."
+    },
+    "alien": {
+      "onboardingTitle": "Choose Your Alien",
+      "onboardingIntro": "Before exploring planets, pick your intergalactic companion's color.",
+      "colorPlaceholder": "Select your alien's color...",
+      "colorChoice": {
+        "purple": "Purple alien — mysterious and charming",
+        "green": "Green alien — curious and adventurous",
+        "blue": "Blue alien — calm and wise",
+        "pink": "Pink alien — cute and energetic",
+        "orange": "Orange alien — lively and fearless"
+      },
+      "panelTitle": "My Alien",
+      "panelGreeting": "This is **{name}**, your intergalactic companion!",
+      "infoTitle": "Information",
+      "nameLabel": "Name",
+      "colorLabel": "Color",
+      "defaultName": "Alien",
+      "renameLabel": "Change name",
+      "hangarTitle": "Hangar — Ship",
+      "hangarUsageUsed": "Explorations this hour: `{uses}/{limit}`",
+      "hangarUsageRemaining": "Remaining: `{remaining}`",
+      "hangarUsageReset": "Recharges at: `{time}`",
+      "upgradesTitle": "Ship Upgrades",
+      "upgrade": {
+        "excavation": {
+          "name": "Excavation Probe",
+          "stat": "{emoji} {rarity} — Depth: `{depth} m` · Bonus: `+{bonus}%`"
+        },
+        "propulsor": {
+          "name": "Propulsor",
+          "stat": "{emoji} {rarity} — `{speed}`"
+        },
+        "scanner": {
+          "name": "Star Scanner",
+          "stat": "{emoji} {rarity} — Range: `{range} light-years`"
+        }
+      },
+      "renameModalTitle": "Rename alien",
+      "renameInputLabel": "New name",
+      "renameInputPlaceholder": "Enter a name",
+      "savedLabel": "Saved successfully!",
+      "invalidColor": "Invalid color. Please try again.",
+      "invalidName": "Invalid name. Use between 1 and 12 characters.",
+      "noAlienButton": "You don't have an alien yet. Use </alien:1536760221983051816> first."
+    },
+    "planet": {
+      "alienRequired": "You need an alien to explore planets!",
+      "alienRequiredTip": "Use </alien:1536760221983051816> to choose your intergalactic companion.",
+      "dmDisabled": "This command only works inside servers.",
+      "title": "Generated Planet",
+      "subtitle": "We captured a planet in your orbit!",
+      "detailsTitle": "Details",
+      "idLabel": "ID",
+      "distanceLabel": "Distance from Earth",
+      "travelOneWayLabel": "One-way travel",
+      "travelRoundTripLabel": "Round trip",
+      "miningTimeLabel": "Mining time",
+      "registryTitle": "Registry",
+      "prefixLabel": "Prefix",
+      "numberLabel": "Number",
+      "suffixLabel": "Suffix",
+      "rarityLabel": "Rarity",
+      "usageUsed": "Uses this hour",
+      "usageRemaining": "Remaining",
+      "rarityA": "Common",
+      "rarityB": "Uncommon",
+      "rarityC": "Rare",
+      "rarityD": "Epic",
+      "rarityE": "Legendary",
+      "resourcesTitle": "Resources to Collect",
+      "resourcesEmpty": "This planet had no useful resources to collect. Better luck next time!",
+      "coinsLabel": "Planet ∩oins",
+      "footerTip": "Each planet is unique! Run the command again to discover a new world.",
+      "footerLater": "Soon you will be able to name, explore and do much more with this planet!",
+      "exploreLabel": "Explore",
+      "nextLabel": "Next",
+      "exploreExpired": "This exploration opportunity expired! Generate a new planet with </planet:1536804847142314076>.",
+      "exploreBusy": "Your alien is already on a mission! Wait for it to finish.",
+      "exploreStartedTitle": "Mission started!",
+      "exploreStartedBody": "**{alien}** launched toward **{planet}**! Travel time: **{travel}**.",
+      "missionCollectingFor": "**To collect:**",
+      "missionEta": "Arrives in: **{time}**",
+      "missionTravelingTitle": "Alien traveling",
+      "missionTravelingBody": "**{alien}** is traveling to **{planet}**",
+      "missionCollectingTitle": "Collecting resources",
+      "missionCollectingBody": "**{alien}** is collecting resources on **{planet}**",
+      "missionCollectingEta": "Finishes in: **{time}**",
+      "missionReturningTitle": "Returning to base",
+      "missionReturningBody": "**{alien}** is returning with resources from **{planet}**",
+      "missionArrivedTitle": "Mission complete!",
+      "missionArrivedBody": "**{alien}** returned from **{planet}** and deposited the resources in your inventory!",
+      "missionArrivedTip": "Use </inventory:1536804847142314075> to see everything you collected.",
+      "notifyButton": "Notify me when it arrives",
+      "notifyButtonActive": "Notification enabled",
+      "notifyNoMission": "You don't have any mission in progress to notify you about."
+    },
+    "inventory": {
+      "title": "Galactic Inventory",
+      "subtitle": "All resources your aliens collected on expeditions.",
+      "coinsLabel": "∩oins Balance",
+      "resourcesTitle": "Your Resources",
+      "empty": "Your inventory is empty. Explore planets with </planet:1536804847142314076> and click **Explore**!"
+    },
+    "daily": {
+      "claimedTitle": "Daily Reward!",
+      "claimedBody": "You claimed your daily reward of **{emoji} +{amount} ∩oins**!",
+      "alreadyClaimedTitle": "Reward Already Claimed!",
+      "alreadyClaimedBody": "You already claimed your daily today. Come back when the clock strikes **00:00**!",
+      "restrictedTitle": "Exclusive Daily Channel!",
+      "restrictedBody": "<:hmm:1536247599365890139> **Hey, space explorer!**\n\nThe daily **∩oins** reward can only be claimed in the channel <#1537511176324386917> inside our **official server**!\n\n<:excited:1536247579061256252> **How to join the server?**\nOur official server link is available right in the **bot's bio**! Open the **∩lien** profile, click the bio link, and claim your coins daily! <:gold_coins:1536941656178298992>",
+      "balanceLabel": "Current Balance",
+      "streakLabel": "Day streak",
+      "streakBonusLabel": "streak bonus",
+      "nextResetLabel": "Next reward available in: **{time}**",
+      "resourcesTitle": "Resources",
+      "resources": {
+        "stone": "Rock",
+        "wood": "Wood",
+        "dirt": "Dirt",
+        "iron": "Iron",
+        "copper": "Copper",
+        "metal": "Metal"
+      }
+    },
+    "market": {
+      "title": "Galactic Market",
+      "subtitle": "Buy and sell resources on the global market or directly from the System Shop!",
+      "browseTitle": "Global Market — {resource}",
+      "shopTitle": "Official System Shop",
+      "myListingsTitle": "My Market Listings",
+      "noListings": "No active listings found for this resource at the moment.",
+      "noMyListings": "You have no active listings on the Global Market.",
+      "selectResourcePlaceholder": "Select a resource to browse market...",
+      "buyFromShopButton": "System Shop (Fixed High Price)",
+      "browseGlobalButton": "Global Market",
+      "myListingsButton": "My Listings",
+      "buyButton": "Buy Lowest Price",
+      "cancelButton": "Cancel Listing",
+      "systemPriceLabel": "Official System Price",
+      "sellPriceLabel": "System Sell Price",
+      "sellPriceInline": "sell",
+      "lowestPriceLabel": "Lowest Price Found",
+      "sellerLabel": "Seller",
+      "pricePerUnit": "{price} ∩oins/unit",
+      "totalPrice": "{price} ∩oins total",
+      "availableQty": "Qty: `{qty}`",
+      "sellSuccess": "<:excited:1536247579061256252> **Listing created successfully!**\nYou put **{amount}x {emoji} {resource}** on sale for **{price} ∩oins** each (Total: **{total} ∩oins**).\nReminder: a {feePercent}% fee applies when it sells — you'll receive **{netTotal} coins** for a full sale, not the full {total}.",
+      "buySuccess": "<:excited:1536247579061256252> **Purchase completed successfully!**\nYou bought **{amount}x {emoji} {resource}** for **{total} ∩oins**!",
+      "sellToShopSuccess": "<:excited:1536247579061256252> **Sale completed!**\nYou sold **{amount}x {emoji} {resource}** to the system and instantly got **{total} ∩oins**!",
+      "cancelSuccess": "<:restart:1536248409634246719> **Listing cancelled!**\nReturned **{amount}x {emoji} {resource}** back to your inventory.",
+      "insufficientResources": "<:sob:1536248436339376138> **Insufficient resources!** You do not have enough items in your inventory.",
+      "insufficientCoins": "<:sob:1536248436339376138> **Insufficient ∩oins!** You need **{total} ∩oins** for this purchase.",
+      "cannotBuyOwn": "<:hmm:1536247599365890139> You cannot buy your own listing. If you want your items back, cancel it in 'My Listings'.",
+      "listingNotFound": "<:error:1536247565006143528> This listing no longer exists or has already been sold out.",
+      "invalidValues": "<:error:1536247565006143528> Quantity and price per unit must be positive numbers greater than zero.",
+      "shopNote": "<:config:1536247533502734376> **Shop Note:** System Shop prices are set high to encourage player-to-player trading.",
+      "notSellableToShop": "<:sob:1536248436339376138> **This resource can't be sold directly to the system.**",
+      "buyByIdButton": "Buy by ID",
+      "buyModalTitle": "Buy from Market",
+      "buyModalListingIdLabel": "Listing ID (e.g. 42)",
+      "buyModalAmountLabel": "Quantity you want to buy",
+      "invalidModalInput": "<:error:1536247565006143528> Enter a valid listing ID and quantity (positive whole numbers).",
+      "priceTooLow": "<:error:1536247565006143528> Price too low! The minimum price to sell this resource is **{minPrice} coins/unit** ({percent}% of the System Shop price).",
+      "tooManyListings": "<:error:1536247565006143528> You already have an active listing for this resource. Cancel it or wait for it to sell before creating another (limit: {limit} listing per resource)."
+    },
+    "wallet": {
+      "myTitle": "My Galactic Wallet",
+      "userTitle": "{user}'s Galactic Wallet",
+      "balanceLabel": "∩oins Balance",
+      "alienCompanion": "Companion",
+      "dailyStatusLabel": "Daily Status",
+      "dailyAvailable": "Available to claim! Use `/daily`",
+      "dailyClaimed": "Already claimed today (resets in `{time}`)"
+    },
+    "profile": {
+      "myTitle": "My Galactic Profile",
+      "userTitle": "{user}'s Galactic Profile",
+      "alienLabel": "Alien Companion",
+      "coinsLabel": "∩oins Balance",
+      "statsTitle": "Space Statistics",
+      "planetsSeen": "Planets seen",
+      "distanceTraveled": "Distance traveled",
+      "tripsCompleted": "Trips completed",
+      "resourcesCollected": "Resources collected",
+      "shipTitle": "Ship & Equipment",
+      "propulsor": "Propulsor",
+      "excavation": "Excavation Probe",
+      "scanner": "Star Scanner",
+      "botTitle": "This is not a user!",
+      "botBody": "**{user}** is a bot!"
+    },
+    "craft": {
+      "title": "Crafting Workshop",
+      "subtitle": "Use your galactic ores to craft ship upgrades!",
+      "categoryPlaceholder": "Select an item category...",
+      "recipePlaceholder": "Select a recipe to craft...",
+      "categories": {
+        "propulsor": "Speed Propulsors",
+        "excavation": "Excavation Probes",
+        "scanner": "Star Scanners"
+      },
+      "ingredientsTitle": "Required Ingredients",
+      "craftTimeLabel": "Crafting time",
+      "buttonCraft": "Start Crafting",
+      "alreadyMaxLevel": "You already own this level or upgrade!",
+      "requirementNotMet": "You need to craft the previous upgrade first!",
+      "insufficientResources": "Insufficient resources in inventory for this recipe.",
+      "busyError": "Your alien is already crafting an item in the workshop! Wait for it to finish.",
+      "inProgressTitle": "Crafting in Progress!",
+      "inProgressBody": "Your alien is constructing **{item}** in the ship workshop.",
+      "inProgressEta": "Finishes in: **{time}**",
+      "successTitle": "Item Crafted Successfully!",
+      "successBody": "Your craft of **{item}** was completed and applied to your ship!",
+      "recipes": {
+        "propulsor_b": {
+          "title": "Propulsor B — 12,000 km/s",
+          "desc": "Increases travel speed to 12,000 km/s."
+        },
+        "propulsor_c": {
+          "title": "Propulsor C — 36,000 km/s",
+          "desc": "Advanced propulsor for 36,000 km/s travel."
+        },
+        "propulsor_d": {
+          "title": "Propulsor D — 60,000 km/s",
+          "desc": "Epic propulsor capable of crossing the galaxy at 60,000 km/s."
+        },
+        "propulsor_e": {
+          "title": "Propulsor E — 120,000 km/s",
+          "desc": "Legendary propulsor reaching top speed of 120,000 km/s."
+        },
+        "excavation_2": {
+          "title": "Excavation Probe Level 2",
+          "desc": "80m depth and +5% bonus resources."
+        },
+        "excavation_3": {
+          "title": "Excavation Probe Level 3",
+          "desc": "120m depth and +10% bonus resources."
+        },
+        "excavation_4": {
+          "title": "Excavation Probe Level 4",
+          "desc": "180m depth and +18% bonus resources."
+        },
+        "excavation_5": {
+          "title": "Excavation Probe Level 5",
+          "desc": "Legendary probe with 250m depth and +28% bonus."
+        },
+        "scanner_2": {
+          "title": "Star Scanner Level 2",
+          "desc": "6 light-years planetary detection range."
+        },
+        "scanner_3": {
+          "title": "Star Scanner Level 3",
+          "desc": "10 light-years planetary detection range."
+        },
+        "scanner_4": {
+          "title": "Star Scanner Level 4",
+          "desc": "Epic scanner with 15 light-years range."
+        },
+        "scanner_5": {
+          "title": "Star Scanner Level 5",
+          "desc": "Legendary scanner with maximum 25 light-years range."
+        }
+      }
+    }
+  }
 }

@@ -1221,6 +1221,58 @@ const buyFromSystemShop = (buyerId, resourceKey, amount) => {
     };
 };
 
+// Espelha buyFromSystemShop: vende recursos do inventário do jogador
+// diretamente pro sistema, a `sellPrice` (definido por recurso em
+// gameConfig/resources.js). Vendedor recebe o valor total na hora, sem taxa
+// (a taxa do /market só se aplica a vendas entre jogadores).
+const sellToSystemShop = (sellerId, resourceKey, amount) => {
+    const resourceInfo = getResourceInfo(resourceKey);
+    if (!resourceInfo) {
+        return { success: false, reason: 'invalid_resource' };
+    }
+
+    const qty = Math.floor(Number(amount));
+    if (qty <= 0 || !Number.isFinite(qty)) {
+        return { success: false, reason: 'invalid_amount' };
+    }
+
+    const unitPrice = resourceInfo.sellPrice;
+    if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
+        return { success: false, reason: 'not_sellable' };
+    }
+
+    const currentInventory = db.prepare(`
+        SELECT amount FROM user_inventory
+        WHERE user_id = ? AND resource_key = ?
+    `).get(sellerId, resourceKey);
+
+    const available = currentInventory?.amount ?? 0;
+    if (available < qty) {
+        return { success: false, reason: 'insufficient_resources' };
+    }
+
+    const totalPayout = qty * unitPrice;
+
+    const tx = db.transaction(() => {
+        db.prepare(`
+            UPDATE user_inventory
+            SET amount = amount - ?
+            WHERE user_id = ? AND resource_key = ?
+        `).run(qty, sellerId, resourceKey);
+
+        db.prepare('UPDATE users SET coins = coins + ? WHERE user_id = ?').run(totalPayout, sellerId);
+    });
+
+    tx();
+    return {
+        success: true,
+        resourceKey,
+        amount: qty,
+        unitPrice,
+        totalPayout,
+    };
+};
+
 module.exports = {
     db,
     getUser,
@@ -1279,4 +1331,5 @@ module.exports = {
     buyMarketListing,
     cancelMarketListing,
     buyFromSystemShop,
+    sellToSystemShop,
 };

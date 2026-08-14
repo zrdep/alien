@@ -1,7 +1,7 @@
 // Adaptador entre gameConfig/resources.js (fonte única de verdade) e o formato
 // que commands/economy/market.js espera (`namePt`/`nameEn` diretos, em vez de
-// `name['pt-BR']`/`name['en-US']`). Preço, emoji e nomes agora vêm todos de
-// gameConfig/resources.js — não duplique-os aqui.
+// `name['pt-BR']`/`name['en-US']`). Preço (compra E venda), emoji e nomes
+// agora vêm todos de gameConfig/resources.js — não duplique-os aqui.
 
 const { RESOURCES } = require('../gameConfig/resources');
 
@@ -14,6 +14,7 @@ const MARKET_RESOURCES = Object.fromEntries(
             nameEn: r.name['en-US'],
             emoji: r.emoji,
             systemShopPrice: r.systemShopPrice,
+            sellPrice: r.sellPrice,
         },
     ]),
 );

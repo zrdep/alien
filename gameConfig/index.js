@@ -30,6 +30,11 @@ const validateGameConfig = ({ throwOnError = true } = {}) => {
         if (!res.name?.['pt-BR'] || !res.name?.['en-US']) {
             errors.push(`gameConfig/resources.js: recurso "${res.key}" está sem nome em pt-BR e/ou en-US`);
         }
+        if (!Number.isFinite(res.sellPrice) || res.sellPrice < 0) {
+            errors.push(`gameConfig/resources.js: recurso "${res.key}" tem sellPrice inválido (${res.sellPrice}) — precisa ser um número >= 0`);
+        } else if (res.sellPrice >= res.systemShopPrice) {
+            errors.push(`gameConfig/resources.js: recurso "${res.key}" tem sellPrice (${res.sellPrice}) >= systemShopPrice (${res.systemShopPrice}) — isso permite comprar da loja e vender de volta com lucro (exploit infinito de ∩oins)`);
+        }
     }
 
     // -- Chaves de recurso duplicadas ----------------------------------------

@@ -29,6 +29,7 @@ const {
     buyMarketListing,
     cancelMarketListing,
     buyFromSystemShop,
+    sellToSystemShop,
 } = require('../../utils/db');
 const {
     getAllMarketResources,
@@ -219,12 +220,14 @@ function renderSystemShopContainer(interaction, selectedResourceKey = 'stone') {
     const shopListText = resources.map((r) => {
         const rName = lang === 'pt-BR' ? r.namePt : r.nameEn;
         const isSelected = r.key === resourceInfo.key ? '▶ ' : '';
-        return `${isSelected}${r.emoji} **${rName}**: \`${r.systemShopPrice.toLocaleString(numLoc)}\` ∩oins/un`;
+        return `${isSelected}${r.emoji} **${rName}**: \`${r.systemShopPrice.toLocaleString(numLoc)}\` ∩oins/un ` +
+            `(${tFor(interaction, 'commands.market.sellPriceInline')}: \`${r.sellPrice.toLocaleString(numLoc)}\`)`;
     }).join('\n');
 
     const selectedDetails =
         `### ${resourceInfo.emoji} **${resourceName}**\n` +
-        `**${tFor(interaction, 'commands.market.systemPriceLabel')}**: \`${resourceInfo.systemShopPrice.toLocaleString(numLoc)}\` ∩oins/un\n\n` +
+        `**${tFor(interaction, 'commands.market.systemPriceLabel')}**: \`${resourceInfo.systemShopPrice.toLocaleString(numLoc)}\` ∩oins/un\n` +
+        `**${tFor(interaction, 'commands.market.sellPriceLabel')}**: \`${resourceInfo.sellPrice.toLocaleString(numLoc)}\` ∩oins/un\n\n` +
         `${tFor(interaction, 'commands.market.shopNote')}`;
 
     const bodyText = new TextDisplayBuilder().setContent(
@@ -257,13 +260,26 @@ function renderSystemShopContainer(interaction, selectedResourceKey = 'stone') {
             .setStyle(ButtonStyle.Primary)
     );
 
+    const sellActionRow = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId(`market_sell_shop_${resourceInfo.key}_1`)
+            .setLabel(`Vender 1x (${resourceInfo.sellPrice.toLocaleString(numLoc)} ∩oins)`)
+            .setEmoji('<:registry:1536459835921530890>')
+            .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+            .setCustomId(`market_sell_shop_${resourceInfo.key}_10`)
+            .setLabel(`Vender 10x (${(resourceInfo.sellPrice * 10).toLocaleString(numLoc)} ∩oins)`)
+            .setEmoji('<:registry:1536459835921530890>')
+            .setStyle(ButtonStyle.Secondary)
+    );
+
     const container = new ContainerBuilder()
         .addTextDisplayComponents(header)
         .addSeparatorComponents(new SeparatorBuilder())
         .addSectionComponents(section);
 
     const files = hasImage ? [{ attachment: MARKET_IMAGE_PATH, name: MARKET_IMAGE_NAME }] : [];
-    const components = [container, selectRow, navRow, shopActionRow];
+    const components = [container, selectRow, navRow, shopActionRow, sellActionRow];
 
     return { components, files, flags: MessageFlags.IsComponentsV2 };
 }
@@ -515,6 +531,38 @@ module.exports = {
         )
         .addSubcommand((sub) =>
             sub
+                .setName('sell_shop')
+                .setNameLocalizations({ 'pt-BR': 'vender_loja' })
+                .setDescription('Sell resources directly to the System Shop for instant coins')
+                .setDescriptionLocalizations({
+                    'pt-BR': 'Vende recursos direto pra Loja do Sistema por ∩oins na hora',
+                })
+                .addStringOption((opt) =>
+                    opt
+                        .setName('resource')
+                        .setNameLocalizations({ 'pt-BR': 'recurso' })
+                        .setDescription('Resource to sell')
+                        .setDescriptionLocalizations({ 'pt-BR': 'Recurso para vender' })
+                        .setRequired(true)
+                        .addChoices(
+                            ...getAllMarketResources().map((r) => ({
+                                name: `${r.namePt} (${r.key})`,
+                                value: r.key,
+                            }))
+                        )
+                )
+                .addIntegerOption((opt) =>
+                    opt
+                        .setName('amount')
+                        .setNameLocalizations({ 'pt-BR': 'quantidade' })
+                        .setDescription('Quantity to sell')
+                        .setDescriptionLocalizations({ 'pt-BR': 'Quantidade para vender' })
+                        .setRequired(true)
+                        .setMinValue(1)
+                )
+        )
+        .addSubcommand((sub) =>
+            sub
                 .setName('my_listings')
                 .setNameLocalizations({ 'pt-BR': 'meus_anuncios' })
                 .setDescription('View and manage your active market listings')
@@ -608,6 +656,38 @@ module.exports = {
                     emoji,
                     resource: resName,
                     total: result.totalCost.toLocaleString(lang === 'pt-BR' ? 'pt-BR' : 'en-US'),
+                }),
+            });
+            return;
+        }
+
+        if (subcommand === 'sell_shop' || subcommand === 'vender_loja') {
+            const resourceKey = interaction.options.getString('resource', true);
+            const amount = interaction.options.getInteger('amount', true);
+
+            const result = sellToSystemShop(interaction.user.id, resourceKey, amount);
+            if (!result.success) {
+                let errorMsg = tFor(interaction, 'commands.market.invalidValues');
+                if (result.reason === 'insufficient_resources') {
+                    errorMsg = tFor(interaction, 'commands.market.insufficientResources');
+                } else if (result.reason === 'not_sellable') {
+                    errorMsg = tFor(interaction, 'commands.market.notSellableToShop');
+                }
+                await interaction.editReply({ content: errorMsg });
+                return;
+            }
+
+            const resInfo = getResourceInfo(resourceKey);
+            const lang = getUserLanguage(interaction.user.id);
+            const resName = resInfo ? (lang === 'pt-BR' ? resInfo.namePt : resInfo.nameEn) : resourceKey;
+            const emoji = resInfo?.emoji ?? '';
+
+            await interaction.editReply({
+                content: tFor(interaction, 'commands.market.sellToShopSuccess', {
+                    amount,
+                    emoji,
+                    resource: resName,
+                    total: result.totalPayout.toLocaleString(lang === 'pt-BR' ? 'pt-BR' : 'en-US'),
                 }),
             });
             return;
@@ -747,6 +827,39 @@ module.exports = {
                     emoji,
                     resource: resName,
                     total: result.totalCost.toLocaleString(numLoc),
+                }),
+                flags: MessageFlags.Ephemeral,
+            });
+            return true;
+        }
+
+        if (interaction.customId.startsWith('market_sell_shop_')) {
+            const parts = interaction.customId.replace('market_sell_shop_', '').split('_');
+            const resourceKey = parts[0];
+            const sellAmount = parseInt(parts[1], 10);
+
+            const result = sellToSystemShop(interaction.user.id, resourceKey, sellAmount);
+            if (!result.success) {
+                let errorMsg = tFor(interaction, 'commands.market.invalidValues');
+                if (result.reason === 'insufficient_resources') {
+                    errorMsg = tFor(interaction, 'commands.market.insufficientResources');
+                } else if (result.reason === 'not_sellable') {
+                    errorMsg = tFor(interaction, 'commands.market.notSellableToShop');
+                }
+                await interaction.reply({ content: errorMsg, flags: MessageFlags.Ephemeral });
+                return true;
+            }
+
+            const resInfo = getResourceInfo(result.resourceKey);
+            const resName = resInfo ? (lang === 'pt-BR' ? resInfo.namePt : resInfo.nameEn) : result.resourceKey;
+            const emoji = resInfo?.emoji ?? '';
+
+            await interaction.reply({
+                content: tFor(interaction, 'commands.market.sellToShopSuccess', {
+                    amount: result.amount,
+                    emoji,
+                    resource: resName,
+                    total: result.totalPayout.toLocaleString(numLoc),
                 }),
                 flags: MessageFlags.Ephemeral,
             });
