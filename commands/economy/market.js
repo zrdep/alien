@@ -115,8 +115,9 @@ function renderGlobalMarketContainer(interaction, selectedResourceKey = 'stone',
             const priceUnitFormatted = l.pricePerUnit.toLocaleString(numLoc);
             const totalFormatted = (l.pricePerUnit * l.amount).toLocaleString(numLoc);
             const rankEmoji = globalIndex === 0 ? '🥇' : globalIndex === 1 ? '🥈' : globalIndex === 2 ? '🥉' : '🔹';
+            const sellerDisplay = l.sellerName || `Usuario#${l.sellerId.substring(0, 4)}`;
             return (
-                `${rankEmoji} **ID #${l.id}** • ${tFor(interaction, 'commands.market.sellerLabel')}: <@${l.sellerId}>\n` +
+                `${rankEmoji} **ID #${l.id}** • ${tFor(interaction, 'commands.market.sellerLabel')}: **${sellerDisplay}**\n` +
                 `└ **${l.amount.toLocaleString(numLoc)}x** ${resourceInfo.emoji} ${resourceName} — **\`${priceUnitFormatted}\`** ∩oins/un (${totalFormatted} ∩oins)`
             );
         }).join('\n\n');
@@ -497,7 +498,7 @@ module.exports = {
             const amount = interaction.options.getInteger('amount', true);
             const pricePerUnit = interaction.options.getInteger('price', true);
 
-            const result = createMarketListing(interaction.user.id, resourceKey, amount, pricePerUnit);
+            const result = createMarketListing(interaction.user.id, resourceKey, amount, pricePerUnit, interaction.user.username);
             if (!result.success) {
                 let errorMsg = tFor(interaction, 'commands.market.invalidValues');
                 if (result.reason === 'insufficient_resources') {

@@ -244,6 +244,7 @@ db.exec(`
 const colunasMarket = db.prepare("PRAGMA table_info(market_listings)").all();
 const temExpiresAt = colunasMarket.some(c => c.name === 'expires_at');
 const temStatus = colunasMarket.some(c => c.name === 'status');
+const temSellerName = colunasMarket.some(c => c.name === 'seller_name');
 
 if (!temExpiresAt) {
     db.exec(`ALTER TABLE market_listings ADD COLUMN expires_at INTEGER NOT NULL DEFAULT 0;`);
@@ -253,6 +254,11 @@ if (!temExpiresAt) {
 if (!temStatus) {
     db.exec(`ALTER TABLE market_listings ADD COLUMN status TEXT NOT NULL DEFAULT 'active';`);
     logger.success('Coluna `status` adicionada à tabela `market_listings`');
+}
+
+if (!temSellerName) {
+    db.exec(`ALTER TABLE market_listings ADD COLUMN seller_name TEXT NOT NULL DEFAULT '';`);
+    logger.success('Coluna `seller_name` adicionada à tabela `market_listings`');
 }
 
 db.exec(`
@@ -988,7 +994,7 @@ const processExpiredMarketListings = () => {
     `).run(now);
 };
 
-const createMarketListing = (sellerId, resourceKey, amount, pricePerUnit) => {
+const createMarketListing = (sellerId, resourceKey, amount, pricePerUnit, sellerName = '') => {
     const qty = Math.floor(Number(amount));
     const price = Math.floor(Number(pricePerUnit));
 
@@ -1017,9 +1023,9 @@ const createMarketListing = (sellerId, resourceKey, amount, pricePerUnit) => {
         `).run(qty, sellerId, resourceKey);
 
         const res = db.prepare(`
-            INSERT INTO market_listings (seller_id, resource_key, amount, price_per_unit, created_at, expires_at, status)
-            VALUES (?, ?, ?, ?, ?, ?, 'active')
-        `).run(sellerId, resourceKey, qty, price, now, expiresAt);
+            INSERT INTO market_listings (seller_id, seller_name, resource_key, amount, price_per_unit, created_at, expires_at, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'active')
+        `).run(sellerId, sellerName, resourceKey, qty, price, now, expiresAt);
 
         return res.lastInsertRowid;
     });
@@ -1033,7 +1039,7 @@ const getMarketListingsByResource = (resourceKey, limit = 10, offset = 0) => {
     const now = Date.now();
 
     const rows = db.prepare(`
-        SELECT id, seller_id AS sellerId, resource_key AS resourceKey, amount, price_per_unit AS pricePerUnit, created_at AS createdAt, expires_at AS expiresAt, status
+        SELECT id, seller_id AS sellerId, seller_name AS sellerName, resource_key AS resourceKey, amount, price_per_unit AS pricePerUnit, created_at AS createdAt, expires_at AS expiresAt, status
         FROM market_listings
         WHERE resource_key = ? AND amount > 0 AND status = 'active' AND (expires_at > ? OR expires_at = 0)
         ORDER BY price_per_unit ASC, created_at ASC
