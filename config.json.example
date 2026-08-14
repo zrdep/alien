@@ -1,0 +1,8 @@
+{
+	"token": "YOUR_BOT_TOKEN_HERE",
+	"supportToken": "YOUR_SUPPORT_BOT_TOKEN_HERE",
+	"clientId": "YOUR_BOT_CLIENT_ID",
+	"guildId": "YOUR_GUILD_ID",
+	"ownerId": "YOUR_USER_ID",
+	"versao": "0.0.0"
+}
