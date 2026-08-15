@@ -168,13 +168,9 @@ As taxas de 5% funcionam como **sumidouro de moedas** — ajudam a evitar que a 
 
 Mais de 25 conquistas rastreadas automaticamente, cobrindo 11 tipos de estatística:
 
-<sub>
-
 `planets_seen` - `trips_completed` - `distance_traveled_km` - `resources_collected` - `craft_completed` - `daily_streak` -
 `market_global_bought_count` - `market_global_bought_spent` - `market_global_sold_count` - `market_global_sold_revenue` -
 `shop_bought_count` - `shop_sold_count`
-
-</sub>
 
 Toda ação relevante (`addMissionCompletionStats`, compra/venda, craft, daily) roda uma checagem e desbloqueia automaticamente — sem precisar de comando manual.
 
