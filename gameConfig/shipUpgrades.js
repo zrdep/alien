@@ -25,10 +25,10 @@ const PROPULSOR_TIERS = [
 
 const EXCAVATION_TIERS = [
     { level: 1, code: 'A', rarityCode: 'A', depth: 50, bonus: 0 },
-    { level: 2, code: 'B', rarityCode: 'B', depth: 80, bonus: 5 },
-    { level: 3, code: 'C', rarityCode: 'C', depth: 120, bonus: 10 },
-    { level: 4, code: 'D', rarityCode: 'D', depth: 180, bonus: 18 },
-    { level: 5, code: 'E', rarityCode: 'E', depth: 250, bonus: 28 },
+    { level: 2, code: 'B', rarityCode: 'B', depth: 80, bonus: 10 },
+    { level: 3, code: 'C', rarityCode: 'C', depth: 120, bonus: 15 },
+    { level: 4, code: 'D', rarityCode: 'D', depth: 180, bonus: 25 },
+    { level: 5, code: 'E', rarityCode: 'E', depth: 250, bonus: 40 },
 ];
 
 // O Scanner Estelar não "vê mais longe" — ele mapeia o subsolo do planeta com
