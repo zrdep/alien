@@ -35,6 +35,7 @@ const { buildHangarContent } = require('../../utils/ship');
 const { getHat, getHatName } = require('../../gameConfig/hats');
 const { getRarityEmoji } = require('../../gameConfig/rarities');
 const { composeAlienWithHat } = require('../../utils/hatImage');
+const { notifyAchievementsFollowUp } = require('../../utils/achievementNotifier');
 
 const ALIEN_COLORS = [
     { key: 'purple', file: 'purple.png' },
@@ -328,7 +329,7 @@ ${nameLine}
 ${colorLine}
 `);
 
-    resolveActiveCraft(interaction.user.id);
+    const { unlockedAchievements } = resolveActiveCraft(interaction.user.id);
     const usage = getPlanetUsageState(interaction.user.id);
     const ship = getUserShip(interaction.user.id);
     const hangarTxt = new TextDisplayBuilder().setContent(
@@ -379,6 +380,7 @@ ${colorLine}
         content: '',
         components: [container],
         files,
+        __alienUnlockedAchievements: unlockedAchievements ?? [],
     };
 };
 
@@ -401,7 +403,9 @@ module.exports = {
             return;
         }
 
-        await interaction.editReply(buildAlienPanel(interaction, alien));
+        const panel = buildAlienPanel(interaction, alien);
+        await interaction.editReply(panel);
+        await notifyAchievementsFollowUp(interaction, panel.__alienUnlockedAchievements);
     },
 
     async handleSelectMenu(interaction) {
@@ -421,6 +425,7 @@ module.exports = {
             const alien = getUserAlien(interaction.user.id);
             const panel = buildAlienPanel(interaction, alien, { saved: true });
             await interaction.update(panel);
+            await notifyAchievementsFollowUp(interaction, panel.__alienUnlockedAchievements);
             return true;
         }
 
@@ -440,6 +445,7 @@ module.exports = {
         const panel = buildAlienPanel(interaction, alien, { saved: true });
 
         await interaction.update(panel);
+        await notifyAchievementsFollowUp(interaction, panel.__alienUnlockedAchievements);
         return true;
     },
 
@@ -475,7 +481,9 @@ module.exports = {
 
         setUserAlien(interaction.user.id, { name: trimmed });
         const alien = getUserAlien(interaction.user.id);
-        await interaction.update(buildAlienPanel(interaction, alien, { saved: true }));
+        const panel = buildAlienPanel(interaction, alien, { saved: true });
+        await interaction.update(panel);
+        await notifyAchievementsFollowUp(interaction, panel.__alienUnlockedAchievements);
         return true;
     },
 };

@@ -21,6 +21,7 @@ const {
 } = require('../../utils/db');
 const { generateDailyCoins, generateDailyResources } = require('../../utils/coins');
 const { formatDuration } = require('../../utils/exploration');
+const { notifyAchievementsFollowUp } = require('../../utils/achievementNotifier');
 
 const GIFT_IMAGE_NAME = 'gift_coins.png';
 const GIFT_IMAGE_PATH = path.join(__dirname, '..', '..', 'images', 'moedas', GIFT_IMAGE_NAME);
@@ -137,7 +138,7 @@ module.exports = {
         const reward = generateDailyCoins(state.nextStreak);
         const dailyResources = generateDailyResources();
 
-        const { streak } = claimDaily(userId, state.today, reward.amount);
+        const { streak, unlockedAchievements } = claimDaily(userId, state.today, reward.amount);
         addInventoryResources(userId, dailyResources.map(r => ({ key: r.key, amount: r.amount })));
 
         const totalCoins = getUserCoins(userId);
@@ -185,5 +186,7 @@ module.exports = {
             components: [container],
             files,
         });
+
+        await notifyAchievementsFollowUp(interaction, unlockedAchievements);
     },
 };

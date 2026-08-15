@@ -142,6 +142,23 @@ if (!temDailyStreak) {
     logger.success('Coluna `daily_streak` adicionada à tabela `users`');
 }
 
+const colunasMarketStats = [
+    { name: 'market_global_sold_count', default: 0 },
+    { name: 'market_global_sold_revenue', default: 0 },
+    { name: 'market_global_bought_count', default: 0 },
+    { name: 'market_global_bought_spent', default: 0 },
+    { name: 'shop_bought_count', default: 0 },
+    { name: 'shop_sold_count', default: 0 },
+    { name: 'craft_completed_count', default: 0 },
+    { name: 'coins_total_earned', default: 0 },
+];
+for (const col of colunasMarketStats) {
+    if (!colunas.some(c => c.name === col.name)) {
+        db.exec(`ALTER TABLE users ADD COLUMN ${col.name} INTEGER NOT NULL DEFAULT ${col.default};`);
+        logger.success(`Coluna \`${col.name}\` adicionada à tabela \`users\``);
+    }
+}
+
 logger.success('Banco SQLite inicializado (data/bot.db)');
 
 db.exec(`
@@ -303,6 +320,15 @@ db.exec(`
     ON hat_market_listings (hat_key, price, created_at);
 `);
 
+db.exec(`
+    CREATE TABLE IF NOT EXISTS user_achievements (
+        user_id TEXT NOT NULL,
+        achievement_id TEXT NOT NULL,
+        unlocked_at INTEGER NOT NULL,
+        PRIMARY KEY (user_id, achievement_id)
+    );
+`);
+
 const getUser = (userId) => {
     let user = db.prepare('SELECT * FROM users WHERE user_id = ?').get(userId);
     if (!user) {
@@ -401,11 +427,13 @@ const getUserCoins = (userId) => {
 const addUserCoins = (userId, amount) => {
     if (typeof amount !== 'number' || amount <= 0) return;
     getUser(userId);
+    const amt = Math.floor(amount);
     db.prepare(`
         UPDATE users
-        SET coins = coins + ?
+        SET coins = coins + ?,
+            coins_total_earned = coins_total_earned + ?
         WHERE user_id = ?
-    `).run(amount, userId);
+    `).run(amt, amt, userId);
 };
 
 const setUserCoins = (userId, amount) => {
@@ -453,15 +481,19 @@ const claimDaily = (userId, dateStr, coinsAmount) => {
     const yesterday = getYesterdayDateStr(dateStr);
     const newStreak = user.last_daily_date === yesterday ? (user.daily_streak ?? 0) + 1 : 1;
 
+    const coinsInt = Math.floor(coinsAmount);
     db.prepare(`
         UPDATE users
         SET last_daily_date = ?,
             coins = coins + ?,
-            daily_streak = ?
+            daily_streak = ?,
+            coins_total_earned = coins_total_earned + ?
         WHERE user_id = ?
-    `).run(dateStr, coinsAmount, newStreak, userId);
+    `).run(dateStr, coinsInt, newStreak, coinsInt, userId);
 
-    return { streak: newStreak };
+    const unlockedAchievements = checkAchievementsForUser(userId);
+
+    return { streak: newStreak, unlockedAchievements };
 };
 
 const resetDailyClaim = (userId) => {
@@ -480,6 +512,8 @@ const incrementPlanetsSeen = (userId, count = 1) => {
         SET planets_seen = planets_seen + ?
         WHERE user_id = ?
     `).run(count, userId);
+    const unlockedAchievements = checkAchievementsForUser(userId);
+    return { unlockedAchievements };
 };
 
 const addMissionCompletionStats = (userId, distanceKm, totalResources) => {
@@ -492,6 +526,8 @@ const addMissionCompletionStats = (userId, distanceKm, totalResources) => {
             total_resources_collected = total_resources_collected + ?
         WHERE user_id = ?
     `).run(roundTripDistance, totalResources, userId);
+    const unlockedAchievements = checkAchievementsForUser(userId);
+    return { unlockedAchievements, roundTripDistance };
 };
 
 const getUserProfileStats = (userId) => {
@@ -831,7 +867,7 @@ const resolveExplorationMission = (userId, now = Date.now()) => {
                 addUserCoins(userId, coinsReward.amount);
             }
             const totalRecsCount = resources.reduce((sum, item) => sum + (item.amount ?? 0), 0);
-            addMissionCompletionStats(userId, mission.planet_distance_km, totalRecsCount);
+            const missionUnlocks = addMissionCompletionStats(userId, mission.planet_distance_km, totalRecsCount).unlockedAchievements;
 
             const alien = getUserAlien(userId);
             notice = {
@@ -842,7 +878,7 @@ const resolveExplorationMission = (userId, now = Date.now()) => {
             };
             setMissionNotice(userId, notice);
             clearExplorationMission(userId);
-            return { mission: null, notice };
+            return { mission: null, notice, unlockedAchievements: missionUnlocks };
         }
 
         clearExplorationMission(userId);
@@ -997,6 +1033,9 @@ const resolveActiveCraft = (userId, now = Date.now()) => {
         }
     }
 
+    incrementCraftCompleted(userId, 1);
+    const unlockedAchievements = checkAchievementsForUser(userId);
+
     db.prepare('DELETE FROM active_crafts WHERE user_id = ?').run(userId);
 
     const notice = {
@@ -1005,7 +1044,7 @@ const resolveActiveCraft = (userId, now = Date.now()) => {
     };
     setCraftNotice(userId, notice);
 
-    return { craft: null, notice };
+    return { craft: null, notice, unlockedAchievements };
 };
 
 const resolveAllPendingCrafts = (now = Date.now()) => {
@@ -1182,6 +1221,12 @@ const buyMarketListing = (buyerId, listingId, buyAmount) => {
     });
 
     tx();
+
+    addMarketGlobalBoughtStats(buyerId, qty, totalCost);
+    addMarketGlobalSoldStats(listing.sellerId, qty, sellerProceeds);
+    const buyerUnlocks = checkAchievementsForUser(buyerId);
+    const sellerUnlocks = checkAchievementsForUser(listing.sellerId);
+
     return {
         success: true,
         totalCost,
@@ -1191,6 +1236,8 @@ const buyMarketListing = (buyerId, listingId, buyAmount) => {
         resourceKey: listing.resourceKey,
         buyAmount: qty,
         pricePerUnit: listing.pricePerUnit,
+        buyerUnlockedAchievements: buyerUnlocks,
+        sellerUnlockedAchievements: sellerUnlocks,
     };
 };
 
@@ -1248,12 +1295,17 @@ const buyFromSystemShop = (buyerId, resourceKey, amount) => {
     });
 
     tx();
+
+    addShopBoughtStats(buyerId, qty);
+    const unlockedAchievements = checkAchievementsForUser(buyerId);
+
     return {
         success: true,
         resourceKey,
         amount: qty,
         unitPrice,
         totalCost,
+        unlockedAchievements,
     };
 };
 
@@ -1300,12 +1352,17 @@ const sellToSystemShop = (sellerId, resourceKey, amount) => {
     });
 
     tx();
+
+    addShopSoldStats(sellerId, qty);
+    const unlockedAchievements = checkAchievementsForUser(sellerId);
+
     return {
         success: true,
         resourceKey,
         amount: qty,
         unitPrice,
         totalPayout,
+        unlockedAchievements,
     };
 };
 
@@ -1515,6 +1572,195 @@ const cancelHatMarketListing = (userId, listingId) => {
     return { success: true, hatKey: listing.hatKey };
 };
 
+// =============================================================================
+// ESTATÍSTICAS DE MERCADO E CONQUISTAS
+// =============================================================================
+
+const getUserMarketStats = (userId) => {
+    const user = getUser(userId);
+    return {
+        marketGlobalSoldCount: user.market_global_sold_count ?? 0,
+        marketGlobalSoldRevenue: user.market_global_sold_revenue ?? 0,
+        marketGlobalBoughtCount: user.market_global_bought_count ?? 0,
+        marketGlobalBoughtSpent: user.market_global_bought_spent ?? 0,
+        shopBoughtCount: user.shop_bought_count ?? 0,
+        shopSoldCount: user.shop_sold_count ?? 0,
+        craftCompletedCount: user.craft_completed_count ?? 0,
+        coinsTotalEarned: user.coins_total_earned ?? 0,
+    };
+};
+
+const addMarketGlobalSoldStats = (sellerId, units, revenue) => {
+    if (units > 0) {
+        getUser(sellerId);
+        db.prepare(`
+            UPDATE users
+            SET market_global_sold_count = market_global_sold_count + ?,
+                market_global_sold_revenue = market_global_sold_revenue + ?
+            WHERE user_id = ?
+        `).run(Math.floor(units), Math.floor(revenue), sellerId);
+    }
+};
+
+const addMarketGlobalBoughtStats = (buyerId, units, spent) => {
+    if (units > 0) {
+        getUser(buyerId);
+        db.prepare(`
+            UPDATE users
+            SET market_global_bought_count = market_global_bought_count + ?,
+                market_global_bought_spent = market_global_bought_spent + ?
+            WHERE user_id = ?
+        `).run(Math.floor(units), Math.floor(spent), buyerId);
+    }
+};
+
+const addShopBoughtStats = (buyerId, units) => {
+    if (units > 0) {
+        getUser(buyerId);
+        db.prepare(`
+            UPDATE users SET shop_bought_count = shop_bought_count + ? WHERE user_id = ?
+        `).run(Math.floor(units), buyerId);
+    }
+};
+
+const addShopSoldStats = (sellerId, units) => {
+    if (units > 0) {
+        getUser(sellerId);
+        db.prepare(`
+            UPDATE users SET shop_sold_count = shop_sold_count + ? WHERE user_id = ?
+        `).run(Math.floor(units), sellerId);
+    }
+};
+
+const incrementCraftCompleted = (userId, amount = 1) => {
+    if (amount > 0) {
+        getUser(userId);
+        db.prepare(`
+            UPDATE users SET craft_completed_count = craft_completed_count + ? WHERE user_id = ?
+        `).run(Math.floor(amount), userId);
+    }
+};
+
+const addCoinsEarned = (userId, amount) => {
+    if (amount > 0) {
+        getUser(userId);
+        db.prepare(`
+            UPDATE users SET coins_total_earned = coins_total_earned + ? WHERE user_id = ?
+        `).run(Math.floor(amount), userId);
+    }
+};
+
+const getUserAchievements = (userId) => {
+    const rows = db.prepare(`
+        SELECT achievement_id AS achievementId, unlocked_at AS unlockedAt
+        FROM user_achievements
+        WHERE user_id = ?
+    `).all(userId);
+    return rows;
+};
+
+const isAchievementUnlocked = (userId, achievementId) => {
+    const row = db.prepare(`
+        SELECT 1 FROM user_achievements
+        WHERE user_id = ? AND achievement_id = ?
+    `).get(userId, achievementId);
+    return !!row;
+};
+
+const getAchievementCurrentStat = (userId, type) => {
+    const user = getUser(userId);
+    switch (type) {
+        case 'market_global_sold_count':   return user.market_global_sold_count ?? 0;
+        case 'market_global_sold_revenue': return user.market_global_sold_revenue ?? 0;
+        case 'market_global_bought_count': return user.market_global_bought_count ?? 0;
+        case 'market_global_bought_spent': return user.market_global_bought_spent ?? 0;
+        case 'shop_bought_count':          return user.shop_bought_count ?? 0;
+        case 'shop_sold_count':            return user.shop_sold_count ?? 0;
+        case 'coins_total_earned':         return user.coins_total_earned ?? 0;
+        case 'planets_seen':               return user.planets_seen ?? 0;
+        case 'trips_completed':            return user.trips_completed ?? 0;
+        case 'resources_collected':        return user.total_resources_collected ?? 0;
+        case 'distance_traveled_km':       return user.distance_traveled_km ?? 0;
+        case 'daily_streak':               return user.daily_streak ?? 0;
+        case 'craft_completed':            return user.craft_completed_count ?? 0;
+        default: return 0;
+    }
+};
+
+const checkAchievementsForUser = (userId) => {
+    const { getAchievementsByType, getAchievement } = require('../gameConfig/achievements');
+    const newlyUnlocked = [];
+
+    const typeSet = new Set();
+    for (const a of getAchievementsByType('__unused__')) typeSet.add(a.type); // no-op
+    const allTypes = new Set([
+        'market_global_sold_count', 'market_global_sold_revenue',
+        'market_global_bought_count', 'market_global_bought_spent',
+        'shop_bought_count', 'shop_sold_count',
+        'coins_total_earned', 'planets_seen', 'trips_completed',
+        'resources_collected', 'distance_traveled_km', 'daily_streak',
+        'craft_completed',
+    ]);
+
+    for (const type of allTypes) {
+        const achievements = getAchievementsByType(type);
+        if (achievements.length === 0) continue;
+        const current = getAchievementCurrentStat(userId, type);
+
+        for (const ach of achievements) {
+            if (current >= ach.threshold && !isAchievementUnlocked(userId, ach.id)) {
+                const res = applyAchievementReward(userId, ach);
+                if (res) {
+                    newlyUnlocked.push({ achievement: ach, appliedReward: res });
+                }
+            }
+        }
+    }
+
+    return newlyUnlocked;
+};
+
+const applyAchievementReward = (userId, achievement) => {
+    if (!achievement || isAchievementUnlocked(userId, achievement.id)) return null;
+
+    const rewardCoins = achievement.reward?.coins ?? 0;
+    const rewardResources = achievement.reward?.resources ?? [];
+
+    const tx = db.transaction(() => {
+        db.prepare(`
+            INSERT INTO user_achievements (user_id, achievement_id, unlocked_at)
+            VALUES (?, ?, ?)
+        `).run(userId, achievement.id, Date.now());
+
+        if (rewardCoins > 0) {
+            db.prepare('UPDATE users SET coins = coins + ? WHERE user_id = ?').run(rewardCoins, userId);
+            addCoinsEarned(userId, rewardCoins);
+        }
+
+        if (rewardResources.length > 0) {
+            const stmt = db.prepare(`
+                INSERT INTO user_inventory (user_id, resource_key, amount)
+                VALUES (?, ?, ?)
+                ON CONFLICT(user_id, resource_key) DO UPDATE SET amount = amount + excluded.amount
+            `);
+            for (const res of rewardResources) {
+                stmt.run(userId, res.key, res.amount);
+            }
+        }
+    });
+
+    try {
+        tx();
+        return {
+            coins: rewardCoins,
+            resources: [...rewardResources],
+        };
+    } catch (err) {
+        logger.error(`Falha ao aplicar recompensa da conquista "${achievement.id}" para ${userId}: ${err.message}`);
+        return null;
+    }
+};
+
 module.exports = {
     db,
     getUser,
@@ -1586,4 +1832,16 @@ module.exports = {
     getHatMarketListingById,
     buyHatMarketListing,
     cancelHatMarketListing,
+    getUserMarketStats,
+    addMarketGlobalSoldStats,
+    addMarketGlobalBoughtStats,
+    addShopBoughtStats,
+    addShopSoldStats,
+    incrementCraftCompleted,
+    addCoinsEarned,
+    getUserAchievements,
+    isAchievementUnlocked,
+    getAchievementCurrentStat,
+    checkAchievementsForUser,
+    applyAchievementReward,
 };

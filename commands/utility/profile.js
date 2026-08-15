@@ -17,8 +17,17 @@ const {
     getUserShip,
     getUserCoins,
     getUserProfileStats,
+    getUserMarketStats,
+    getUserAchievements,
+    getEquippedHat,
 } = require('../../utils/db');
 const { formatDistance, formatCount } = require('../../utils/statsFormatter');
+const {
+    listAchievementsSorted,
+    getRarityEmoji,
+    getHat,
+} = require('../../gameConfig');
+const { composeAlienWithHat } = require('../../utils/hatImage');
 
 const ALIEN_IMAGES_DIR = path.join(__dirname, '..', '..', 'images', 'aliens');
 
@@ -29,6 +38,25 @@ const ALIEN_COLORS = {
     pink: 'pink.png',
     orange: 'orange.png',
 };
+
+const COMPOSED_ALIEN_HAT_NAME = 'alien_hat_profile.png';
+
+const EMOJI_COINS_GOLD = '<:gold_coins:1536941656178298992>';
+const EMOJI_BAG_COINS = '<:bag_coins:1536941656178298992>';
+const EMOJI_EXCITED = '<:excited:1536247579061256252>';
+const EMOJI_OVNI = '<:ovni:1536247726889762847>';
+const EMOJI_SATURN = '<:saturn:1536459943480270959>';
+const EMOJI_ASTEROID = '<:asteroid:1536459906973171782>';
+const EMOJI_PASSIONATE = '<:passionate:1536247742110634034>';
+const EMOJI_ROCK = '<:rock:1536579687407681596>';
+const EMOJI_CONFIG = '<:config:1536247533502734376>';
+const EMOJI_REGISTRY = '<:registry:1536459835921530890>';
+const EMOJI_BOOK2 = '<:book2:1536459861527756952>';
+const EMOJI_RAINBOW = '<:rainbow:1536248394681552957>';
+const EMOJI_BOOK = '<:book:1536247508181848134>';
+const EMOJI_DND = '<:dnd:1536247547193204766>';
+const EMOJI_HMM = '<:hmm:1536247599365890139>';
+const EMOJI_LOADING = '<:loading:1536247662372982794>';
 
 const EASTER_EGG_LINES = [
     'psst... você sabia que já explorei **infinitos planetas** antes de você chegar? Perdi a conta.',
@@ -65,13 +93,14 @@ module.exports = {
         const targetUser = interaction.options.getUser('user') ?? interaction.user;
         const isSelf = targetUser.id === interaction.user.id;
         const lang = getUserLanguage(interaction.user.id);
-        const numLoc = lang === 'pt-BR' ? 'pt-BR' : 'en-US';
+        const isPt = lang === 'pt-BR';
+        const numLoc = isPt ? 'pt-BR' : 'en-US';
 
         // === Bot guard: bots don't have profiles ===
         if (targetUser.bot) {
             const botText = new TextDisplayBuilder().setContent(
-                `<:dnd:1536247547193204766> **${tFor(interaction, 'commands.profile.botTitle')}**\n\n` +
-                `<:hmm:1536247599365890139> ${tFor(interaction, 'commands.profile.botBody', { user: targetUser.username })}`
+                `${EMOJI_DND} **${tFor(interaction, 'commands.profile.botTitle')}**\n\n` +
+                `${EMOJI_HMM} ${tFor(interaction, 'commands.profile.botBody', { user: targetUser.username })}`
             );
             const botContainer = new ContainerBuilder().addTextDisplayComponents(botText);
             await interaction.editReply({
@@ -86,6 +115,11 @@ module.exports = {
         const ship = getUserShip(targetUser.id);
         const coins = getUserCoins(targetUser.id);
         const stats = getUserProfileStats(targetUser.id);
+        const marketStats = getUserMarketStats(targetUser.id);
+        const unlockedAchievements = new Set(getUserAchievements(targetUser.id).map((a) => a.achievementId));
+        const allAchievements = listAchievementsSorted();
+        const equippedHatKey = getEquippedHat(targetUser.id);
+        const equippedHat = equippedHatKey ? getHat(equippedHatKey) : null;
 
         const alienName = alien?.name ?? tFor(interaction, 'commands.alien.defaultName');
         const formattedDistance = formatDistance(stats.distanceTraveledKm, lang);
@@ -94,8 +128,12 @@ module.exports = {
         const formattedResources = formatCount(stats.totalResourcesCollected, lang);
         const formattedCoins = coins.toLocaleString(numLoc);
 
+        const totalAchievements = allAchievements.length;
+        const unlockedCount = unlockedAchievements.size;
+        const achievementPct = totalAchievements > 0 ? Math.floor((unlockedCount / totalAchievements) * 100) : 0;
+
         const header = new TextDisplayBuilder().setContent(
-            `# <:excited:1536247579061256252> ${
+            `# ${EMOJI_EXCITED} ${
                 isSelf
                     ? tFor(interaction, 'commands.profile.myTitle')
                     : tFor(interaction, 'commands.profile.userTitle', { user: targetUser.username })
@@ -103,48 +141,77 @@ module.exports = {
         );
 
         const mainInfoText = new TextDisplayBuilder().setContent(
-            `<:ovni:1536247726889762847> **${tFor(interaction, 'commands.profile.alienLabel')}**: \`${alienName}\`\n` +
-            `<:gold_coins:1536941656178298992> **${tFor(interaction, 'commands.profile.coinsLabel')}**: \`${formattedCoins}\` ∩oins`
+            `${EMOJI_OVNI} **${tFor(interaction, 'commands.profile.alienLabel')}**: \`${alienName}\`\n` +
+            `${EMOJI_COINS_GOLD} **${tFor(interaction, 'commands.profile.coinsLabel')}**: \`${formattedCoins}\` ∩oins\n` +
+            `${EMOJI_RAINBOW} **${isPt ? 'Conquistas' : 'Achievements'}**: \`${unlockedCount}/${totalAchievements}\` (\`${achievementPct}%\` ${isPt ? 'desbloqueado' : 'unlocked'})`
         );
 
-        // Check alien image attachment
+        // === Monta thumbnail do perfil, com chapéu equipado se existir ===
         const files = [];
-        let thumbnailFilename = null;
+        let mainSection;
+
         if (alien?.color && ALIEN_COLORS[alien.color]) {
-            const fileName = ALIEN_COLORS[alien.color];
-            const fullPath = path.join(ALIEN_IMAGES_DIR, fileName);
-            if (fs.existsSync(fullPath)) {
-                thumbnailFilename = fileName;
+            const alienFile = ALIEN_COLORS[alien.color];
+            const alienFullPath = path.join(ALIEN_IMAGES_DIR, alienFile);
+
+            if (equippedHat && fs.existsSync(alienFullPath)) {
+                const composedBuffer = composeAlienWithHat(alienFile, equippedHat.file);
+                if (composedBuffer) {
+                    const thumbnail = new ThumbnailBuilder().setURL(`attachment://${COMPOSED_ALIEN_HAT_NAME}`);
+                    files.push({
+                        attachment: composedBuffer,
+                        name: COMPOSED_ALIEN_HAT_NAME,
+                    });
+                    mainSection = new SectionBuilder()
+                        .addTextDisplayComponents(mainInfoText)
+                        .setThumbnailAccessory(thumbnail);
+                }
+            }
+
+            if (!mainSection && fs.existsSync(alienFullPath)) {
+                const thumbnail = new ThumbnailBuilder().setURL(`attachment://${alienFile}`);
                 files.push({
-                    attachment: fullPath,
-                    name: fileName,
+                    attachment: alienFullPath,
+                    name: alienFile,
                 });
+                mainSection = new SectionBuilder()
+                    .addTextDisplayComponents(mainInfoText)
+                    .setThumbnailAccessory(thumbnail);
             }
         }
 
-        let mainSection;
-        if (thumbnailFilename) {
-            const thumbnail = new ThumbnailBuilder().setURL(`attachment://${thumbnailFilename}`);
-            mainSection = new SectionBuilder()
-                .addTextDisplayComponents(mainInfoText)
-                .setThumbnailAccessory(thumbnail);
-        } else {
+        if (!mainSection) {
             mainSection = new SectionBuilder().addTextDisplayComponents(mainInfoText);
         }
 
         const statsText = new TextDisplayBuilder().setContent(
-            `## <:saturn:1536459943480270959> ${tFor(interaction, 'commands.profile.statsTitle')}\n\n` +
-            `<:asteroid:1536459906973171782> **${tFor(interaction, 'commands.profile.planetsSeen')}**: \`${formattedPlanets}\`\n` +
-            `<:ovni:1536247726889762847> **${tFor(interaction, 'commands.profile.distanceTraveled')}**: \`${formattedDistance}\`\n` +
-            `<:passionate:1536247742110634034> **${tFor(interaction, 'commands.profile.tripsCompleted')}**: \`${formattedTrips}\`\n` +
-            `<:rock:1536579687407681596> **${tFor(interaction, 'commands.profile.resourcesCollected')}**: \`${formattedResources}\``
+            `## ${EMOJI_SATURN} ${tFor(interaction, 'commands.profile.statsTitle')}\n\n` +
+            `${EMOJI_ASTEROID} **${tFor(interaction, 'commands.profile.planetsSeen')}**: \`${formattedPlanets}\`\n` +
+            `${EMOJI_OVNI} **${tFor(interaction, 'commands.profile.distanceTraveled')}**: \`${formattedDistance}\`\n` +
+            `${EMOJI_PASSIONATE} **${tFor(interaction, 'commands.profile.tripsCompleted')}**: \`${formattedTrips}\`\n` +
+            `${EMOJI_ROCK} **${tFor(interaction, 'commands.profile.resourcesCollected')}**: \`${formattedResources}\``
         );
 
         const shipText = new TextDisplayBuilder().setContent(
-            `## <:config:1536247533502734376> ${tFor(interaction, 'commands.profile.shipTitle')}\n\n` +
-            `<:ovni:1536247726889762847> **${tFor(interaction, 'commands.profile.propulsor')}**: Tier \`${ship.propulsorTier}\`\n` +
-            `<:rock:1536579687407681596> **${tFor(interaction, 'commands.profile.excavation')}**: Nível \`${ship.excavationProbeLevel}\`\n` +
-            `<:loading:1536247662372982794> **${tFor(interaction, 'commands.profile.scanner')}**: Nível \`${ship.starScannerLevel}\``
+            `## ${EMOJI_CONFIG} ${tFor(interaction, 'commands.profile.shipTitle')}\n\n` +
+            `${EMOJI_OVNI} **${tFor(interaction, 'commands.profile.propulsor')}**: Tier \`${ship.propulsorTier}\`\n` +
+            `${EMOJI_ROCK} **${tFor(interaction, 'commands.profile.excavation')}**: Nível \`${ship.excavationProbeLevel}\`\n` +
+            `${EMOJI_LOADING} **${tFor(interaction, 'commands.profile.scanner')}**: Nível \`${ship.starScannerLevel}\``
+        );
+
+        // === Seção MERCADO GLOBAL (sem "lucro estimado", conforme pedido) ===
+        const marketRevenueFormatted = marketStats.marketGlobalSoldRevenue.toLocaleString(numLoc);
+        const marketSpentFormatted = marketStats.marketGlobalBoughtSpent.toLocaleString(numLoc);
+
+        const marketText = new TextDisplayBuilder().setContent(
+            `## ${EMOJI_BAG_COINS} ${isPt ? 'Mercado Global' : 'Global Market'}\n\n` +
+            `${EMOJI_REGISTRY} **${isPt ? 'Total vendido (unid.)' : 'Units sold'}**: \`${marketStats.marketGlobalSoldCount.toLocaleString(numLoc)}\`\n` +
+            `${EMOJI_COINS_GOLD} **${isPt ? 'Receita líquida' : 'Net revenue'}**: \`${marketRevenueFormatted}\` ∩oins\n\n` +
+            `${EMOJI_OVNI} **${isPt ? 'Total comprado (unid.)' : 'Units bought'}**: \`${marketStats.marketGlobalBoughtCount.toLocaleString(numLoc)}\`\n` +
+            `${EMOJI_COINS_GOLD} **${isPt ? 'Total gasto' : 'Total spent'}**: \`${marketSpentFormatted}\` ∩oins\n\n` +
+            `${EMOJI_CONFIG} **${isPt ? 'Loja do Sistema - Comprado' : 'System Shop - Bought'}**: \`${marketStats.shopBoughtCount.toLocaleString(numLoc)}\` unid.\n` +
+            `${EMOJI_BOOK} **${isPt ? 'Loja do Sistema - Vendido' : 'System Shop - Sold'}**: \`${marketStats.shopSoldCount.toLocaleString(numLoc)}\` unid.\n` +
+            `${EMOJI_BOOK2} **${isPt ? 'Crafts concluídos' : 'Crafts completed'}**: \`${marketStats.craftCompletedCount.toLocaleString(numLoc)}\``
         );
 
         const container = new ContainerBuilder()
@@ -154,7 +221,9 @@ module.exports = {
             .addSeparatorComponents(new SeparatorBuilder())
             .addTextDisplayComponents(statsText)
             .addSeparatorComponents(new SeparatorBuilder())
-            .addTextDisplayComponents(shipText);
+            .addTextDisplayComponents(shipText)
+            .addSeparatorComponents(new SeparatorBuilder())
+            .addTextDisplayComponents(marketText);
 
         await interaction.editReply({
             flags: MessageFlags.IsComponentsV2,

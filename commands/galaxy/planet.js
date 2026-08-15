@@ -47,6 +47,7 @@ const { enableMissionNotification } = require('../../utils/missionNotifier');
 const logger = require('../../utils/logger');
 const { getRarityEmoji, getRarityLabelKey } = require('../../gameConfig/rarities');
 const { rollHatDrop, getHatName } = require('../../gameConfig/hats');
+const { notifyAchievementsFollowUp } = require('../../utils/achievementNotifier');
 
 const USAGE_EMOJI = {
     uses: '<:loading:1536247662372982794>',
@@ -334,7 +335,7 @@ const buildMissionV2Payload = (interaction, userId, mission, arrivalNotice = nul
 };
 
 const generatePlanetReply = async (interaction, usage, arrivalNotice = null) => {
-    incrementPlanetsSeen(interaction.user.id);
+    const { unlockedAchievements: planetsSeenUnlocks } = incrementPlanetsSeen(interaction.user.id);
     const dados = gerarDadosPlaneta();
     const recursos = gerarRecursosPlaneta(dados.seedDicebear, dados.raridadeCode);
 
@@ -369,6 +370,7 @@ const generatePlanetReply = async (interaction, usage, arrivalNotice = null) => 
         flags: MessageFlags.IsComponentsV2,
         components: [container],
         files,
+        __planetExtraUnlocks: planetsSeenUnlocks,
     };
 };
 
@@ -403,11 +405,12 @@ module.exports = {
             return;
         }
 
-        const { mission } = resolveExplorationMission(interaction.user.id);
+        const { mission, unlockedAchievements: arrivalUnlocks } = resolveExplorationMission(interaction.user.id);
         const arrivalNotice = popMissionNotice(interaction.user.id);
 
         if (mission) {
             await interaction.editReply(buildMissionV2Payload(interaction, interaction.user.id, mission, arrivalNotice));
+            await notifyAchievementsFollowUp(interaction, arrivalUnlocks);
             return;
         }
 
@@ -418,7 +421,9 @@ module.exports = {
             return;
         }
 
-        await editPlanetReply(interaction, await generatePlanetReply(interaction, usage, arrivalNotice));
+        const payload = await generatePlanetReply(interaction, usage, arrivalNotice);
+        await editPlanetReply(interaction, payload);
+        await notifyAchievementsFollowUp(interaction, payload.__planetExtraUnlocks);
     },
 
     async handleButton(interaction) {
@@ -446,21 +451,28 @@ module.exports = {
             await interaction.deferUpdate();
 
             const userId = interaction.user.id;
-            resolveExplorationMission(userId);
+            const { unlockedAchievements: arrivalUnlocks } = resolveExplorationMission(userId);
             const mission = getExplorationMission(userId);
 
             if (mission) {
                 await interaction.editReply(buildMissionV2Payload(interaction, userId, mission));
+                await notifyAchievementsFollowUp(interaction, arrivalUnlocks);
                 return true;
             }
 
             const usage = consumePlanetUsage(userId);
             if (!usage.canUse) {
                 await interaction.editReply(buildV2TextPayload(buildFuelEmptyMessage(interaction, usage)));
+                await notifyAchievementsFollowUp(interaction, arrivalUnlocks);
                 return true;
             }
 
-            await editPlanetReply(interaction, await generatePlanetReply(interaction, usage));
+            const payload = await generatePlanetReply(interaction, usage);
+            await editPlanetReply(interaction, payload);
+            await notifyAchievementsFollowUp(interaction, [
+                ...(arrivalUnlocks ?? []),
+                ...(payload.__planetExtraUnlocks ?? []),
+            ]);
             return true;
         }
 
@@ -469,12 +481,13 @@ module.exports = {
         const planetSeed = interaction.customId.slice('planet_explore:'.length);
         const userId = interaction.user.id;
 
-        resolveExplorationMission(userId);
+        const { unlockedAchievements: arrivalUnlocks } = resolveExplorationMission(userId);
         if (getExplorationMission(userId)) {
             await interaction.reply({
                 content: `<:error:1536247565006143528> ${tFor(interaction, 'commands.planet.exploreBusy')}`,
                 flags: MessageFlags.Ephemeral,
             });
+            await notifyAchievementsFollowUp(interaction, arrivalUnlocks);
             return true;
         }
 
@@ -484,6 +497,7 @@ module.exports = {
                 content: `<:hmm:1536247599365890139> ${tFor(interaction, 'commands.planet.exploreExpired')}`,
                 flags: MessageFlags.Ephemeral,
             });
+            await notifyAchievementsFollowUp(interaction, arrivalUnlocks);
             return true;
         }
 
@@ -517,6 +531,7 @@ module.exports = {
             )
         );
 
+        await notifyAchievementsFollowUp(interaction, arrivalUnlocks);
         return true;
     },
 };

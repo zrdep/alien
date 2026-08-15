@@ -15,6 +15,7 @@ const planetDropTables = require('./planetDropTables');
 const shipUpgrades = require('./shipUpgrades');
 const market = require('./market');
 const hats = require('./hats');
+const achievements = require('./achievements');
 
 const validateGameConfig = ({ throwOnError = true } = {}) => {
     const errors = [];
@@ -120,6 +121,52 @@ const validateGameConfig = ({ throwOnError = true } = {}) => {
         errors.push(`config/market.js: maxActiveListingsPerResource deve ser pelo menos 1`);
     }
 
+    // -- Conquistas referenciam raridades válidas e recursos da recompensa ---
+    const validAchievementTypes = new Set([
+        'market_global_sold_count', 'market_global_sold_revenue',
+        'market_global_bought_count', 'market_global_bought_spent',
+        'shop_bought_count', 'shop_sold_count',
+        'coins_total_earned', 'planets_seen', 'trips_completed',
+        'resources_collected', 'distance_traveled_km', 'daily_streak',
+        'craft_completed',
+    ]);
+    const seenAchievementIds = new Set();
+    for (const ach of achievements.ACHIEVEMENTS) {
+        if (seenAchievementIds.has(ach.id)) {
+            errors.push(`gameConfig/achievements.js: id de conquista duplicado "${ach.id}"`);
+        }
+        seenAchievementIds.add(ach.id);
+
+        if (!rarityCodes.has(ach.rarity)) {
+            errors.push(`gameConfig/achievements.js: conquista "${ach.id}" usa raridade "${ach.rarity}", que não existe`);
+        }
+        if (!validAchievementTypes.has(ach.type)) {
+            errors.push(`gameConfig/achievements.js: conquista "${ach.id}" tem type inválido "${ach.type}"`);
+        }
+        if (!Number.isFinite(ach.threshold) || ach.threshold <= 0) {
+            errors.push(`gameConfig/achievements.js: conquista "${ach.id}" tem threshold inválido (${ach.threshold})`);
+        }
+        if (!ach.name?.['pt-BR'] || !ach.name?.['en-US']) {
+            errors.push(`gameConfig/achievements.js: conquista "${ach.id}" está sem nome em pt-BR e/ou en-US`);
+        }
+        if (!ach.description?.['pt-BR'] || !ach.description?.['en-US']) {
+            errors.push(`gameConfig/achievements.js: conquista "${ach.id}" está sem descrição em pt-BR e/ou en-US`);
+        }
+        if (ach.reward?.coins && (!Number.isFinite(ach.reward.coins) || ach.reward.coins < 0)) {
+            errors.push(`gameConfig/achievements.js: conquista "${ach.id}" tem reward.coins inválido`);
+        }
+        if (ach.reward?.resources) {
+            for (const res of ach.reward.resources) {
+                if (!resourceKeys.has(res.key)) {
+                    errors.push(`gameConfig/achievements.js: conquista "${ach.id}" recompensa com recurso "${res.key}" que não existe`);
+                }
+                if (!Number.isFinite(res.amount) || res.amount <= 0) {
+                    errors.push(`gameConfig/achievements.js: conquista "${ach.id}" tem amount inválido no recurso "${res.key}"`);
+                }
+            }
+        }
+    }
+
     // -- Receitas de craft referenciam recursos válidos ----------------------
     // (lazy require pra evitar ciclo: craftRecipes não depende de config/index)
     try {
@@ -165,5 +212,6 @@ module.exports = {
     ...shipUpgrades,
     ...market,
     ...hats,
+    ...achievements,
     validateGameConfig,
 };

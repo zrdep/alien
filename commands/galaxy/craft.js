@@ -28,6 +28,7 @@ const {
 const { getResourceMeta } = require('../../utils/planetResources');
 const { getResourceLabel } = require('../../utils/resourcesDisplay');
 const { formatDuration, formatTimeRemaining } = require('../../utils/exploration');
+const { notifyAchievementsFollowUp } = require('../../utils/achievementNotifier');
 
 const buildCategoryMenu = (interaction, selectedCategory = CATEGORIES.PROPULSOR) => {
     return new ActionRowBuilder().addComponents(
@@ -101,15 +102,18 @@ ${tFor(interaction, 'commands.craft.inProgressBody', { item: itemTitle })}
 const buildCraftPanel = (interaction, category = CATEGORIES.PROPULSOR, selectedRecipeId = null, toastMessage = null) => {
     const userId = interaction.user.id;
 
-    const { craft: activeCraft, notice } = resolveActiveCraft(userId);
+    const { craft: activeCraft, notice, unlockedAchievements } = resolveActiveCraft(userId);
 
     if (notice && !toastMessage) {
         const itemTitle = tFor(interaction, notice.titleKey);
         toastMessage = `<:excited:1536247579061256252> **${tFor(interaction, 'commands.craft.successTitle')}**\n${tFor(interaction, 'commands.craft.successBody', { item: itemTitle })}`;
     }
 
+    const __craftUnlockedAchievements = unlockedAchievements || [];
+
     if (activeCraft) {
-        return buildActiveCraftPanel(interaction, activeCraft);
+        const panel = buildActiveCraftPanel(interaction, activeCraft);
+        return { ...panel, __craftUnlockedAchievements };
     }
 
     const lang = getUserLanguage(userId);
@@ -199,6 +203,7 @@ ${ingredientLines}${statusWarning}
         flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
         content: '',
         components: [container],
+        __craftUnlockedAchievements,
     };
 };
 
@@ -223,12 +228,15 @@ module.exports = {
         }
 
         await interaction.editReply(buildCraftPanel(interaction, CATEGORIES.PROPULSOR));
+        await notifyAchievementsFollowUp(interaction, buildCraftPanel(interaction).__craftUnlockedAchievements);
     },
 
     async handleSelectMenu(interaction) {
         if (interaction.customId === 'craft_category_select') {
             const category = interaction.values[0];
-            await interaction.update(buildCraftPanel(interaction, category));
+            const panel = buildCraftPanel(interaction, category);
+            await interaction.update(panel);
+            await notifyAchievementsFollowUp(interaction, panel.__craftUnlockedAchievements);
             return true;
         }
 
@@ -236,7 +244,9 @@ module.exports = {
             const recipeId = interaction.values[0];
             const recipe = getRecipe(recipeId);
             const category = recipe ? recipe.category : CATEGORIES.PROPULSOR;
-            await interaction.update(buildCraftPanel(interaction, category, recipeId));
+            const panel = buildCraftPanel(interaction, category, recipeId);
+            await interaction.update(panel);
+            await notifyAchievementsFollowUp(interaction, panel.__craftUnlockedAchievements);
             return true;
         }
 
@@ -273,7 +283,9 @@ module.exports = {
             return true;
         }
 
-        await interaction.update(buildCraftPanel(interaction, recipe.category, recipeId));
+        const panel = buildCraftPanel(interaction, recipe.category, recipeId);
+        await interaction.update(panel);
+        await notifyAchievementsFollowUp(interaction, panel.__craftUnlockedAchievements);
         return true;
     },
 };

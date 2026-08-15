@@ -37,6 +37,7 @@ const {
     isValidResourceKey,
 } = require('../../utils/market');
 const { MARKET_CONFIG, getMinListingPrice, getSellerProceeds } = require('../../gameConfig/market');
+const { notifyAchievementsFollowUp } = require('../../utils/achievementNotifier');
 
 const MARKET_IMAGE_NAME = 'bag_coins.png';
 const MARKET_IMAGE_PATH = path.join(__dirname, '..', '..', 'images', 'moedas', MARKET_IMAGE_NAME);
@@ -658,6 +659,7 @@ module.exports = {
                     total: result.totalCost.toLocaleString(lang === 'pt-BR' ? 'pt-BR' : 'en-US'),
                 }),
             });
+            await notifyAchievementsFollowUp(interaction, result.unlockedAchievements);
             return;
         }
 
@@ -690,6 +692,7 @@ module.exports = {
                     total: result.totalPayout.toLocaleString(lang === 'pt-BR' ? 'pt-BR' : 'en-US'),
                 }),
             });
+            await notifyAchievementsFollowUp(interaction, result.unlockedAchievements);
             return;
         }
 
@@ -794,6 +797,8 @@ module.exports = {
                 flags: MessageFlags.Ephemeral,
             });
 
+            await notifyAchievementsFollowUp(interaction, result.buyerUnlockedAchievements);
+
             // Refresh global market view
             const payload = renderGlobalMarketContainer(interaction, result.resourceKey, 1);
             await interaction.message.edit(payload).catch(() => {});
@@ -830,6 +835,7 @@ module.exports = {
                 }),
                 flags: MessageFlags.Ephemeral,
             });
+            await notifyAchievementsFollowUp(interaction, result.unlockedAchievements);
             return true;
         }
 
@@ -863,6 +869,7 @@ module.exports = {
                 }),
                 flags: MessageFlags.Ephemeral,
             });
+            await notifyAchievementsFollowUp(interaction, result.unlockedAchievements);
             return true;
         }
 
@@ -945,6 +952,8 @@ module.exports = {
             }),
             flags: MessageFlags.Ephemeral,
         });
+
+        await notifyAchievementsFollowUp(interaction, result.buyerUnlockedAchievements);
 
         // Se o modal foi aberto a partir da visão do mercado, atualiza a mensagem original.
         if (interaction.message) {

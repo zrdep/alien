@@ -125,7 +125,7 @@ function renderHelpContainer(interaction, activeCategory = 'galaxy') {
     const tutorialButtonRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId('help_open_tutorial')
-            .setLabel(isPt ? 'Ver Tutorial Passo a Passo (/tutorial)' : 'View Step-by-Step Tutorial (/tutorial)')
+            .setLabel(isPt ? 'Ver Tutorial Passo a Passo' : 'View Step-by-Step Tutorial')
             .setEmoji('<:book2:1536459861527756952>')
             .setStyle(ButtonStyle.Success)
     );
