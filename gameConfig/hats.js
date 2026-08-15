@@ -19,11 +19,11 @@
 //   chapéu VAI aparecer. Pesos maiores = mais comum DENTRO da raridade dele.
 //
 // SOBRE `marketBasePrice`:
-//   Preço de referência (∩oins) usado só pra calcular o preço MÍNIMO
+//   Preço de referência (∩oins) usado tanto pra calcular o preço MÍNIMO
 //   permitido ao anunciar esse chapéu no /hatmarket (ver
-//   HAT_MARKET_CONFIG.minPricePercentOfBase abaixo). Não é uma loja do
-//   sistema — chapéus só se conseguem explorando ou comprando de outro
-//   jogador.
+//   HAT_MARKET_CONFIG.minPricePercentOfBase abaixo) quanto como preço FIXO
+//   de compra direta na Loja do Sistema (aba "Loja" do /hatmarket — espelha
+//   a Loja do Sistema do /market pra recursos).
 // =============================================================================
 
 const HATS = [
@@ -217,6 +217,14 @@ const getMinHatListingPrice = (hatKey) => {
     return Math.max(1, Math.ceil(base * (HAT_MARKET_CONFIG.minPricePercentOfBase / 100)));
 };
 
+/**
+ * Preço fixo de compra direta na Loja do Sistema (aba "Loja" do /hatmarket).
+ */
+const getHatShopPrice = (hatKey) => {
+    const hat = getHat(hatKey);
+    return hat?.marketBasePrice ?? 1;
+};
+
 const getHatSaleFee = (price) => Math.floor(price * (HAT_MARKET_CONFIG.saleFeePercent / 100));
 
 const getHatSellerProceeds = (price) => price - getHatSaleFee(price);
@@ -231,6 +239,7 @@ module.exports = {
     getHatName,
     rollHatDrop,
     getMinHatListingPrice,
+    getHatShopPrice,
     getHatSaleFee,
     getHatSellerProceeds,
 };

@@ -25,15 +25,18 @@ const {
     getUserHatMarketListings,
     buyHatMarketListing,
     cancelHatMarketListing,
+    buyHatFromSystemShop,
 } = require('../../utils/db');
 const {
     getAllHats,
     getHat,
     getHatName,
     getMinHatListingPrice,
+    getHatShopPrice,
     HAT_MARKET_CONFIG,
 } = require('../../gameConfig/hats');
 const { getRarityEmoji } = require('../../gameConfig/rarities');
+const { notifyAchievementsFollowUp } = require('../../utils/achievementNotifier');
 
 const IMAGE_NAME = 'bag_coins.png';
 const IMAGE_PATH = path.join(__dirname, '..', '..', 'images', 'moedas', IMAGE_NAME);
@@ -44,13 +47,20 @@ const TXT = {
         browseSubtitle: 'Compre chapéus de outros jogadores',
         sellSubtitle: 'Anuncie um chapéu do seu inventário',
         myListingsSubtitle: 'Seus anúncios ativos',
+        shopSubtitle: 'Compre chapéus direto da Loja do Sistema, a preço fixo',
         browseButton: 'Navegar',
+        shopButton: 'Loja',
         sellButton: 'Vender',
         myListingsButton: 'Meus Anúncios',
+        switchToMarketButton: 'Ver Mercado',
         selectHatPlaceholder: 'Selecione um chapéu...',
         noListings: 'Nenhum anúncio ativo pra esse chapéu ainda.',
         buyButton: 'Comprar',
         buyByIdButton: 'Comprar por ID',
+        buyShop1x: (price) => `Comprar 1x (${price.toLocaleString('pt-BR')} ∩oins)`,
+        buyShop5x: (price) => `Comprar 5x (${price.toLocaleString('pt-BR')} ∩oins)`,
+        shopListTitle: 'Lista de Preços da Loja Oficial:',
+        shopNote: 'Chapéus da Loja do Sistema são criados na hora — sem vendedor, sem taxa.',
         noOwnedHats: 'Você não tem nenhum chapéu pra vender. Explore planetas com `/planet` pra achar um!',
         selectHatToSellPlaceholder: 'Selecione o chapéu que quer vender...',
         noMyListings: 'Você não tem anúncios ativos.',
@@ -68,6 +78,7 @@ const TXT = {
         cannotBuyOwn: 'Você não pode comprar seu próprio anúncio.',
         insufficientCoins: (total) => `Você não tem ∩oins suficientes. Precisa de **${total.toLocaleString('pt-BR')}**.`,
         buySuccess: (name, total) => `<:excited:1536247579061256252> Você comprou **${name}** por **${total.toLocaleString('pt-BR')}** ∩oins!`,
+        buyShopSuccess: (amount, name, total) => `<:excited:1536247579061256252> Você comprou **${amount}x ${name}** da Loja por **${total.toLocaleString('pt-BR')}** ∩oins!`,
         cancelSuccess: (name) => `Anúncio de **${name}** cancelado — o chapéu voltou pro seu inventário.`,
         feeNote: (fee) => `*Taxa de venda: ${fee}%*`,
     },
@@ -76,13 +87,20 @@ const TXT = {
         browseSubtitle: 'Buy hats from other players',
         sellSubtitle: 'List a hat from your inventory',
         myListingsSubtitle: 'Your active listings',
+        shopSubtitle: 'Buy hats directly from the System Shop at a fixed price',
         browseButton: 'Browse',
+        shopButton: 'Shop',
         sellButton: 'Sell',
         myListingsButton: 'My Listings',
+        switchToMarketButton: 'View Market',
         selectHatPlaceholder: 'Select a hat...',
         noListings: 'No active listings for this hat yet.',
         buyButton: 'Buy',
         buyByIdButton: 'Buy by ID',
+        buyShop1x: (price) => `Buy 1x (${price.toLocaleString('en-US')} ∩oins)`,
+        buyShop5x: (price) => `Buy 5x (${price.toLocaleString('en-US')} ∩oins)`,
+        shopListTitle: 'Official Shop Price List:',
+        shopNote: 'System Shop hats are created on the spot — no seller, no fee.',
         noOwnedHats: "You don't have any hats to sell. Explore planets with `/planet` to find one!",
         selectHatToSellPlaceholder: 'Select the hat you want to sell...',
         noMyListings: "You don't have any active listings.",
@@ -100,6 +118,7 @@ const TXT = {
         cannotBuyOwn: 'You cannot buy your own listing.',
         insufficientCoins: (total) => `You don't have enough ∩oins. You need **${total.toLocaleString('en-US')}**.`,
         buySuccess: (name, total) => `<:excited:1536247579061256252> You bought **${name}** for **${total.toLocaleString('en-US')}** ∩oins!`,
+        buyShopSuccess: (amount, name, total) => `<:excited:1536247579061256252> You bought **${amount}x ${name}** from the Shop for **${total.toLocaleString('en-US')}** ∩oins!`,
         cancelSuccess: (name) => `Listing for **${name}** cancelled — the hat is back in your inventory.`,
         feeNote: (fee) => `*Sale fee: ${fee}%*`,
     },
@@ -121,12 +140,18 @@ const buildNavRow = (active, t) => new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('hatmarket_nav_browse').setLabel(t.browseButton)
         .setEmoji('<:ovni:1536247726889762847>')
         .setStyle(active === 'browse' ? ButtonStyle.Primary : ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('hatmarket_nav_shop').setLabel(t.shopButton)
+        .setEmoji('<:gold_coins:1536941656178298992>')
+        .setStyle(active === 'shop' ? ButtonStyle.Primary : ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('hatmarket_nav_sell').setLabel(t.sellButton)
         .setEmoji('<:config:1536247533502734376>')
         .setStyle(active === 'sell' ? ButtonStyle.Primary : ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('hatmarket_nav_mylistings').setLabel(t.myListingsButton)
         .setEmoji('<:registry:1536459835921530890>')
-        .setStyle(active === 'mylistings' ? ButtonStyle.Primary : ButtonStyle.Secondary)
+        .setStyle(active === 'mylistings' ? ButtonStyle.Primary : ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('hatmarket_switch_market').setLabel(t.switchToMarketButton)
+        .setEmoji('<:rock:1536579687407681596>')
+        .setStyle(ButtonStyle.Secondary)
 );
 
 const buildHatSelectRow = (customId, placeholder, selectedKey, hats) => {
@@ -208,6 +233,56 @@ function renderBrowse(interaction, selectedKey) {
         );
         rows.push(actionRow);
     }
+
+    return { components: rows, files, flags: MessageFlags.IsComponentsV2 };
+}
+
+function renderShop(interaction, selectedKey) {
+    const lang = getUserLanguage(interaction.user.id);
+    const t = getTxt(lang);
+    const hats = getAllHats();
+    const hatKey = selectedKey ?? hats[0]?.key;
+    const hat = getHat(hatKey);
+    const price = getHatShopPrice(hatKey);
+
+    const shopListText = hats.map((h) => {
+        const isSelected = h.key === hatKey ? '▶ ' : '';
+        return `${isSelected}${getRarityEmoji(h.rarity)} **${getHatName(h.key, lang)}**: \`${getHatShopPrice(h.key).toLocaleString(lang)}\` ∩oins`;
+    }).join('\n');
+
+    const rarityEmoji = hat ? getRarityEmoji(hat.rarity) : '';
+    const bodyText = new TextDisplayBuilder().setContent(
+        `### ${rarityEmoji} ${getHatName(hatKey, lang)}\n` +
+        `**${lang === 'pt-BR' ? 'Preço' : 'Price'}**: \`${price.toLocaleString(lang)}\` ∩oins\n\n` +
+        `${t.shopNote}\n\n` +
+        `## ${t.shopListTitle}\n${shopListText}`
+    );
+
+    const { section, files } = wrapWithImage(interaction, bodyText);
+    const container = new ContainerBuilder()
+        .addTextDisplayComponents(header(t, t.shopSubtitle))
+        .addSeparatorComponents(new SeparatorBuilder())
+        .addSectionComponents(section);
+
+    const buyRow = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId(`hatmarket_buy_shop_${hatKey}_1`)
+            .setLabel(t.buyShop1x(price))
+            .setEmoji('<:gold_coins:1536941656178298992>')
+            .setStyle(ButtonStyle.Success),
+        new ButtonBuilder()
+            .setCustomId(`hatmarket_buy_shop_${hatKey}_5`)
+            .setLabel(t.buyShop5x(price * 5))
+            .setEmoji('<:gold_coins:1536941656178298992>')
+            .setStyle(ButtonStyle.Primary)
+    );
+
+    const rows = [
+        container,
+        buildHatSelectRow('hatmarket_select_shop', t.selectHatPlaceholder, hatKey, hats),
+        buildNavRow('shop', t),
+        buyRow,
+    ];
 
     return { components: rows, files, flags: MessageFlags.IsComponentsV2 };
 }
@@ -339,9 +414,15 @@ module.exports = {
         await interaction.editReply(renderBrowse(interaction, null));
     },
 
+    renderBrowse,
+
     async handleButton(interaction) {
         if (interaction.customId === 'hatmarket_nav_browse') {
             await interaction.update(renderBrowse(interaction, null));
+            return true;
+        }
+        if (interaction.customId === 'hatmarket_nav_shop') {
+            await interaction.update(renderShop(interaction, null));
             return true;
         }
         if (interaction.customId === 'hatmarket_nav_sell') {
@@ -353,6 +434,15 @@ module.exports = {
             return true;
         }
 
+        if (interaction.customId === 'hatmarket_switch_market') {
+            // Requer dentro do handler (não no topo do arquivo) pra evitar
+            // problema de import circular — market.js também pode importar
+            // coisas deste arquivo pro botão inverso ("Ver Chapéus").
+            const { renderGlobalMarketContainer } = require('./market');
+            await interaction.update(renderGlobalMarketContainer(interaction, 'stone', 1));
+            return true;
+        }
+
         if (interaction.customId === 'hatmarket_open_buy_modal') {
             await interaction.showModal(buildBuyModal(interaction));
             return true;
@@ -361,6 +451,31 @@ module.exports = {
         if (interaction.customId.startsWith('hatmarket_open_sell_modal_')) {
             const hatKey = interaction.customId.replace('hatmarket_open_sell_modal_', '');
             await interaction.showModal(buildSellModal(interaction, hatKey));
+            return true;
+        }
+
+        if (interaction.customId.startsWith('hatmarket_buy_shop_')) {
+            const lang = getUserLanguage(interaction.user.id);
+            const t = getTxt(lang);
+            const parts = interaction.customId.replace('hatmarket_buy_shop_', '').split('_');
+            const hatKey = parts[0];
+            const qty = parseInt(parts[1], 10) || 1;
+
+            const result = buyHatFromSystemShop(interaction.user.id, hatKey, qty);
+            if (!result.success) {
+                let msg = t.invalidValues;
+                if (result.reason === 'insufficient_coins') msg = t.insufficientCoins(result.totalCost);
+                await interaction.reply({ content: msg, flags: MessageFlags.Ephemeral });
+                return true;
+            }
+
+            const name = getHatName(result.hatKey, lang);
+            await interaction.reply({
+                content: t.buyShopSuccess(result.amount, name, result.totalCost),
+                flags: MessageFlags.Ephemeral,
+            });
+            await notifyAchievementsFollowUp(interaction, result.unlockedAchievements);
+            await interaction.message.edit(renderShop(interaction, result.hatKey)).catch(() => {});
             return true;
         }
 
@@ -409,6 +524,10 @@ module.exports = {
     async handleSelectMenu(interaction) {
         if (interaction.customId === 'hatmarket_select_browse') {
             await interaction.update(renderBrowse(interaction, interaction.values[0]));
+            return true;
+        }
+        if (interaction.customId === 'hatmarket_select_shop') {
+            await interaction.update(renderShop(interaction, interaction.values[0]));
             return true;
         }
         if (interaction.customId === 'hatmarket_select_sell') {

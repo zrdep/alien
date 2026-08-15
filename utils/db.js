@@ -5,7 +5,7 @@ const logger = require('./logger');
 const { generateMissionCoins } = require('./coins');
 const { getResourceInfo } = require('./market');
 const { MARKET_CONFIG, getMinListingPrice, getSellerProceeds } = require('../gameConfig/market');
-const { getHat, HAT_MARKET_CONFIG, getMinHatListingPrice, getHatSellerProceeds } = require('../gameConfig/hats');
+const { getHat, HAT_MARKET_CONFIG, getMinHatListingPrice, getHatShopPrice, getHatSellerProceeds } = require('../gameConfig/hats');
 const { getScannerMiningMs } = require('../gameConfig/shipUpgrades');
 
 const dataDir = path.join(__dirname, '..', 'data');
@@ -1460,6 +1460,48 @@ const getUserHats = (userId) => {
     `).all(userId);
 };
 
+// Espelha buyFromSystemShop (recursos): compra chapéu(éis) direto da Loja do
+// Sistema, ao preço fixo de gameConfig/hats.js (getHatShopPrice). Diferente
+// do /hatmarket normal (jogador-a-jogador), aqui não existe vendedor nem
+// taxa — o chapéu é criado "do nada" e pago em ∩oins direto pro sistema.
+const buyHatFromSystemShop = (buyerId, hatKey, qty = 1) => {
+    const hat = getHat(hatKey);
+    if (!hat) {
+        return { success: false, reason: 'invalid_hat' };
+    }
+
+    const amount = Math.floor(Number(qty));
+    if (!Number.isFinite(amount) || amount <= 0) {
+        return { success: false, reason: 'invalid_amount' };
+    }
+
+    const unitPrice = getHatShopPrice(hatKey);
+    const totalCost = amount * unitPrice;
+
+    const buyerCoins = getUserCoins(buyerId);
+    if (buyerCoins < totalCost) {
+        return { success: false, reason: 'insufficient_coins', totalCost };
+    }
+
+    const tx = db.transaction(() => {
+        db.prepare('UPDATE users SET coins = coins - ? WHERE user_id = ?').run(totalCost, buyerId);
+        addUserHat(buyerId, hatKey, amount);
+    });
+    tx();
+
+    addShopBoughtStats(buyerId, amount);
+    const unlockedAchievements = checkAchievementsForUser(buyerId);
+
+    return {
+        success: true,
+        hatKey,
+        amount,
+        unitPrice,
+        totalCost,
+        unlockedAchievements,
+    };
+};
+
 const getUserHatQuantity = (userId, hatKey) => {
     const row = db.prepare(`
         SELECT quantity FROM user_hats WHERE user_id = ? AND hat_key = ?
@@ -1904,6 +1946,7 @@ module.exports = {
     buyFromSystemShop,
     sellToSystemShop,
     getUserHats,
+    buyHatFromSystemShop,
     getUserHatQuantity,
     addUserHat,
     removeUserHat,

@@ -85,7 +85,12 @@ function buildNavButtons(interaction, activeTab = 'global') {
             .setCustomId('market_nav_mylistings')
             .setLabel(tFor(interaction, 'commands.market.myListingsButton'))
             .setEmoji('<:registry:1536459835921530890>')
-            .setStyle(activeTab === 'mylistings' ? ButtonStyle.Primary : ButtonStyle.Secondary)
+            .setStyle(activeTab === 'mylistings' ? ButtonStyle.Primary : ButtonStyle.Secondary),
+        new ButtonBuilder()
+            .setCustomId('market_switch_hats')
+            .setLabel(tFor(interaction, 'commands.market.switchToHatsButton'))
+            .setEmoji('<:sunglasses:1536248455519801386>')
+            .setStyle(ButtonStyle.Secondary)
     );
 }
 
@@ -708,6 +713,8 @@ module.exports = {
         await interaction.editReply(payload);
     },
 
+    renderGlobalMarketContainer,
+
     async handleSelectMenu(interaction) {
         if (!interaction.customId.startsWith('market_select_resource')) return false;
 
@@ -746,6 +753,15 @@ module.exports = {
         if (interaction.customId === 'market_nav_mylistings') {
             const payload = renderMyListingsContainer(interaction);
             await interaction.update(payload);
+            return true;
+        }
+
+        if (interaction.customId === 'market_switch_hats') {
+            // Requer dentro do handler (não no topo do arquivo) pra evitar
+            // problema de import circular com hatmarket.js, que também
+            // importa este arquivo pro botão inverso ("Ver Mercado").
+            const { renderBrowse } = require('./hatmarket');
+            await interaction.update(renderBrowse(interaction, null));
             return true;
         }
 
