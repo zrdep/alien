@@ -16,11 +16,11 @@
 // =============================================================================
 
 const PROPULSOR_TIERS = [
-    { code: 'A', rarityCode: 'A', speedKms: 4_500 },
-    { code: 'B', rarityCode: 'B', speedKms: 12_000 },
-    { code: 'C', rarityCode: 'C', speedKms: 36_000 },
-    { code: 'D', rarityCode: 'D', speedKms: 60_000 },
-    { code: 'E', rarityCode: 'E', speedKms: 120_000 },
+    { code: 'A', rarityCode: 'A', speedKms: 2_200 },
+    { code: 'B', rarityCode: 'B', speedKms: 6_000 },
+    { code: 'C', rarityCode: 'C', speedKms: 18_000 },
+    { code: 'D', rarityCode: 'D', speedKms: 30_000 },
+    { code: 'E', rarityCode: 'E', speedKms: 60_000 },
 ];
 
 const EXCAVATION_TIERS = [
@@ -31,12 +31,15 @@ const EXCAVATION_TIERS = [
     { level: 5, code: 'E', rarityCode: 'E', depth: 250, bonus: 28 },
 ];
 
+// O Scanner Estelar não "vê mais longe" — ele mapeia o subsolo do planeta com
+// precisão, então o alien perde menos tempo cavando às cegas. Cada tier reduz
+// o tempo de mineração (começa em 15min no tier A e chega a 8min no tier E).
 const SCANNER_TIERS = [
-    { level: 1, code: 'A', rarityCode: 'A', range: 3 },
-    { level: 2, code: 'B', rarityCode: 'B', range: 6 },
-    { level: 3, code: 'C', rarityCode: 'C', range: 10 },
-    { level: 4, code: 'D', rarityCode: 'D', range: 15 },
-    { level: 5, code: 'E', rarityCode: 'E', range: 25 },
+    { level: 1, code: 'A', rarityCode: 'A', miningMinutes: 15 },
+    { level: 2, code: 'B', rarityCode: 'B', miningMinutes: 13 },
+    { level: 3, code: 'C', rarityCode: 'C', miningMinutes: 11 },
+    { level: 4, code: 'D', rarityCode: 'D', miningMinutes: 9 },
+    { level: 5, code: 'E', rarityCode: 'E', miningMinutes: 8 },
 ];
 
 const DEFAULT_SHIP = {
@@ -45,9 +48,25 @@ const DEFAULT_SHIP = {
     starScannerLevel: 1,
 };
 
+// Helper "puro" (sem dependências de db/ship) pra converter nível/código do
+// scanner direto em milissegundos de mineração. Existe aqui pra poder ser
+// usado tanto por utils/exploration.js quanto por utils/db.js sem criar
+// import circular entre esses dois arquivos.
+const getScannerMiningMs = (levelOrCode) => {
+    let tier;
+    if (typeof levelOrCode === 'string') {
+        tier = SCANNER_TIERS.find((t) => t.code === levelOrCode);
+    } else {
+        const index = Math.max(0, Math.min((levelOrCode || 1) - 1, SCANNER_TIERS.length - 1));
+        tier = SCANNER_TIERS[index];
+    }
+    return (tier ?? SCANNER_TIERS[0]).miningMinutes * 60 * 1000;
+};
+
 module.exports = {
     PROPULSOR_TIERS,
     EXCAVATION_TIERS,
     SCANNER_TIERS,
     DEFAULT_SHIP,
+    getScannerMiningMs,
 };

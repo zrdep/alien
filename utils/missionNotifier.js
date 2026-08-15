@@ -4,6 +4,7 @@ const {
     resolveExplorationMission,
     peekMissionNotice,
     getUserAlien,
+    getUserShip,
 } = require('./db');
 const { getMissionFinalEndsAt, buildArrivalNotice } = require('./exploration');
 const logger = require('./logger');
@@ -71,7 +72,8 @@ const scheduleMissionNotification = (client, userId) => {
     if (!mission || !mission.notify_channel_id) return;
 
     const channelId = mission.notify_channel_id;
-    const finalEndsAt = getMissionFinalEndsAt(mission);
+    const ship = getUserShip(userId);
+    const finalEndsAt = getMissionFinalEndsAt(mission, ship.starScannerLevel);
     const delay = finalEndsAt - Date.now();
 
     const fire = async () => {

@@ -34,6 +34,7 @@ const { gerarDadosPlaneta } = require('../../utils/planet');
 const { gerarRecursosPlaneta } = require('../../utils/planetResources');
 const { formatResourcesInline } = require('../../utils/resourcesDisplay');
 const { generateMissionCoins } = require('../../utils/coins');
+const { getExcavationBonusPercent } = require('../../utils/ship');
 const {
     EXPLORE_OFFER_MS,
     MISSION_STATUS,
@@ -57,7 +58,7 @@ const USAGE_EMOJI = {
 const ATTACHMENT_NAME = 'planet.png';
 
 
-const buildResourcesContent = (interaction, recursos) => {
+const buildResourcesContent = (interaction, recursos, bonusPercent = 0) => {
     const title = tFor(interaction, 'commands.planet.resourcesTitle');
     const empty = tFor(interaction, 'commands.planet.resourcesEmpty');
     const lang = getUserLanguage(interaction.user.id);
@@ -69,7 +70,11 @@ const buildResourcesContent = (interaction, recursos) => {
         body = formatResourcesInline(lang, recursos);
     }
 
-    return `\n## <:excited:1536247579061256252> ${title}\n\n${body}\n`;
+    const bonusLine = bonusPercent > 0
+        ? `\n<:rock:1536579687407681596> ${tFor(interaction, 'commands.planet.probeBonusLabel', { percent: bonusPercent })}`
+        : '';
+
+    return `\n## <:excited:1536247579061256252> ${title}\n\n${body}${bonusLine}\n`;
 };
 
 const buildHatFoundContent = (interaction, hat) => {
@@ -104,7 +109,8 @@ const buildPlanetContainer = (interaction, dados, usage, recursos, { withThumbna
     const rarityLabel = tFor(interaction, getRarityLabelKey(dados.raridadeCode));
     const lang = getUserLanguage(interaction.user.id);
     const ship = getUserShip(interaction.user.id);
-    const times = getExpeditionTimes(interaction.user.id, dados.distancia, ship.propulsorTier);
+    const times = getExpeditionTimes(interaction.user.id, dados.distancia, ship);
+    const excavationBonusPercent = getExcavationBonusPercent(ship.excavationProbeLevel);
 
     const header = new TextDisplayBuilder().setContent(
 `# <:asteroid:1536459906973171782> ${dados.nome}
@@ -144,7 +150,7 @@ ${tFor(interaction, 'commands.planet.rarityLabel')}: ${emojiRarity} ${rarityLabe
 `
     );
 
-    const resourcesTxt = new TextDisplayBuilder().setContent(buildResourcesContent(interaction, recursos));
+    const resourcesTxt = new TextDisplayBuilder().setContent(buildResourcesContent(interaction, recursos, excavationBonusPercent));
     const hatTxt = hatFound
         ? new TextDisplayBuilder().setContent(buildHatFoundContent(interaction, hatFound))
         : null;
@@ -337,7 +343,9 @@ const buildMissionV2Payload = (interaction, userId, mission, arrivalNotice = nul
 const generatePlanetReply = async (interaction, usage, arrivalNotice = null) => {
     const { unlockedAchievements: planetsSeenUnlocks } = incrementPlanetsSeen(interaction.user.id);
     const dados = gerarDadosPlaneta();
-    const recursos = gerarRecursosPlaneta(dados.seedDicebear, dados.raridadeCode);
+    const ship = getUserShip(interaction.user.id);
+    const excavationBonusPercent = getExcavationBonusPercent(ship.excavationProbeLevel);
+    const recursos = gerarRecursosPlaneta(dados.seedDicebear, dados.raridadeCode, excavationBonusPercent);
 
     const planetCoins = generateMissionCoins(dados.raridadeCode);
     dados.coins = planetCoins;

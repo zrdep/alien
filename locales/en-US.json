@@ -126,7 +126,7 @@
         },
         "scanner": {
           "name": "Star Scanner",
-          "stat": "{emoji} {rarity} — Range: `{range} light-years`"
+          "stat": "{emoji} {rarity} — Mining time: `{minutes} min`"
         }
       },
       "renameModalTitle": "Rename alien",
@@ -163,6 +163,7 @@
       "rarityE": "Legendary",
       "resourcesTitle": "Resources to Collect",
       "resourcesEmpty": "This planet had no useful resources to collect. Better luck next time!",
+      "probeBonusLabel": "Excavation Probe bonus: +{percent}% (already included above)",
       "coinsLabel": "Planet ∩oins",
       "footerTip": "Each planet is unique! Run the command again to discover a new world.",
       "footerLater": "Soon you will be able to name, explore and do much more with this planet!",
@@ -340,19 +341,19 @@
         },
         "scanner_2": {
           "title": "Star Scanner Level 2",
-          "desc": "6 light-years planetary detection range."
+          "desc": "Reduces mining time to 13 minutes."
         },
         "scanner_3": {
           "title": "Star Scanner Level 3",
-          "desc": "10 light-years planetary detection range."
+          "desc": "Reduces mining time to 11 minutes."
         },
         "scanner_4": {
           "title": "Star Scanner Level 4",
-          "desc": "Epic scanner with 15 light-years range."
+          "desc": "Epic scanner that reduces mining time to 9 minutes."
         },
         "scanner_5": {
           "title": "Star Scanner Level 5",
-          "desc": "Legendary scanner with maximum 25 light-years range."
+          "desc": "Legendary scanner with the shortest possible mining time: 8 minutes."
         }
       }
     }

@@ -54,8 +54,8 @@ function getStepContent(lang, stepNum) {
             cmd: '/craft',
             icon: '<:config:1536247533502734376>',
             desc: isPt
-                ? 'Use os recursos acumulados no seu inventário para fabricar atualizações para sua nave! Evolua o Propulsor (mais velocidade), Sonda de Escavação (mais recursos) e o Scanner Estelar.'
-                : 'Use accumulated resources from your inventory to craft upgrades for your ship! Upgrade your Propulsor (more speed), Excavation Probe (more resources), and Star Scanner.',
+                ? 'Use os recursos acumulados no seu inventário para fabricar atualizações para sua nave! Evolua o Propulsor (mais velocidade), a Sonda de Escavação (mais recursos por missão) e o Scanner Estelar (menos tempo de mineração).'
+                : 'Use accumulated resources from your inventory to craft upgrades for your ship! Upgrade your Propulsor (more speed), Excavation Probe (more resources per mission), and Star Scanner (less mining time).',
         },
         5: {
             title: isPt ? 'Passo 5: Mercado Global de Recursos' : 'Step 5: Global Resource Market',

@@ -1,7 +1,7 @@
 const { t } = require('./i18n');
 const { getUserLanguage } = require('./db');
 const { getRarityEmoji, getRarityLabelKey } = require('../gameConfig/rarities');
-const { PROPULSOR_TIERS, EXCAVATION_TIERS, SCANNER_TIERS, DEFAULT_SHIP } = require('../gameConfig/shipUpgrades');
+const { PROPULSOR_TIERS, EXCAVATION_TIERS, SCANNER_TIERS, DEFAULT_SHIP, getScannerMiningMs } = require('../gameConfig/shipUpgrades');
 
 const formatSpeed = (speedKms, lang) => {
     const locale = lang === 'en-US' ? 'en-US' : 'pt-BR';
@@ -26,6 +26,12 @@ const getScannerTier = (levelOrCode) => {
     }
     const index = Math.max(0, Math.min(levelOrCode - 1, SCANNER_TIERS.length - 1));
     return SCANNER_TIERS[index];
+};
+
+// Bônus percentual de recursos que a Sonda de Escavação atual do jogador
+// aplica em cima da quantidade base sorteada por planeta.
+const getExcavationBonusPercent = (levelOrCode) => {
+    return getExcavationTier(levelOrCode).bonus ?? 0;
 };
 
 const buildHangarContent = (userId, usage, ship = DEFAULT_SHIP) => {
@@ -70,7 +76,7 @@ const buildHangarContent = (userId, usage, ship = DEFAULT_SHIP) => {
     const scannerLine = t(userId, 'commands.alien.upgrade.scanner.stat', {
         emoji: getRarityEmoji(scanner.rarityCode),
         rarity: scannerRarity,
-        range: scanner.range,
+        minutes: scanner.miningMinutes,
     });
 
     return `## <:ovni:1536247726889762847> ${hangarTitle}
@@ -94,6 +100,8 @@ module.exports = {
     formatSpeed,
     getPropulsorTier,
     getExcavationTier,
+    getExcavationBonusPercent,
     getScannerTier,
+    getScannerMiningMs,
     buildHangarContent,
 };

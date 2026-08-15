@@ -1,10 +1,15 @@
 const { t } = require('./i18n');
-const { getUserLanguage, getUserAlien } = require('./db');
-const { getPropulsorTier } = require('./ship');
+const { getUserLanguage, getUserAlien, getUserShip } = require('./db');
+const { getPropulsorTier, getExcavationBonusPercent } = require('./ship');
+const { getScannerMiningMs } = require('../gameConfig/shipUpgrades');
 const { formatResourcesInline } = require('./resourcesDisplay');
 
 const EXPLORE_OFFER_MS = 3 * 60 * 1000;
-const COLLECT_DURATION_MS = 10 * 60 * 1000;
+// Duração de mineração padrão (tier 1 do Scanner Estelar) — usada só como
+// fallback quando não temos o nível do scanner do jogador à mão. O valor
+// real e dinâmico (15min -> 8min conforme o scanner evolui) vem de
+// getScannerMiningMs(), em gameConfig/shipUpgrades.js.
+const COLLECT_DURATION_MS = getScannerMiningMs(1);
 
 const MISSION_STATUS = {
     TRAVELING_OUT: 'traveling_out',
@@ -72,12 +77,24 @@ const formatCoinsText = (lang, coinsData) => {
     return `\n${coinsData.emoji} **+${amountStr}** ∩oins`;
 };
 
+// Linha extra mostrando o bônus de recursos da Sonda de Escavação atual do
+// jogador — os valores em `resources` JÁ vêm com o bônus aplicado (ver
+// utils/planetResources.js), isso é só um indicador visual de onde ele
+// entrou em jogo.
+const buildProbeBonusText = (userId) => {
+    const ship = getUserShip(userId);
+    const bonusPercent = getExcavationBonusPercent(ship.excavationProbeLevel);
+    if (bonusPercent <= 0) return '';
+    return `\n<:rock:1536579687407681596> ${t(userId, 'commands.planet.probeBonusLabel', { percent: bonusPercent })}`;
+};
+
 const buildMissionStatusContent = (userId, mission) => {
     const lang = getUserLanguage(userId);
     const alienName = getAlienDisplayName(userId);
     const resources = parseMissionResources(mission);
     const resourcesText = formatResourcesInline(lang, resources);
     const eta = formatTimeRemaining(mission.phase_ends_at, lang);
+    const bonusText = buildProbeBonusText(userId);
 
     const getMissionCoins = () => {
         if (mission.coins_json) {
@@ -102,7 +119,7 @@ const buildMissionStatusContent = (userId, mission) => {
         })}
 
 ${t(userId, 'commands.planet.missionCollectingFor')}
-${resourcesText}${coinsText}
+${resourcesText}${bonusText}${coinsText}
 
 <:saturn:1536459943480270959> ${t(userId, 'commands.planet.missionEta', { time: eta })}`;
     }
@@ -119,7 +136,7 @@ ${resourcesText}${coinsText}
         })}
 
 ${t(userId, 'commands.planet.missionCollectingFor')}
-${resourcesText}${coinsDisplayText}
+${resourcesText}${bonusText}${coinsDisplayText}
 
 <:loading:1536247662372982794> ${t(userId, 'commands.planet.missionCollectingEta', { time: eta })}`;
     }
@@ -135,7 +152,7 @@ ${resourcesText}${coinsDisplayText}
             planet: mission.planet_name,
         })}
 
-${resourcesText}${coinsText}
+${resourcesText}${bonusText}${coinsText}
 
 <:saturn:1536459943480270959> ${t(userId, 'commands.planet.missionEta', { time: eta })}`;
     }
@@ -147,6 +164,7 @@ const buildArrivalNotice = (userId, notice) => {
     const lang = getUserLanguage(userId);
     const resources = notice.resources ?? [];
     const resourcesText = formatResourcesInline(lang, resources);
+    const bonusText = buildProbeBonusText(userId);
 
     let coinsText = '';
     if (notice.coins && notice.coins.amount) {
@@ -161,7 +179,7 @@ ${t(userId, 'commands.planet.missionArrivedBody', {
         planet: notice.planetName,
     })}
 
-${resourcesText}${coinsText}
+${resourcesText}${bonusText}${coinsText}
 
 <:registry:1536459835921530890> ${t(userId, 'commands.planet.missionArrivedTip')}`;
 };
@@ -183,11 +201,11 @@ ${t(userId, 'commands.planet.exploreStartedBody', {
 <:saturn:1536459943480270959> ${t(userId, 'commands.planet.missionEta', { time: eta })}`;
 };
 
-const getExpeditionTimes = (userId, distanceKm, propulsorTier) => {
+const getExpeditionTimes = (userId, distanceKm, ship) => {
     const lang = getUserLanguage(userId);
-    const oneWaySec = calculateTravelSeconds(distanceKm, propulsorTier);
+    const oneWaySec = calculateTravelSeconds(distanceKm, ship.propulsorTier);
     const roundTripSec = oneWaySec * 2;
-    const miningSec = COLLECT_DURATION_MS / 1000;
+    const miningSec = getScannerMiningMs(ship.starScannerLevel) / 1000;
 
     return {
         oneWay: formatDuration(oneWaySec, lang),
@@ -199,9 +217,12 @@ const getExpeditionTimes = (userId, distanceKm, propulsorTier) => {
 // Calcula o timestamp (ms) em que a missão termina de vez, ou seja, quando o
 // alien chega de volta na Terra com os recursos - independente de qual fase
 // a missão está agora. Usado para agendar a notificação no chat.
-const getMissionFinalEndsAt = (mission) => {
+// `starScannerLevel` é opcional: só é necessário (e só faz diferença) quando
+// a missão ainda está na fase TRAVELING_OUT, ou seja, a fase de mineração
+// ainda nem começou e precisamos estimar sua duração.
+const getMissionFinalEndsAt = (mission, starScannerLevel = 1) => {
     if (mission.status === MISSION_STATUS.TRAVELING_OUT) {
-        return mission.phase_ends_at + COLLECT_DURATION_MS + mission.travel_seconds * 1000;
+        return mission.phase_ends_at + getScannerMiningMs(starScannerLevel) + mission.travel_seconds * 1000;
     }
     if (mission.status === MISSION_STATUS.COLLECTING) {
         return mission.phase_ends_at + mission.travel_seconds * 1000;

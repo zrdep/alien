@@ -6,6 +6,7 @@ const { generateMissionCoins } = require('./coins');
 const { getResourceInfo } = require('./market');
 const { MARKET_CONFIG, getMinListingPrice, getSellerProceeds } = require('../gameConfig/market');
 const { getHat, HAT_MARKET_CONFIG, getMinHatListingPrice, getHatSellerProceeds } = require('../gameConfig/hats');
+const { getScannerMiningMs } = require('../gameConfig/shipUpgrades');
 
 const dataDir = path.join(__dirname, '..', 'data');
 if (!fs.existsSync(dataDir)) {
@@ -804,7 +805,6 @@ const setMissionNotifyChannel = (userId, channelId) => {
 };
 
 const resolveExplorationMission = (userId, now = Date.now()) => {
-    const COLLECT_DURATION_MS = 10 * 60 * 1000;
     const STATUS = {
         TRAVELING_OUT: 'traveling_out',
         COLLECTING: 'collecting',
@@ -823,10 +823,14 @@ const resolveExplorationMission = (userId, now = Date.now()) => {
 
         if (mission.status === STATUS.TRAVELING_OUT) {
             const collectStart = mission.phase_ends_at;
+            // Duração de mineração depende do nível atual do Scanner Estelar
+            // do jogador (15min no tier 1, caindo até 8min no tier 5).
+            const ship = getUserShip(userId);
+            const collectDurationMs = getScannerMiningMs(ship.starScannerLevel);
             updateExplorationMission(userId, {
                 status: STATUS.COLLECTING,
                 phaseStartedAt: collectStart,
-                phaseEndsAt: collectStart + COLLECT_DURATION_MS,
+                phaseEndsAt: collectStart + collectDurationMs,
             });
             continue;
         }

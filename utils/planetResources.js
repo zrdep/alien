@@ -47,7 +47,7 @@ const rollResourcesPass = (planetSeed, planetRarityCode, passIdx, usedKeys, curr
     return found;
 };
 
-const gerarRecursosPlaneta = (planetSeed, planetRarityCode) => {
+const gerarRecursosPlaneta = (planetSeed, planetRarityCode, bonusPercent = 0) => {
     const usedKeys = new Set();
     const chosen = [];
 
@@ -76,6 +76,12 @@ const gerarRecursosPlaneta = (planetSeed, planetRarityCode) => {
                 rarity: res.rarity,
                 emoji: res.emoji,
             });
+        }
+    }
+
+    if (bonusPercent > 0) {
+        for (const item of chosen) {
+            item.amount = Math.max(item.amount, Math.round(item.amount * (1 + bonusPercent / 100)));
         }
     }
 

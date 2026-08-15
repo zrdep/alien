@@ -126,7 +126,7 @@
         },
         "scanner": {
           "name": "Scanner Estelar",
-          "stat": "{emoji} {rarity} — Alcance: `{range} anos-luz`"
+          "stat": "{emoji} {rarity} — Tempo de mineração: `{minutes} min`"
         }
       },
       "renameModalTitle": "Renomear alien",
@@ -163,6 +163,7 @@
       "rarityE": "Lendário",
       "resourcesTitle": "Recursos para Coletar",
       "resourcesEmpty": "Este planeta não tinha recursos úteis para coletar. A sorte fica pra próxima!",
+      "probeBonusLabel": "Bônus da Sonda de Escavação: +{percent}% (já incluso acima)",
       "coinsLabel": "∩oins do Planeta",
       "footerTip": "Cada planeta é único! Rode o comando de novo para descobrir um novo mundo.",
       "footerLater": "Em breve você poderá nomear, explorar e fazer muito mais com este planeta!",
@@ -340,19 +341,19 @@
         },
         "scanner_2": {
           "title": "Scanner Estelar Nível 2",
-          "desc": "Alcance de detecção planetária de 6 anos-luz."
+          "desc": "Reduz o tempo de mineração para 13 minutos."
         },
         "scanner_3": {
           "title": "Scanner Estelar Nível 3",
-          "desc": "Alcance de detecção planetária de 10 anos-luz."
+          "desc": "Reduz o tempo de mineração para 11 minutos."
         },
         "scanner_4": {
           "title": "Scanner Estelar Nível 4",
-          "desc": "Scanner Épico com alcance de 15 anos-luz."
+          "desc": "Scanner Épico que reduz o tempo de mineração para 9 minutos."
         },
         "scanner_5": {
           "title": "Scanner Estelar Nível 5",
-          "desc": "Scanner Lendário com alcance máximo de 25 anos-luz."
+          "desc": "Scanner Lendário com o menor tempo de mineração possível: 8 minutos."
         }
       }
     }
