@@ -30,7 +30,6 @@
     "generic": "Ocorreu um erro ao executar este comando! Contate o suporte."
   },
   "guildGuard": {
-    "userInstall": "<:ovni:1536247726889762847> **Instalação de usuário detectada!**\n\nNeste servidor, o **∩lien** precisa ser usado como app do servidor, no canal configurado pela equipe. Peça a um moderador para configurar em </config server:1536804847142314078> ou adicione o bot ao servidor normalmente.",
     "wrongChannel": "<:hmm:1536247599365890139> **Canal errado!**\n\nNeste servidor, os comandos do **∩lien** só funcionam em {channel}.",
     "dmNotAllowed": "<:question:1536248373240270888> **Este comando só funciona em servidores!**\n\nEntre em um servidor com o **∩lien** e use o canal permitido pela equipe."
   },
