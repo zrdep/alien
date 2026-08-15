@@ -30,6 +30,7 @@
     "generic": "An error occurred while executing this command! Contact support."
   },
   "guildGuard": {
+    "userInstall": "<:ovni:1536247726889762847> **User installation detected!**\n\nIn this server, **∩lien** must be used as the server app in the channel set by the staff. Ask a moderator to set it up with </config server:1536804847142314078> or add the bot to the server normally.",
     "wrongChannel": "<:hmm:1536247599365890139> **Wrong channel!**\n\nIn this server, **∩lien** commands only work in {channel}.",
     "dmNotAllowed": "<:question:1536248373240270888> **This command only works in servers!**\n\nJoin a server with **∩lien** and use the channel allowed by the staff."
   },
@@ -186,16 +187,7 @@
       "missionArrivedTip": "Use </inventory:1536804847142314075> to see everything you collected.",
       "notifyButton": "Notify me when it arrives",
       "notifyButtonActive": "Notification enabled",
-      "notifyNoMission": "You don't have any mission in progress to notify you about.",
-      "notifyButtonActiveChannel": "Notification enabled (this channel)",
-      "notifyButtonActiveDm": "Notification enabled (your DMs)",
-      "notifyChoiceTitle": "Where do you want to be notified?",
-      "notifyChoiceBody": "When the mission finishes, ∩lien will let you know. Pick where:",
-      "notifyChoiceChannelButton": "This channel",
-      "notifyChoiceDmButton": "My DMs",
-      "notifyDmWarning": "<:hmm:1536247599365890139> If you pick DMs, make sure your **direct messages are open** for this server — otherwise the bot won't be able to reach you.",
-      "notifyEnabledChannel": "<:excited:1536247579061256252> Got it! I'll notify you **in this channel** as soon as the mission is done.",
-      "notifyEnabledDm": "<:excited:1536247579061256252> Got it! I'll notify you in your **DMs** as soon as the mission is done. Remember to keep your direct messages open!"
+      "notifyNoMission": "You don't have any mission in progress to notify you about."
     },
     "inventory": {
       "title": "Galactic Inventory",
@@ -317,51 +309,51 @@
       "recipes": {
         "propulsor_b": {
           "title": "Propulsor B — 12,000 km/s",
-          "desc": "Increases travel speed to 12,000 km/s."
+          "desc": "Increases travel speed to {speed}."
         },
         "propulsor_c": {
           "title": "Propulsor C — 36,000 km/s",
-          "desc": "Advanced propulsor for 36,000 km/s travel."
+          "desc": "Advanced propulsor for {speed} travel."
         },
         "propulsor_d": {
           "title": "Propulsor D — 60,000 km/s",
-          "desc": "Epic propulsor capable of crossing the galaxy at 60,000 km/s."
+          "desc": "Epic propulsor capable of crossing the galaxy at {speed}."
         },
         "propulsor_e": {
           "title": "Propulsor E — 120,000 km/s",
-          "desc": "Legendary propulsor reaching top speed of 120,000 km/s."
+          "desc": "Legendary propulsor reaching top speed of {speed}."
         },
         "excavation_2": {
           "title": "Excavation Probe Level 2",
-          "desc": "80m depth and +5% bonus resources."
+          "desc": "{depth}m depth and +{bonus}% bonus resources."
         },
         "excavation_3": {
           "title": "Excavation Probe Level 3",
-          "desc": "120m depth and +10% bonus resources."
+          "desc": "{depth}m depth and +{bonus}% bonus resources."
         },
         "excavation_4": {
           "title": "Excavation Probe Level 4",
-          "desc": "180m depth and +18% bonus resources."
+          "desc": "{depth}m depth and +{bonus}% bonus resources."
         },
         "excavation_5": {
           "title": "Excavation Probe Level 5",
-          "desc": "Legendary probe with 250m depth and +28% bonus."
+          "desc": "Legendary probe with {depth}m depth and +{bonus}% bonus."
         },
         "scanner_2": {
           "title": "Star Scanner Level 2",
-          "desc": "Reduces mining time to 13 minutes."
+          "desc": "Reduces mining time to {minutes} minutes."
         },
         "scanner_3": {
           "title": "Star Scanner Level 3",
-          "desc": "Reduces mining time to 11 minutes."
+          "desc": "Reduces mining time to {minutes} minutes."
         },
         "scanner_4": {
           "title": "Star Scanner Level 4",
-          "desc": "Epic scanner that reduces mining time to 9 minutes."
+          "desc": "Epic scanner that reduces mining time to {minutes} minutes."
         },
         "scanner_5": {
           "title": "Star Scanner Level 5",
-          "desc": "Legendary scanner with the shortest possible mining time: 8 minutes."
+          "desc": "Legendary scanner with the shortest possible mining time: {minutes} minutes."
         }
       }
     }

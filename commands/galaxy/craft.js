@@ -24,6 +24,7 @@ const {
     CATEGORIES,
     getRecipesByCategory,
     getRecipe,
+    getRecipeDescParams,
 } = require('../../utils/craftRecipes');
 const { getResourceMeta } = require('../../utils/planetResources');
 const { getResourceLabel } = require('../../utils/resourcesDisplay');
@@ -59,10 +60,11 @@ const buildCategoryMenu = (interaction, selectedCategory = CATEGORIES.PROPULSOR)
 };
 
 const buildRecipeMenu = (interaction, category, selectedRecipeId = null) => {
+    const lang = getUserLanguage(interaction.user.id);
     const recipes = getRecipesByCategory(category);
     const options = recipes.map((r) => ({
         label: tFor(interaction, r.titleKey),
-        description: tFor(interaction, r.descKey).slice(0, 100),
+        description: tFor(interaction, r.descKey, getRecipeDescParams(r, lang)).slice(0, 100),
         value: r.id,
         default: r.id === selectedRecipeId,
     }));
@@ -131,7 +133,7 @@ const buildCraftPanel = (interaction, category = CATEGORIES.PROPULSOR, selectedR
 `);
 
     const recipeTitle = tFor(interaction, currentRecipe.titleKey);
-    const recipeDesc = tFor(interaction, currentRecipe.descKey);
+    const recipeDesc = tFor(interaction, currentRecipe.descKey, getRecipeDescParams(currentRecipe, lang));
     const ingredientsTitle = tFor(interaction, 'commands.craft.ingredientsTitle');
     const timeFormatted = formatDuration(currentRecipe.craftSeconds ?? 60, lang);
 

@@ -1,3 +1,5 @@
+const { getPropulsorTier, getExcavationTier, getScannerTier, formatSpeed } = require('./ship');
+
 const CATEGORIES = {
     PROPULSOR: 'propulsor',
     EXCAVATION: 'excavation',
@@ -232,10 +234,36 @@ const getRecipe = (id) => CRAFT_RECIPES.find((r) => r.id === id) ?? null;
 
 const getRecipesByCategory = (category) => CRAFT_RECIPES.filter((r) => r.category === category);
 
+// Monta as variáveis pra interpolar no texto de descrição da receita
+// (locales/*.json, chave `descKey`) SEMPRE lendo o valor atual direto de
+// gameConfig/shipUpgrades.js (via utils/ship.js) — assim, se alguém mudar
+// um número lá (velocidade, profundidade, bônus, tempo de mineração), a
+// tela de /craft reflete na hora, sem precisar caçar texto duplicado em
+// locale pra atualizar também.
+const getRecipeDescParams = (recipe, lang) => {
+    switch (recipe.category) {
+        case CATEGORIES.PROPULSOR: {
+            const tier = getPropulsorTier(recipe.targetTierOrLevel);
+            return { speed: formatSpeed(tier.speedKms, lang) };
+        }
+        case CATEGORIES.EXCAVATION: {
+            const tier = getExcavationTier(recipe.targetTierOrLevel);
+            return { depth: tier.depth, bonus: tier.bonus };
+        }
+        case CATEGORIES.SCANNER: {
+            const tier = getScannerTier(recipe.targetTierOrLevel);
+            return { minutes: tier.miningMinutes };
+        }
+        default:
+            return {};
+    }
+};
+
 module.exports = {
     CATEGORIES,
     CRAFT_RECIPES,
     getAllRecipes,
     getRecipe,
     getRecipesByCategory,
+    getRecipeDescParams,
 };
