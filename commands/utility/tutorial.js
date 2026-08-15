@@ -11,6 +11,7 @@ const {
     ActionRowBuilder,
     ButtonBuilder,
     ButtonStyle,
+    StringSelectMenuBuilder,
 } = require('discord.js');
 
 const { getUserLanguage } = require('../../utils/db');
@@ -18,7 +19,7 @@ const { getUserLanguage } = require('../../utils/db');
 const GIFT_IMAGE_NAME = 'bag_coins.png';
 const GIFT_IMAGE_PATH = path.join(__dirname, '..', '..', 'images', 'moedas', GIFT_IMAGE_NAME);
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
 
 function getStepContent(lang, stepNum) {
     const isPt = lang === 'pt-BR';
@@ -72,28 +73,45 @@ function getStepContent(lang, stepNum) {
                 ? 'Acompanhe seu progresso! Consulte seu saldo de moedas em `/wallet`, veja seus itens em `/inventory` e confira suas estatísticas de viagem e equipamentos em `/profile`.'
                 : 'Track your progress! Check your balance in `/wallet`, see items in `/inventory`, and view travel stats and ship equipment in `/profile`.',
         },
+        7: {
+            title: isPt ? 'Passo 7: Conquistas & Personalização' : 'Step 7: Achievements & Customization',
+            cmd: '/achievements',
+            icon: '<:legendary:1536459814475927653>',
+            desc: isPt
+                ? 'Você já sabe o essencial! Agora explore `/achievements` para desbloquear conquistas, `/hatmarket` para comprar e vender chapéus exclusivos, e `/config` para ajustar seu idioma. Bons voos, explorador!'
+                : "You know the essentials now! Explore `/achievements` to unlock achievements, `/hatmarket` to buy and sell exclusive hats, and `/config` to adjust your language. Safe travels, explorer!",
+        },
     };
 
     return steps[stepNum] ?? steps[1];
+}
+
+function renderProgressDots(currentStep) {
+    return Array.from({ length: TOTAL_STEPS }, (_, i) => (i + 1 === currentStep ? '●' : '○')).join(' ');
 }
 
 function renderTutorialContainer(interaction, stepNum = 1) {
     const lang = getUserLanguage(interaction.user.id);
     const isPt = lang === 'pt-BR';
     const currentStep = Math.min(Math.max(1, stepNum), TOTAL_STEPS);
+    const isLastStep = currentStep === TOTAL_STEPS;
     const data = getStepContent(lang, currentStep);
 
     const header = new TextDisplayBuilder().setContent(
         `# <:book2:1536459861527756952> ${isPt ? 'Guia do Explorador • Tutorial ∩lien' : 'Explorer Guide • ∩lien Tutorial'}\n` +
-        `<:ovni:1536247726889762847> *${isPt ? `Etapa ${currentStep} de ${TOTAL_STEPS}` : `Step ${currentStep} of ${TOTAL_STEPS}`}*`
+        `<:ovni:1536247726889762847> *${isPt ? `Etapa ${currentStep} de ${TOTAL_STEPS}` : `Step ${currentStep} of ${TOTAL_STEPS}`}*\n` +
+        renderProgressDots(currentStep)
     );
+
+    const footerTip = isLastStep
+        ? `<:sunglasses:1536248455519801386> *${isPt ? 'Você concluiu o tutorial! Use `/help` sempre que precisar consultar um comando.' : "You've completed the tutorial! Use `/help` anytime you need to look up a command."}*`
+        : `<:excited:1536247579061256252> *${isPt ? 'Use os botões ou o menu abaixo para navegar entre os passos do tutorial!' : 'Use the buttons or the menu below to navigate tutorial steps!'}*`;
 
     const bodyText = new TextDisplayBuilder().setContent(
         `## ${data.icon} ${data.title}\n` +
         `**${isPt ? 'Comando principal:' : 'Main command:'}** \`${data.cmd}\`\n\n` +
         `${data.desc}\n\n` +
-        `---\n` +
-        `<:excited:1536247579061256252> *${isPt ? 'Use os botões abaixo para navegar entre os passos do tutorial!' : 'Use buttons below to navigate tutorial steps!'}*`
+        footerTip
     );
 
     const hasImage = fs.existsSync(GIFT_IMAGE_PATH);
@@ -105,6 +123,25 @@ function renderTutorialContainer(interaction, stepNum = 1) {
         section = new SectionBuilder().addTextDisplayComponents(bodyText);
     }
 
+    const jumpRow = new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+            .setCustomId('tutorial_select_step')
+            .setPlaceholder(isPt ? 'Ir direto para um passo...' : 'Jump directly to a step...')
+            .addOptions(
+                Array.from({ length: TOTAL_STEPS }, (_, i) => {
+                    const step = i + 1;
+                    const stepData = getStepContent(lang, step);
+                    return {
+                        label: isPt ? `Passo ${step}: ${stepData.title.split(': ')[1] ?? stepData.title}` : stepData.title,
+                        description: stepData.cmd,
+                        value: String(step),
+                        emoji: stepData.icon,
+                        default: step === currentStep,
+                    };
+                })
+            )
+    );
+
     const navRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId(`tutorial_step_${currentStep - 1}`)
@@ -113,9 +150,9 @@ function renderTutorialContainer(interaction, stepNum = 1) {
             .setDisabled(currentStep <= 1),
         new ButtonBuilder()
             .setCustomId(`tutorial_step_${currentStep + 1}`)
-            .setLabel(isPt ? 'Próximo ▶' : 'Next ▶')
+            .setLabel(isLastStep ? (isPt ? 'Concluído ✔' : 'Done ✔') : (isPt ? 'Próximo ▶' : 'Next ▶'))
             .setStyle(ButtonStyle.Primary)
-            .setDisabled(currentStep >= TOTAL_STEPS),
+            .setDisabled(isLastStep),
         new ButtonBuilder()
             .setCustomId('tutorial_open_help')
             .setLabel(isPt ? 'Comandos (/help)' : 'Commands (/help)')
@@ -131,7 +168,7 @@ function renderTutorialContainer(interaction, stepNum = 1) {
     const files = hasImage ? [{ attachment: GIFT_IMAGE_PATH, name: GIFT_IMAGE_NAME }] : [];
 
     return {
-        components: [container, navRow],
+        components: [container, jumpRow, navRow],
         files,
         flags: MessageFlags.IsComponentsV2,
     };
@@ -177,6 +214,15 @@ module.exports = {
         }
 
         return false;
+    },
+
+    async handleSelectMenu(interaction) {
+        if (interaction.customId !== 'tutorial_select_step') return false;
+
+        const stepNum = parseInt(interaction.values[0], 10);
+        const payload = renderTutorialContainer(interaction, stepNum);
+        await interaction.update(payload);
+        return true;
     },
 
     renderTutorialContainer,
