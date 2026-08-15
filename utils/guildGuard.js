@@ -31,8 +31,23 @@ const isConfigServerComponent = (interaction) =>
     ['config_server_channel', 'config_server_clear'].includes(interaction.customId);
 
 const checkGuildAccess = (interaction) => {
+    const isServerConfig = isConfigServerCommand(interaction) || isConfigServerComponent(interaction);
+
+    // /config server só faz sentido dentro de um servidor de verdade — o
+    // próprio comando/componentes já verificam isso (interaction.inGuild()
+    // + permissão de Gerenciar Servidor) e respondem com a mensagem certa,
+    // então aqui só deixamos passar pra ele decidir.
+    if (isServerConfig) {
+        return { ok: true };
+    }
+
+    // Todo o resto do bot (exploração, nave, chapéus, mercado, /config
+    // user etc.) funciona normalmente em instalação de usuário — DM, grupo
+    // ou qualquer servidor, mesmo sem o bot estar formalmente adicionado
+    // ali. A restrição de canal abaixo só faz sentido pra quem instalou o
+    // ∩lien oficialmente no servidor.
     if (isUserInstall(interaction)) {
-        return { ok: false, messageKey: 'guildGuard.userInstall' };
+        return { ok: true };
     }
 
     if (isConfigUserCommand(interaction)) {
@@ -41,10 +56,6 @@ const checkGuildAccess = (interaction) => {
 
     if (!interaction.inGuild()) {
         return { ok: false, messageKey: 'guildGuard.dmNotAllowed' };
-    }
-
-    if (hasManageGuild(interaction) && (isConfigServerCommand(interaction) || isConfigServerComponent(interaction))) {
-        return { ok: true };
     }
 
     const allowedChannelId = getGuildAllowedChannel(interaction.guildId);
