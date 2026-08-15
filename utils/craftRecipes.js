@@ -30,7 +30,7 @@ const CRAFT_RECIPES = [
         category: CATEGORIES.PROPULSOR,
         titleKey: 'commands.craft.recipes.propulsor_c.title',
         descKey: 'commands.craft.recipes.propulsor_c.desc',
-        craftSeconds: 1200, // 20 minutos
+        craftSeconds: 300, // 5 minutos
         ingredients: [
             { key: 'blueCrystal', amount: 10 },
             { key: 'metal', amount: 8 },
@@ -47,7 +47,7 @@ const CRAFT_RECIPES = [
         category: CATEGORIES.PROPULSOR,
         titleKey: 'commands.craft.recipes.propulsor_d.title',
         descKey: 'commands.craft.recipes.propulsor_d.desc',
-        craftSeconds: 3600, // 1 hora
+        craftSeconds: 300, // 5 minutos
         ingredients: [
             { key: 'purpleCrystal', amount: 4 },
             { key: 'glowingOre', amount: 3 },
@@ -64,7 +64,7 @@ const CRAFT_RECIPES = [
         category: CATEGORIES.PROPULSOR,
         titleKey: 'commands.craft.recipes.propulsor_e.title',
         descKey: 'commands.craft.recipes.propulsor_e.desc',
-        craftSeconds: 10800, // 3 horas
+        craftSeconds: 300, // 5 minutos
         ingredients: [
             { key: 'cosmicPearl', amount: 5 },
             { key: 'planetCore', amount: 3 },
@@ -103,7 +103,7 @@ const CRAFT_RECIPES = [
         category: CATEGORIES.EXCAVATION,
         titleKey: 'commands.craft.recipes.excavation_3.title',
         descKey: 'commands.craft.recipes.excavation_3.desc',
-        craftSeconds: 1200, // 20 minutos
+        craftSeconds: 300, // 5 minutos
         ingredients: [
             { key: 'metal', amount: 7 },
             { key: 'copper', amount: 5 },
@@ -121,7 +121,7 @@ const CRAFT_RECIPES = [
         category: CATEGORIES.EXCAVATION,
         titleKey: 'commands.craft.recipes.excavation_4.title',
         descKey: 'commands.craft.recipes.excavation_4.desc',
-        craftSeconds: 3600, // 1 hora
+        craftSeconds: 300, // 5 minutos
         ingredients: [
             { key: 'purpleCrystal', amount: 8 },
             { key: 'starFragment', amount: 6 },
@@ -138,7 +138,7 @@ const CRAFT_RECIPES = [
         category: CATEGORIES.EXCAVATION,
         titleKey: 'commands.craft.recipes.excavation_5.title',
         descKey: 'commands.craft.recipes.excavation_5.desc',
-        craftSeconds: 10800, // 3 horas
+        craftSeconds: 300, // 5 minutos
         ingredients: [
             { key: 'planetCore', amount: 3 },
             { key: 'cosmicPearl', amount: 2 },
@@ -177,7 +177,7 @@ const CRAFT_RECIPES = [
         category: CATEGORIES.SCANNER,
         titleKey: 'commands.craft.recipes.scanner_3.title',
         descKey: 'commands.craft.recipes.scanner_3.desc',
-        craftSeconds: 1200, // 20 minutos
+        craftSeconds: 300, // 5 minutos
         ingredients: [
             { key: 'wood', amount: 10 },
             { key: 'dirt', amount: 8 },
@@ -195,7 +195,7 @@ const CRAFT_RECIPES = [
         category: CATEGORIES.SCANNER,
         titleKey: 'commands.craft.recipes.scanner_4.title',
         descKey: 'commands.craft.recipes.scanner_4.desc',
-        craftSeconds: 3600, // 1 hora
+        craftSeconds: 300, // 5 minutos
         ingredients: [
             { key: 'purpleCrystal', amount: 4 },
             { key: 'glowingOre', amount: 3 },
@@ -212,7 +212,7 @@ const CRAFT_RECIPES = [
         category: CATEGORIES.SCANNER,
         titleKey: 'commands.craft.recipes.scanner_5.title',
         descKey: 'commands.craft.recipes.scanner_5.desc',
-        craftSeconds: 10800, // 3 horas
+        craftSeconds: 300, // 5 minutos
         ingredients: [
             { key: 'cosmicPearl', amount: 3 },
             { key: 'planetCore', amount: 2 },
