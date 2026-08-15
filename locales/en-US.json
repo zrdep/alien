@@ -201,8 +201,8 @@
       "claimedBody": "You claimed your daily reward of **{emoji} +{amount} ∩oins**!",
       "alreadyClaimedTitle": "Reward Already Claimed!",
       "alreadyClaimedBody": "You already claimed your daily today. Come back when the clock strikes **00:00**!",
-      "restrictedTitle": "Exclusive Daily Channel!",
-      "restrictedBody": "<:hmm:1536247599365890139> **Hey, space explorer!**\n\nThe daily **∩oins** reward can only be claimed in the channel <#1537511176324386917> inside our **official server**!\n\n<:excited:1536247579061256252> **How to join the server?**\nOur official server link is available right in the **bot's bio**! Open the **∩lien** profile, click the bio link, and claim your coins daily! <:gold_coins:1536941656178298992>",
+      "restrictedTitle": "Daily Exclusive Server!",
+      "restrictedBody": "<:hmm:1536247599365890139> **Hey, space explorer!**\n\nThe daily **∩oins** reward can only be claimed inside our **official server**!\n\n<:excited:1536247579061256252> **How to join the server?**\nOur official server link is available right in the **bot's bio**! Open the **∩lien** profile, click the bio link, and claim your coins daily! <:gold_coins:1536941656178298992>",
       "balanceLabel": "Current Balance",
       "streakLabel": "Day streak",
       "streakBonusLabel": "streak bonus",
@@ -283,6 +283,29 @@
       "scanner": "Star Scanner",
       "botTitle": "This is not a user!",
       "botBody": "**{user}** is a bot!"
+    },
+    "ranking": {
+      "title": "Galactic Ranking",
+      "subtitle": "See who's leading the galaxy in each category. Pick one below:",
+      "placeholder": "Choose a ranking category...",
+      "categories": {
+        "coins": "Richest",
+        "planets_seen": "Planets Seen",
+        "trips_completed": "Planets Explored",
+        "distance_traveled_km": "Distance Traveled",
+        "total_resources_collected": "Resources Collected"
+      },
+      "categoryDesc": {
+        "coins": "Who has piled up the most ∩oins so far",
+        "planets_seen": "Who has spotted the most planets with `/planet`",
+        "trips_completed": "Who has completed the most exploration missions",
+        "distance_traveled_km": "Who has traveled the most kilometers across the galaxy",
+        "total_resources_collected": "Who has collected the most resources on expeditions"
+      },
+      "yourPosition": "Your position",
+      "notRanked": "not ranked yet — go play!",
+      "empty": "No one has joined this ranking yet. Be the first!",
+      "footer": "Updated every few minutes · Top 10 explorers"
     },
     "craft": {
       "title": "Crafting Workshop",

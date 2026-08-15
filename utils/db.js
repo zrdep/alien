@@ -330,6 +330,19 @@ db.exec(`
     );
 `);
 
+// =============================================================================
+// Índices pra ranking (/ranking) — sem eles o SQLite ainda funciona, mas
+// precisa varrer a tabela inteira pra ordenar toda vez. Com o índice, um
+// "ORDER BY coluna DESC LIMIT 10" vira leitura direta da árvore já
+// ordenada — instantâneo mesmo com muitos jogadores.
+db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_users_coins ON users(coins DESC);
+    CREATE INDEX IF NOT EXISTS idx_users_planets_seen ON users(planets_seen DESC);
+    CREATE INDEX IF NOT EXISTS idx_users_trips_completed ON users(trips_completed DESC);
+    CREATE INDEX IF NOT EXISTS idx_users_distance_traveled ON users(distance_traveled_km DESC);
+    CREATE INDEX IF NOT EXISTS idx_users_resources_collected ON users(total_resources_collected DESC);
+`);
+
 const getUser = (userId) => {
     let user = db.prepare('SELECT * FROM users WHERE user_id = ?').get(userId);
     if (!user) {
@@ -529,6 +542,70 @@ const addMissionCompletionStats = (userId, distanceKm, totalResources) => {
     `).run(roundTripDistance, totalResources, userId);
     const unlockedAchievements = checkAchievementsForUser(userId);
     return { unlockedAchievements, roundTripDistance };
+};
+
+// =============================================================================
+// RANKING (/ranking)
+// =============================================================================
+// Cada categoria mapeia direto pra uma coluna já existente na tabela `users`
+// (todas indexadas acima), então o ranking é 1 query só com ORDER BY + LIMIT
+// — o SQLite lê direto do índice já ordenado, sem varrer a tabela inteira e
+// sem precisar buscar usuário por usuário em JS. Isso roda em frações de
+// milissegundo mesmo com muitos jogadores cadastrados.
+const LEADERBOARD_COLUMNS = {
+    coins: 'coins',
+    planets_seen: 'planets_seen',
+    trips_completed: 'trips_completed',
+    distance_traveled_km: 'distance_traveled_km',
+    total_resources_collected: 'total_resources_collected',
+};
+
+// Cache curto em memória: um /ranking popular não precisa bater no banco a
+// cada clique de todo mundo — os números não mudam segundo a segundo.
+const leaderboardCache = new Map(); // "statKey:limit" -> { rows, expiresAt }
+const LEADERBOARD_CACHE_TTL_MS = 90 * 1000;
+
+const getLeaderboard = (statKey, limit = 10) => {
+    const column = LEADERBOARD_COLUMNS[statKey];
+    if (!column) return [];
+
+    const cacheKey = `${statKey}:${limit}`;
+    const cached = leaderboardCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+        return cached.rows;
+    }
+
+    // `column` vem sempre de LEADERBOARD_COLUMNS (whitelist fixa acima), nunca
+    // de input do usuário — por isso é seguro interpolar direto no SQL aqui
+    // (SQLite não permite parametrizar nome de coluna/tabela com `?`).
+    const rows = db.prepare(`
+        SELECT user_id AS userId, ${column} AS value
+        FROM users
+        WHERE ${column} > 0
+        ORDER BY ${column} DESC
+        LIMIT ?
+    `).all(limit);
+
+    leaderboardCache.set(cacheKey, { rows, expiresAt: Date.now() + LEADERBOARD_CACHE_TTL_MS });
+    return rows;
+};
+
+// Posição exata de 1 jogador numa categoria (pra mostrar "você está em
+// #37" mesmo fora do Top 10) — também 1 query só, contando quantos têm
+// valor maior (não precisa carregar a lista inteira em memória).
+const getLeaderboardRank = (statKey, userId) => {
+    const column = LEADERBOARD_COLUMNS[statKey];
+    if (!column) return null;
+
+    const user = db.prepare(`SELECT ${column} AS value FROM users WHERE user_id = ?`).get(userId);
+    const value = user?.value ?? 0;
+    if (value <= 0) return { value, position: null };
+
+    const { higherCount } = db.prepare(`
+        SELECT COUNT(*) AS higherCount FROM users WHERE ${column} > ?
+    `).get(value);
+
+    return { value, position: higherCount + 1 };
 };
 
 const getUserProfileStats = (userId) => {
@@ -1815,6 +1892,8 @@ module.exports = {
     resetDailyClaim,
     incrementPlanetsSeen,
     addMissionCompletionStats,
+    getLeaderboard,
+    getLeaderboardRank,
     getUserProfileStats,
     createMarketListing,
     getMarketListingsByResource,

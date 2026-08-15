@@ -201,8 +201,8 @@
       "claimedBody": "Você resgatou sua recompensa diária de **{emoji} +{amount} ∩oins**!",
       "alreadyClaimedTitle": "Recompensa já Coletada!",
       "alreadyClaimedBody": "Você já resgatou seu daily hoje. Volte quando o relógio bater **00:00**!",
-      "restrictedTitle": "Canal Exclusivo do Daily!",
-      "restrictedBody": "<:hmm:1536247599365890139> **Ei, explorador espacial!**\n\nA recompensa diária de **∩oins** só pode ser coletada no canal <#1537511176324386917> dentro do nosso **servidor oficial**!\n\n<:excited:1536247579061256252> **Como entrar no servidor?**\nO convite do nosso servidor está disponível na **bio do bot**! Abra o perfil do **∩lien**, clique no link da bio e venha garantir suas moedas diariamente! <:gold_coins:1536941656178298992>",
+      "restrictedTitle": "Servidor Exclusivo do Daily!",
+      "restrictedBody": "<:hmm:1536247599365890139> **Ei, explorador espacial!**\n\nA recompensa diária de **∩oins** só pode ser coletada dentro do nosso **servidor oficial**!\n\n<:excited:1536247579061256252> **Como entrar no servidor?**\nO convite do nosso servidor está disponível na **bio do bot**! Abra o perfil do **∩lien**, clique no link da bio e venha garantir suas moedas diariamente! <:gold_coins:1536941656178298992>",
       "balanceLabel": "Saldo Atual",
       "streakLabel": "Sequência de dias",
       "streakBonusLabel": "bônus de sequência",
@@ -283,6 +283,29 @@
       "scanner": "Scanner Estelar",
       "botTitle": "Este não é um usuário!",
       "botBody": "**{user}** é um bot!"
+    },
+    "ranking": {
+      "title": "Ranking Galáctico",
+      "subtitle": "Veja quem lidera a galáxia em cada categoria. Escolha abaixo:",
+      "placeholder": "Escolha uma categoria de ranking...",
+      "categories": {
+        "coins": "Mais Ricos",
+        "planets_seen": "Planetas Vistos",
+        "trips_completed": "Planetas Explorados",
+        "distance_traveled_km": "Distância Percorrida",
+        "total_resources_collected": "Recursos Coletados"
+      },
+      "categoryDesc": {
+        "coins": "Quem acumulou mais ∩oins até agora",
+        "planets_seen": "Quem já avistou mais planetas com `/planet`",
+        "trips_completed": "Quem já completou mais missões de exploração",
+        "distance_traveled_km": "Quem já viajou mais quilômetros pela galáxia",
+        "total_resources_collected": "Quem já coletou mais recursos em expedições"
+      },
+      "yourPosition": "Sua posição",
+      "notRanked": "ainda fora do ranking — vá jogar!",
+      "empty": "Ninguém entrou pra esse ranking ainda. Seja o primeiro!",
+      "footer": "Atualizado a cada poucos minutos · Top 10 exploradores"
     },
     "craft": {
       "title": "Oficina de Fabricação",

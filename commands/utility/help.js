@@ -58,6 +58,7 @@ function getCategoryData(lang, categoryKey) {
                 { name: isPt ? '/conquistas' : '/achievements', desc: isPt ? 'Veja todas as conquistas disponíveis e seu progresso nelas.' : 'View all available achievements and your progress toward them.' },
                 { name: '/config user/server', desc: isPt ? 'Altere seu idioma pessoal ou configurações do servidor.' : 'Change your personal language or server settings.' },
                 { name: '/tutorial', desc: isPt ? 'Guia interativo passo a passo para aprender a jogar com o ∩lien.' : 'Interactive step-by-step tutorial guide to learn ∩lien.' },
+                { name: '/ranking', desc: isPt ? 'Veja o ranking galáctico: mais ricos, mais explorados e mais.' : 'View the galactic leaderboard: richest, most explored, and more.' },
                 { name: '/botinfo', desc: isPt ? 'Exibe informações sobre o bot ∩lien, desempenho e estatísticas.' : 'Displays information about ∩lien bot, performance, and stats.' },
                 { name: '/ping', desc: isPt ? 'Verifica o tempo de resposta e latência do bot.' : 'Checks bot response time and latency.' },
                 { name: isPt ? '/ajuda' : '/help', desc: isPt ? 'Abre este painel de ajuda categorizado com comandos.' : 'Opens this categorized help menu with commands.' },

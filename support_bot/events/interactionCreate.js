@@ -14,6 +14,8 @@ const {
 const fs = require('node:fs');
 const path = require('node:path');
 
+const logger = require('../../utils/logger.js');
+
 const CATEGORY = '1488000497658101925';
 const MOD_ROLE = '1537520462563774605';
 const LOG_CHANNEL = '1537520628637368451';
