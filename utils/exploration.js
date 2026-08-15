@@ -184,6 +184,30 @@ ${resourcesText}${bonusText}${coinsText}
 <:registry:1536459835921530890> ${t(userId, 'commands.planet.missionArrivedTip')}`;
 };
 
+// Monta o payload Components V2 da notificação de chegada de missão (usada
+// tanto pra notificação em canal quanto na DM). Quando `pingUser` é true,
+// a menção `<@userId>` entra como primeira linha dentro do próprio
+// TextDisplay — em mensagens Components V2 o `content` do topo precisa
+// ficar vazio, mas o Discord ainda processa/pinga menções escritas dentro
+// do texto dos componentes, respeitando `allowedMentions`.
+const buildArrivalNoticeV2Payload = (userId, notice, { pingUser = false } = {}) => {
+    const { ContainerBuilder, TextDisplayBuilder, MessageFlags } = require('discord.js');
+
+    const mentionLine = pingUser ? `<@${userId}>\n` : '';
+    const text = `${mentionLine}${buildArrivalNotice(userId, notice)}`;
+
+    const container = new ContainerBuilder().addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(text)
+    );
+
+    return {
+        content: '',
+        flags: MessageFlags.IsComponentsV2,
+        components: [container],
+        allowedMentions: pingUser ? { users: [userId] } : { parse: [] },
+    };
+};
+
 const buildExploreStartedContent = (userId, mission) => {
     const lang = getUserLanguage(userId);
     const alienName = getAlienDisplayName(userId);
@@ -243,5 +267,6 @@ module.exports = {
     getMissionFinalEndsAt,
     buildMissionStatusContent,
     buildArrivalNotice,
+    buildArrivalNoticeV2Payload,
     buildExploreStartedContent,
 };

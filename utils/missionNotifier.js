@@ -6,10 +6,14 @@ const {
     getUserAlien,
     getUserShip,
 } = require('./db');
-const { getMissionFinalEndsAt, buildArrivalNotice } = require('./exploration');
+const { getMissionFinalEndsAt, buildArrivalNoticeV2Payload } = require('./exploration');
 const logger = require('./logger');
 
 const scheduledTimers = new Map();
+
+// Valor especial gravado em `notify_channel_id` quando o jogador escolhe
+// receber o aviso na DM em vez de num canal do servidor.
+const DM_TARGET = 'dm';
 
 const buildNoticeFromMission = (userId, mission) => {
     let resources = [];
@@ -39,14 +43,24 @@ const buildNoticeFromMission = (userId, mission) => {
 };
 
 const sendArrivalPingFromNotice = async (client, userId, channelId, notice) => {
+    const isDm = channelId === DM_TARGET;
+    const payload = buildArrivalNoticeV2Payload(userId, notice, { pingUser: !isDm });
+
+    if (isDm) {
+        try {
+            const user = await client.users.fetch(userId);
+            await user.send(payload);
+        } catch (err) {
+            logger.warn(`Não foi possível enviar a notificação de chegada por DM para ${userId} (DMs provavelmente fechadas): ${err.message}`);
+        }
+        return;
+    }
+
     try {
         const channel = await client.channels.fetch(channelId);
         if (!channel || !channel.isTextBased()) return;
 
-        await channel.send({
-            content: `<@${userId}> ${buildArrivalNotice(userId, notice)}`,
-            allowedMentions: { users: [userId] },
-        });
+        await channel.send(payload);
     } catch (err) {
         logger.warn(`Falha ao enviar notificação de chegada para ${userId}: ${err.message}`);
     }
@@ -144,6 +158,7 @@ const processNotifyFlaggedMissions = async (client, snapshots) => {
 };
 
 module.exports = {
+    DM_TARGET,
     enableMissionNotification,
     scheduleMissionNotification,
     captureNotifyFlaggedMissions,

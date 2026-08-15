@@ -44,7 +44,7 @@ const {
     buildArrivalNotice,
     buildExploreStartedContent,
 } = require('../../utils/exploration');
-const { enableMissionNotification } = require('../../utils/missionNotifier');
+const { enableMissionNotification, DM_TARGET } = require('../../utils/missionNotifier');
 const logger = require('../../utils/logger');
 const { getRarityEmoji, getRarityLabelKey } = require('../../gameConfig/rarities');
 const { rollHatDrop, getHatName } = require('../../gameConfig/hats');
@@ -306,14 +306,58 @@ const buildV2TextPayload = (text, extraRows = []) => {
 };
 
 const buildNotifyButtonRow = (interaction, userId, mission) => {
-    const alreadyOn = Boolean(mission?.notify_channel_id);
+    const notifyTarget = mission?.notify_channel_id ?? null;
+    const alreadyOn = Boolean(notifyTarget);
+    const isDm = notifyTarget === DM_TARGET;
+
+    const activeLabelKey = isDm
+        ? 'commands.planet.notifyButtonActiveDm'
+        : 'commands.planet.notifyButtonActiveChannel';
+
     const button = new ButtonBuilder()
-        .setCustomId(`planet_notify:${userId}`)
-        .setLabel(tFor(interaction, alreadyOn ? 'commands.planet.notifyButtonActive' : 'commands.planet.notifyButton'))
+        .setCustomId(`planet_notify_ask:${userId}`)
+        .setLabel(tFor(interaction, alreadyOn ? activeLabelKey : 'commands.planet.notifyButton'))
         .setEmoji(alreadyOn ? '<:excited:1536247579061256252>' : '<:passionate:1536247742110634034>')
         .setStyle(alreadyOn ? ButtonStyle.Secondary : ButtonStyle.Primary)
         .setDisabled(alreadyOn);
     return new ActionRowBuilder().addComponents(button);
+};
+
+// Tela intermediária mostrada quando o jogador clica em "Notificar quando
+// chegar" — pergunta ONDE ele quer receber o aviso (no canal atual ou na
+// DM), avisando que a DM precisa estar aberta pro bot conseguir mandar.
+const buildNotifyChoiceContainer = (interaction, userId) => {
+    const title = tFor(interaction, 'commands.planet.notifyChoiceTitle');
+    const body = tFor(interaction, 'commands.planet.notifyChoiceBody');
+    const dmWarning = tFor(interaction, 'commands.planet.notifyDmWarning');
+
+    const text = new TextDisplayBuilder().setContent(
+        `<:passionate:1536247742110634034> **${title}**\n\n${body}\n\n${dmWarning}`
+    );
+
+    const buttonsRow = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId(`planet_notify_channel:${userId}`)
+            .setLabel(tFor(interaction, 'commands.planet.notifyChoiceChannelButton'))
+            .setEmoji('<:earth:1536459925495087226>')
+            .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+            .setCustomId(`planet_notify_dm:${userId}`)
+            .setLabel(tFor(interaction, 'commands.planet.notifyChoiceDmButton'))
+            .setEmoji('<:ovni:1536247726889762847>')
+            .setStyle(ButtonStyle.Primary)
+    );
+
+    const container = new ContainerBuilder()
+        .addTextDisplayComponents(text)
+        .addActionRowComponents(buttonsRow);
+
+    return {
+        content: '',
+        flags: MessageFlags.IsComponentsV2,
+        components: [container],
+        files: [],
+    };
 };
 
 const buildMissionV2Payload = (interaction, userId, mission, arrivalNotice = null) => {
@@ -435,23 +479,52 @@ module.exports = {
     },
 
     async handleButton(interaction) {
-        if (interaction.customId.startsWith('planet_notify:')) {
+        if (interaction.customId.startsWith('planet_notify_ask:')) {
             await interaction.deferUpdate();
 
             const userId = interaction.user.id;
-            const ok = enableMissionNotification(interaction.client, userId, interaction.channelId);
+            const mission = getExplorationMission(userId);
 
-            if (!ok) {
-                // Missão já não existe mais (terminou ou já foi coletada) -
-                // só recarrega a tela atual, sem quebrar nada.
+            if (!mission) {
                 await interaction.editReply(
                     buildV2TextPayload(`<:hmm:1536247599365890139> ${tFor(interaction, 'commands.planet.notifyNoMission')}`)
                 );
                 return true;
             }
 
+            await interaction.editReply(buildNotifyChoiceContainer(interaction, userId));
+            return true;
+        }
+
+        if (interaction.customId.startsWith('planet_notify_channel:') || interaction.customId.startsWith('planet_notify_dm:')) {
+            await interaction.deferUpdate();
+
+            const userId = interaction.user.id;
+            const wantsDm = interaction.customId.startsWith('planet_notify_dm:');
+            const target = wantsDm ? DM_TARGET : interaction.channelId;
+
+            const ok = enableMissionNotification(interaction.client, userId, target);
+
+            if (!ok) {
+                await interaction.editReply(
+                    buildV2TextPayload(`<:hmm:1536247599365890139> ${tFor(interaction, 'commands.planet.notifyNoMission')}`)
+                );
+                return true;
+            }
+
+            const confirmKey = wantsDm ? 'commands.planet.notifyEnabledDm' : 'commands.planet.notifyEnabledChannel';
             const mission = getExplorationMission(userId);
-            await interaction.editReply(buildMissionV2Payload(interaction, userId, mission));
+            const payload = buildMissionV2Payload(interaction, userId, mission);
+
+            // Insere a confirmação de escolha (canal/DM) no topo da tela da
+            // missão, sem perder o resto do conteúdo (recursos, ETA, botão).
+            const confirmContainer = new ContainerBuilder()
+                .addTextDisplayComponents(new TextDisplayBuilder().setContent(tFor(interaction, confirmKey)))
+                .addSeparatorComponents(new SeparatorBuilder());
+
+            payload.components = [confirmContainer, ...payload.components];
+
+            await interaction.editReply(payload);
             return true;
         }
 

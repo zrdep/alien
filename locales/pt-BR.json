@@ -187,7 +187,16 @@
       "missionArrivedTip": "Use </inventory:1536804847142314075> para ver tudo que você coletou.",
       "notifyButton": "Notificar quando chegar",
       "notifyButtonActive": "Notificação ativada",
-      "notifyNoMission": "Você não tem nenhuma missão em andamento pra notificar."
+      "notifyNoMission": "Você não tem nenhuma missão em andamento pra notificar.",
+      "notifyButtonActiveChannel": "Notificação ativada (neste canal)",
+      "notifyButtonActiveDm": "Notificação ativada (na sua DM)",
+      "notifyChoiceTitle": "Onde você quer receber o aviso?",
+      "notifyChoiceBody": "Quando a missão terminar, o ∩lien te avisa. Escolha onde:",
+      "notifyChoiceChannelButton": "Neste canal",
+      "notifyChoiceDmButton": "Na minha DM",
+      "notifyDmWarning": "<:hmm:1536247599365890139> Se escolher a DM, deixe suas **mensagens diretas abertas** para este servidor — senão o bot não vai conseguir te avisar.",
+      "notifyEnabledChannel": "<:excited:1536247579061256252> Combinado! Vou te avisar **neste canal** assim que a missão terminar.",
+      "notifyEnabledDm": "<:excited:1536247579061256252> Combinado! Vou te avisar na sua **DM** assim que a missão terminar. Lembra de deixar as mensagens diretas abertas!"
     },
     "inventory": {
       "title": "Inventário Galáctico",
