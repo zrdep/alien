@@ -310,7 +310,7 @@ const buildAchievementsView = (interaction, userId, categoryKey, page) => {
                 clientId = null;
             }
             const inviteLink = clientId
-                ? `https://discord.com/oauth2/authorize?client_id=${clientId}&scope=bot%20applications.commands&permissions=0`
+                ? `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=2147863680&integration_type=0&scope=bot+applications.commands`
                 : null;
 
             const rewardCoins = inviteAchievement.reward?.coins ?? 0;
