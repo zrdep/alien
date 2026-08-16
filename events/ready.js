@@ -2,8 +2,9 @@ const { Events, ActivityType } = require('discord.js');
 const figlet = require('figlet');
 const picocolors = require('picocolors');
 const logger = require('../utils/logger');
-const { resolveAllPendingMissions, cleanExpiredPlanetOffers, resolveAllPendingCrafts, hasBotInviteRecord, recordBotInvite } = require('../utils/db');
+const { resolveAllPendingMissions, cleanExpiredPlanetOffers, resolveAllPendingCrafts, hasBotInviteRecord, recordBotInvite, setGuildDefaultLanguageIfUnset } = require('../utils/db');
 const { captureNotifyFlaggedMissions, processNotifyFlaggedMissions } = require('../utils/missionNotifier');
+const { mapDiscordLocaleToLang } = require('../utils/i18n');
 const { detectInviter } = require('./guildCreate');
 const versao = require('../config.json').versao;
 
@@ -80,6 +81,26 @@ const backfillBotInvites = async (client) => {
     }
 };
 
+// =============================================================================
+// Backfill de idioma padrão do servidor — cobre servidores em que o bot já
+// estava ANTES dessa feature existir (nunca passaram pelo guildCreate).
+// =============================================================================
+const backfillGuildDefaultLanguage = async (client) => {
+    let preenchidos = 0;
+    for (const guild of client.guilds.cache.values()) {
+        try {
+            const lang = mapDiscordLocaleToLang(guild.preferredLocale);
+            if (setGuildDefaultLanguageIfUnset(guild.id, lang)) preenchidos++;
+        } catch (err) {
+            logger.warn(`Backfill de idioma padrão falhou para "${guild.name}" (${guild.id}): ${err.message}`);
+        }
+    }
+
+    if (preenchidos > 0) {
+        logger.info(`Backfill de idioma padrão concluído: ${preenchidos} servidor(es) atualizado(s)`);
+    }
+};
+
 module.exports = {
     name: Events.ClientReady,
     once: true,
@@ -150,6 +171,10 @@ module.exports = {
 
         backfillBotInvites(client).catch((err) => {
             logger.warn(`Backfill de convites do bot falhou: ${err.message}`);
+        });
+
+        backfillGuildDefaultLanguage(client).catch((err) => {
+            logger.warn(`Backfill de idioma padrão falhou: ${err.message}`);
         });
 
         logger.success('Pronto para uso!');

@@ -1,6 +1,7 @@
 const { Events, AuditLogEvent, PermissionFlagsBits } = require('discord.js');
 const logger = require('../utils/logger');
-const { recordBotInvite } = require('../utils/db');
+const { recordBotInvite, setGuildDefaultLanguageIfUnset } = require('../utils/db');
+const { mapDiscordLocaleToLang } = require('../utils/i18n');
 
 // =============================================================================
 // Dispara quando o bot entra num servidor novo. Tenta descobrir QUEM
@@ -48,8 +49,14 @@ module.exports = {
         const { inviterId, source } = await detectInviter(guild);
         recordBotInvite(guild.id, inviterId, Date.now(), source);
 
+        // Detecta o idioma padrão do servidor pelo locale configurado no
+        // Discord (Configurações do Servidor > Idioma da Comunidade).
+        // Servidores fora do Brasil/língua portuguesa já entram em inglês.
+        const detectedLang = mapDiscordLocaleToLang(guild.preferredLocale);
+        setGuildDefaultLanguageIfUnset(guild.id, detectedLang);
+
         if (inviterId) {
-            logger.success(`Bot adicionado ao servidor "${guild.name}" (${guild.id}) — convidado por ${inviterId} (${source})`);
+            logger.success(`Bot adicionado ao servidor "${guild.name}" (${guild.id}) — convidado por ${inviterId} (${source}), idioma padrão: ${detectedLang}`);
         } else {
             logger.warn(`Bot adicionado ao servidor "${guild.name}" (${guild.id}) — não foi possível identificar quem convidou`);
         }

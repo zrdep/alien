@@ -8,7 +8,7 @@ const {
 } = require('discord.js');
 const logger = require('../utils/logger');
 const picocolors = require('picocolors');
-const { hasAcceptedTerms, acceptTerms, getUserAlien } = require('../utils/db');
+const { hasAcceptedTerms, acceptTerms, getUserAlien, syncUserLanguageWithGuildDefault } = require('../utils/db');
 const { tFor } = require('../utils/i18n');
 const { blockWrongComponentUser } = require('../utils/componentGuard');
 const { checkGuildAccess, replyBlocked } = require('../utils/guildGuard');
@@ -146,6 +146,12 @@ ${tFor(interaction, 'cooldown.text', { seconds: segundos })}`,
 module.exports = {
     name: Events.InteractionCreate,
     async execute(interaction) {
+        // Se o usuário nunca escolheu um idioma pessoal (/config user), sincroniza
+        // com o idioma padrão do servidor onde ele está interagindo agora.
+        if (interaction.guildId && interaction.user?.id) {
+            syncUserLanguageWithGuildDefault(interaction.user.id, interaction.guildId);
+        }
+
         if (interaction.isStringSelectMenu()) {
             const access = checkGuildAccess(interaction);
             if (!access.ok) {

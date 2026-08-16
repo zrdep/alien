@@ -20,6 +20,7 @@ const {
     getGuildSettings,
     setGuildAllowedChannel,
     clearGuildAllowedChannel,
+    setGuildDefaultLanguage,
 } = require('../../utils/db');
 const { hasManageGuild } = require('../../utils/guildGuard');
 
@@ -162,6 +163,36 @@ ${t(userId, 'commands.config.serverChannelDesc')}
 **${t(userId, 'commands.config.currentValue')}** ${buildServerChannelValue(userId, guildId)}
 `));
 
+    const adminLang = getUserLanguage(userId);
+    const guildDefaultLang = getGuildSettings(guildId).defaultLanguage ?? 'pt-BR';
+
+    container.addSeparatorComponents(new SeparatorBuilder());
+
+    container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`
+## <:passionate:1536247742110634034> ${t(userId, 'commands.config.serverLanguageLabel')}
+
+${t(userId, 'commands.config.serverLanguageDesc')}
+
+**${t(userId, 'commands.config.currentValue')}** ${FLAG[guildDefaultLang]} ${NAME[guildDefaultLang][adminLang]}
+`));
+
+    container.addActionRowComponents(
+        new ActionRowBuilder().addComponents(
+            new StringSelectMenuBuilder()
+                .setCustomId('config_server_language')
+                .setPlaceholder(t(userId, 'commands.config.serverLanguagePlaceholder'))
+                .addOptions(
+                    SUPPORTED_LANGS.map((code) => ({
+                        label: NAME[code][adminLang],
+                        description: DESC[code][adminLang],
+                        value: code,
+                        emoji: FLAG[code],
+                        default: code === guildDefaultLang,
+                    }))
+                )
+        )
+    );
+
     container.addSeparatorComponents(new SeparatorBuilder());
 
     container.addActionRowComponents(
@@ -292,6 +323,34 @@ module.exports = {
     },
 
     async handleSelectMenu(interaction) {
+        if (interaction.customId === 'config_server_language') {
+            if (!hasManageGuild(interaction)) {
+                await interaction.reply({
+                    content: `<:error:1536247565006143528> ${t(interaction.user.id, 'commands.config.serverNoPermission')}`,
+                    flags: MessageFlags.Ephemeral,
+                });
+                return true;
+            }
+
+            const code = interaction.values[0];
+            if (!SUPPORTED_LANGS.includes(code)) {
+                await interaction.reply({
+                    content: `<:error:1536247536191111248> ${t(interaction.user.id, 'commands.config.invalidLanguage')}`,
+                    flags: MessageFlags.Ephemeral,
+                });
+                return true;
+            }
+
+            setGuildDefaultLanguage(interaction.guildId, code);
+
+            const savedMessage = `<:excited:1536247579061256252> **${t(interaction.user.id, 'commands.config.serverLanguageSaved')}**`;
+            await interaction.update(buildServerPanel(interaction.user.id, interaction.guildId, {
+                saved: true,
+                savedMessage,
+            }));
+            return true;
+        }
+
         if (interaction.customId === 'config_user_mission_notify') {
             const pref = interaction.values[0];
             if (!['off', 'dm', 'channel'].includes(pref)) {

@@ -100,6 +100,10 @@
       "serverChannelClear": "Allow all channels",
       "serverChannelSaved": "Channel set: {channel}",
       "serverChannelCleared": "Restriction removed! The bot works in all channels.",
+      "serverLanguageLabel": "Server default language",
+      "serverLanguageDesc": "Language used with members who never picked a personal language in `/config user`. Auto-detected when the bot joined, based on the server's language — but you can change it here.",
+      "serverLanguagePlaceholder": "Select the default language...",
+      "serverLanguageSaved": "Server default language updated successfully!",
       "serverGuildOnly": "This command can only be used inside a server.",
       "serverNoPermission": "You need **Manage Server** permission to change these settings."
     },

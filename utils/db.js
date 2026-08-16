@@ -80,6 +80,18 @@ if (!temMissionNotifyPref) {
     logger.success('Coluna `mission_notify_pref` adicionada à tabela `users`');
 }
 
+// Marca se o usuário JÁ escolheu um idioma manualmente em /config user.
+// Enquanto for 0, o idioma dele fica sincronizado com o idioma padrão do
+// servidor onde ele interage (ver `syncUserLanguageWithGuildDefault`).
+const temLanguageSet = colunas.some(c => c.name === 'language_set');
+if (!temLanguageSet) {
+    db.exec(`
+        ALTER TABLE users
+        ADD COLUMN language_set INTEGER NOT NULL DEFAULT 0;
+    `);
+    logger.success('Coluna `language_set` adicionada à tabela `users`');
+}
+
 const temShipExcavation = colunas.some(c => c.name === 'ship_excavation_level');
 const temShipPropulsor = colunas.some(c => c.name === 'ship_propulsor_tier');
 const temShipScanner = colunas.some(c => c.name === 'ship_scanner_level');
@@ -241,9 +253,20 @@ db.exec(`
     CREATE TABLE IF NOT EXISTS guild_settings (
         guild_id TEXT PRIMARY KEY,
         allowed_channel_id TEXT,
+        default_language TEXT,
         updated_at TEXT
     );
 `);
+
+const colunasGuildSettings = db.prepare("PRAGMA table_info(guild_settings)").all();
+const temDefaultLanguage = colunasGuildSettings.some(c => c.name === 'default_language');
+if (!temDefaultLanguage) {
+    db.exec(`
+        ALTER TABLE guild_settings
+        ADD COLUMN default_language TEXT;
+    `);
+    logger.success('Coluna `default_language` adicionada à tabela `guild_settings`');
+}
 
 db.exec(`
     CREATE TABLE IF NOT EXISTS active_crafts (
@@ -428,7 +451,7 @@ const getUserLanguage = (userId) => {
 const setUserLanguage = (userId, language) => {
     db.prepare(`
         UPDATE users
-        SET language = ?
+        SET language = ?, language_set = 1
         WHERE user_id = ?
     `).run(language, userId);
 };
@@ -1064,6 +1087,7 @@ const getGuildSettings = (guildId) => {
     const row = db.prepare('SELECT * FROM guild_settings WHERE guild_id = ?').get(guildId);
     return {
         allowedChannelId: row?.allowed_channel_id ?? null,
+        defaultLanguage: row?.default_language ?? null,
         updatedAt: row?.updated_at ?? null,
     };
 };
@@ -1079,7 +1103,48 @@ const setGuildAllowedChannel = (guildId, channelId) => {
 };
 
 const clearGuildAllowedChannel = (guildId) => {
-    db.prepare('DELETE FROM guild_settings WHERE guild_id = ?').run(guildId);
+    // Só limpa o canal permitido — NÃO apaga a linha inteira, pra não perder
+    // o `default_language` (ou outras configs futuras) do servidor.
+    db.prepare(`
+        UPDATE guild_settings
+        SET allowed_channel_id = NULL, updated_at = CURRENT_TIMESTAMP
+        WHERE guild_id = ?
+    `).run(guildId);
+};
+
+// Idioma padrão do servidor, aplicado a quem nunca escolheu um idioma
+// pessoal em /config user. `lang` deve ser 'pt-BR' ou 'en-US'.
+const setGuildDefaultLanguage = (guildId, lang) => {
+    db.prepare(`
+        INSERT INTO guild_settings (guild_id, default_language, updated_at)
+        VALUES (?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(guild_id) DO UPDATE SET
+            default_language = excluded.default_language,
+            updated_at = CURRENT_TIMESTAMP
+    `).run(guildId, lang);
+};
+
+// Só define o padrão se o servidor ainda não tiver um definido — usado no
+// guildCreate/backfill pra não sobrescrever uma escolha manual de admin.
+const setGuildDefaultLanguageIfUnset = (guildId, lang) => {
+    const current = db.prepare('SELECT default_language FROM guild_settings WHERE guild_id = ?').get(guildId);
+    if (current?.default_language) return false;
+    setGuildDefaultLanguage(guildId, lang);
+    return true;
+};
+
+// Sincroniza o idioma do usuário com o padrão do servidor, mas SÓ se ele
+// nunca tiver escolhido um idioma manualmente (`language_set = 0`).
+// Chamado a cada interação dentro de um servidor (ver events/interactionCreate.js).
+const syncUserLanguageWithGuildDefault = (userId, guildId) => {
+    const user = getUser(userId);
+    if (user.language_set === 1) return;
+
+    const settings = db.prepare('SELECT default_language FROM guild_settings WHERE guild_id = ?').get(guildId);
+    const defaultLang = settings?.default_language;
+    if (!defaultLang || defaultLang === user.language) return;
+
+    db.prepare('UPDATE users SET language = ? WHERE user_id = ?').run(defaultLang, userId);
 };
 
 const getActiveCraft = (userId) => {
@@ -2121,6 +2186,9 @@ module.exports = {
     getGuildSettings,
     setGuildAllowedChannel,
     clearGuildAllowedChannel,
+    setGuildDefaultLanguage,
+    setGuildDefaultLanguageIfUnset,
+    syncUserLanguageWithGuildDefault,
     getUserCoins,
     addUserCoins,
     setUserCoins,

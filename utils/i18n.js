@@ -67,10 +67,21 @@ const tFor = (interaction, key, variables) => {
     return t(interaction.user.id, key, variables);
 };
 
+// Mapeia o `preferredLocale` do Discord (guild.preferredLocale, ex: 'pt-BR',
+// 'en-US', 'es-ES', 'fr'...) para um dos idiomas suportados pelo bot.
+// Qualquer coisa que não seja variação de português cai em 'en-US'.
+const mapDiscordLocaleToLang = (discordLocale) => {
+    if (typeof discordLocale === 'string' && discordLocale.toLowerCase().startsWith('pt')) {
+        return 'pt-BR';
+    }
+    return 'en-US';
+};
+
 module.exports = {
     t,
     tFor,
     getText,
+    mapDiscordLocaleToLang,
     DEFAULT_LANG,
     SUPPORTED_LANGS,
 };
