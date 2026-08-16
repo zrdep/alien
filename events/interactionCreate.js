@@ -8,7 +8,16 @@ const {
 } = require('discord.js');
 const logger = require('../utils/logger');
 const picocolors = require('picocolors');
-const { hasAcceptedTerms, acceptTerms, getUserAlien, syncUserLanguageWithGuildDefault } = require('../utils/db');
+const { versao, changelogMessage } = require('../config.json');
+const {
+    hasAcceptedTerms,
+    acceptTerms,
+    getUserAlien,
+    syncUserLanguageWithGuildDefault,
+    getUserLanguage,
+    getChangelogSeenVersion,
+    setChangelogSeenVersion,
+} = require('../utils/db');
 const { tFor } = require('../utils/i18n');
 const { blockWrongComponentUser } = require('../utils/componentGuard');
 const { checkGuildAccess, replyBlocked } = require('../utils/guildGuard');
@@ -142,6 +151,28 @@ const mensagemCooldown = (interaction, segundos) => ({
 ${tFor(interaction, 'cooldown.text', { seconds: segundos })}`,
     flags: MessageFlags.Ephemeral,
 });
+
+// Depois de um comando executado com sucesso, avisa (ephemeral, só o autor
+// vê) se a versão do bot em config.json mudou desde a última vez que esse
+// usuário viu o aviso. Editar `versao` + `changelogMessage` no config.json
+// é o suficiente pra disparar o aviso de novo pra todo mundo.
+const enviarAvisoChangelogSeNecessario = async (interaction) => {
+    if (!versao || !changelogMessage) return;
+
+    const idioma = getUserLanguage(interaction.user.id) || 'pt-BR';
+    const texto = changelogMessage[idioma] || changelogMessage['pt-BR'];
+    if (!texto) return; // nada configurado ainda, não marca como visto
+
+    if (getChangelogSeenVersion(interaction.user.id) === versao) return;
+
+    setChangelogSeenVersion(interaction.user.id, versao);
+
+    try {
+        await interaction.followUp({ content: texto, flags: MessageFlags.Ephemeral });
+    } catch (err) {
+        logger.warn(`Falha ao enviar aviso de changelog: ${err.message}`);
+    }
+};
 
 module.exports = {
     name: Events.InteractionCreate,
@@ -307,6 +338,7 @@ module.exports = {
 
         try {
             await command.execute(interaction);
+            await enviarAvisoChangelogSeNecessario(interaction);
         } catch (error) {
             logger.br();
             logger.div();

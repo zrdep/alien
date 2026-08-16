@@ -167,6 +167,12 @@ if (!temDailyStreak) {
     logger.success('Coluna `daily_streak` adicionada à tabela `users`');
 }
 
+const temChangelogSeen = colunas.some(c => c.name === 'changelog_seen_version');
+if (!temChangelogSeen) {
+    db.exec(`ALTER TABLE users ADD COLUMN changelog_seen_version TEXT NOT NULL DEFAULT '';`);
+    logger.success('Coluna `changelog_seen_version` adicionada à tabela `users`');
+}
+
 const colunasMarketStats = [
     { name: 'market_global_sold_count', default: 0 },
     { name: 'market_global_sold_revenue', default: 0 },
@@ -427,6 +433,18 @@ const getUser = (userId) => {
         user = db.prepare('SELECT * FROM users WHERE user_id = ?').get(userId);
     }
     return user;
+};
+
+// Retorna a última versão do changelog que o usuário já viu (string vazia
+// se nunca viu nenhuma). Usado pra decidir se mostra o aviso ephemeral
+// de atualização depois de um comando (ver events/interactionCreate.js).
+const getChangelogSeenVersion = (userId) => {
+    return getUser(userId).changelog_seen_version ?? '';
+};
+
+const setChangelogSeenVersion = (userId, version) => {
+    getUser(userId); // garante que a linha existe
+    db.prepare('UPDATE users SET changelog_seen_version = ? WHERE user_id = ?').run(version, userId);
 };
 
 const hasAcceptedTerms = (userId) => {
@@ -2145,6 +2163,8 @@ const claimAllRedeemables = (userId) => {
 module.exports = {
     db,
     getUser,
+    getChangelogSeenVersion,
+    setChangelogSeenVersion,
     hasAcceptedTerms,
     acceptTerms,
     getUserLanguage,
