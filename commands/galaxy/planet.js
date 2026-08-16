@@ -29,6 +29,7 @@ const {
     popMissionNotice,
     incrementPlanetsSeen,
     addUserHat,
+    getUserMissionNotifyPref,
 } = require('../../utils/db');
 const { gerarDadosPlaneta } = require('../../utils/planet');
 const { gerarRecursosPlaneta } = require('../../utils/planetResources');
@@ -604,11 +605,27 @@ module.exports = {
 
         deletePlanetOffer(userId, planetSeed);
 
+        // Preferência salva em /config user: aplica o aviso automaticamente
+        // (DM ou canal atual) sem precisar clicar no botão toda missão.
+        const notifyPref = getUserMissionNotifyPref(userId);
+        if (notifyPref === 'dm') {
+            enableMissionNotification(interaction.client, userId, DM_TARGET);
+        } else if (notifyPref === 'channel') {
+            enableMissionNotification(interaction.client, userId, interaction.channelId);
+        }
+
         const mission = getExplorationMission(userId);
+        const notifyHintKey = notifyPref === 'dm'
+            ? 'commands.planet.notifyAutoDm'
+            : notifyPref === 'channel'
+                ? 'commands.planet.notifyAutoChannel'
+                : 'commands.planet.notifyOffHint';
+        const content = `${buildExploreStartedContent(userId, mission)}\n\n${tFor(interaction, notifyHintKey)}`;
+
         await interaction.update(
             buildV2TextPayload(
-                buildExploreStartedContent(userId, mission),
-                [buildNotifyButtonRow(interaction, userId, mission)]
+                content,
+                notifyPref === 'off' ? [buildNotifyButtonRow(interaction, userId, mission)] : []
             )
         );
 

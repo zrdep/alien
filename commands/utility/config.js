@@ -15,6 +15,8 @@ const { t, SUPPORTED_LANGS } = require('../../utils/i18n');
 const {
     setUserLanguage,
     getUserLanguage,
+    getUserMissionNotifyPref,
+    setUserMissionNotifyPref,
     getGuildSettings,
     setGuildAllowedChannel,
     clearGuildAllowedChannel,
@@ -55,6 +57,31 @@ const buildLanguageMenu = (userId) => {
     return [row];
 };
 
+const MISSION_NOTIFY_OPTIONS = [
+    { value: 'off', emoji: '<:idle:1536247613681176616>', labelKey: 'commands.config.missionNotifyOptionOffLabel', descKey: 'commands.config.missionNotifyOptionOffDesc' },
+    { value: 'dm', emoji: '<:ovni:1536247726889762847>', labelKey: 'commands.config.missionNotifyOptionDmLabel', descKey: 'commands.config.missionNotifyOptionDmDesc' },
+    { value: 'channel', emoji: '<:earth:1536459925495087226>', labelKey: 'commands.config.missionNotifyOptionChannelLabel', descKey: 'commands.config.missionNotifyOptionChannelDesc' },
+];
+
+const buildMissionNotifyMenu = (userId) => {
+    const current = getUserMissionNotifyPref(userId);
+    const row = new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+            .setCustomId('config_user_mission_notify')
+            .setPlaceholder(t(userId, 'commands.config.missionNotifyPlaceholder'))
+            .addOptions(
+                MISSION_NOTIFY_OPTIONS.map((opt) => ({
+                    label: t(userId, opt.labelKey),
+                    description: t(userId, opt.descKey),
+                    value: opt.value,
+                    emoji: opt.emoji,
+                    default: opt.value === current,
+                }))
+            )
+    );
+    return row;
+};
+
 const buildHeader = (userId) => {
     return new TextDisplayBuilder().setContent(`
 # <:settings:1536248422686920704> ${t(userId, 'commands.config.panelUserTitle')}
@@ -75,15 +102,30 @@ ${t(userId, 'commands.config.languageDesc')}
 `);
 };
 
+const buildMissionNotifySection = (userId) => {
+    const pref = getUserMissionNotifyPref(userId);
+    const prefLabelKey = MISSION_NOTIFY_OPTIONS.find((o) => o.value === pref)?.labelKey
+        ?? 'commands.config.missionNotifyOptionOffLabel';
+    const prefEmoji = MISSION_NOTIFY_OPTIONS.find((o) => o.value === pref)?.emoji ?? '';
+
+    return new TextDisplayBuilder().setContent(`
+## ${t(userId, 'commands.config.missionNotifyLabel')}
+
+${t(userId, 'commands.config.missionNotifyDesc')}
+
+**${t(userId, 'commands.config.currentValue')}** ${prefEmoji} ${t(userId, prefLabelKey)}
+`);
+};
+
 const buildFooter = (userId) => {
     return new TextDisplayBuilder().setContent(`
 <:sunglasses:1536248455519801386> ${t(userId, 'commands.config.panelUserFooter')}
 `);
 };
 
-const buildSuccessToast = (userId) => {
+const buildSuccessToast = (userId, messageKey = 'commands.config.languageSaved') => {
     return new TextDisplayBuilder().setContent(
-        `<:excited:1536247579061256252> **${t(userId, 'commands.config.languageSaved')}**
+        `<:excited:1536247579061256252> **${t(userId, messageKey)}**
 `);
 };
 
@@ -149,46 +191,48 @@ ${t(userId, 'commands.config.serverChannelDesc')}
 
 const painelUsuario = (userId) => {
     const header = buildHeader(userId);
-    const separator1 = new SeparatorBuilder();
     const languageBlock = buildLanguageSection(userId);
-    const separator2 = new SeparatorBuilder();
+    const missionNotifyBlock = buildMissionNotifySection(userId);
     const footer = buildFooter(userId);
 
     const container = new ContainerBuilder()
         .addTextDisplayComponents(header)
-        .addSeparatorComponents(separator1)
+        .addSeparatorComponents(new SeparatorBuilder())
         .addTextDisplayComponents(languageBlock)
-        .addSeparatorComponents(separator2)
+        .addSeparatorComponents(new SeparatorBuilder())
+        .addTextDisplayComponents(missionNotifyBlock)
+        .addSeparatorComponents(new SeparatorBuilder())
         .addTextDisplayComponents(footer);
 
     return {
         flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
         content: '',
-        components: [container, ...buildLanguageMenu(userId)],
+        components: [container, ...buildLanguageMenu(userId), buildMissionNotifyMenu(userId)],
     };
 };
 
-const painelUsuarioAtualizado = (userId) => {
-    const toast = buildSuccessToast(userId);
+const painelUsuarioAtualizado = (userId, messageKey) => {
+    const toast = buildSuccessToast(userId, messageKey);
     const header = buildHeader(userId);
-    const separator1 = new SeparatorBuilder();
     const languageBlock = buildLanguageSection(userId);
-    const separator2 = new SeparatorBuilder();
+    const missionNotifyBlock = buildMissionNotifySection(userId);
     const footer = buildFooter(userId);
 
     const container = new ContainerBuilder()
         .addTextDisplayComponents(toast)
-        .addSeparatorComponents(separator1)
+        .addSeparatorComponents(new SeparatorBuilder())
         .addTextDisplayComponents(header)
         .addSeparatorComponents(new SeparatorBuilder())
         .addTextDisplayComponents(languageBlock)
-        .addSeparatorComponents(separator2)
+        .addSeparatorComponents(new SeparatorBuilder())
+        .addTextDisplayComponents(missionNotifyBlock)
+        .addSeparatorComponents(new SeparatorBuilder())
         .addTextDisplayComponents(footer);
 
     return {
         flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
         content: '',
-        components: [container, ...buildLanguageMenu(userId)],
+        components: [container, ...buildLanguageMenu(userId), buildMissionNotifyMenu(userId)],
     };
 };
 
@@ -248,6 +292,21 @@ module.exports = {
     },
 
     async handleSelectMenu(interaction) {
+        if (interaction.customId === 'config_user_mission_notify') {
+            const pref = interaction.values[0];
+            if (!['off', 'dm', 'channel'].includes(pref)) {
+                await interaction.reply({
+                    content: `<:error:1536247536191111248> ${t(interaction.user.id, 'commands.config.invalidMissionNotifyPref')}`,
+                    flags: MessageFlags.Ephemeral,
+                });
+                return true;
+            }
+
+            setUserMissionNotifyPref(interaction.user.id, pref);
+            await interaction.update(painelUsuarioAtualizado(interaction.user.id, 'commands.config.missionNotifySaved'));
+            return true;
+        }
+
         if (interaction.customId !== 'config_user_language') return false;
 
         const code = interaction.values[0];
@@ -260,7 +319,7 @@ module.exports = {
         }
 
         setUserLanguage(interaction.user.id, code);
-        await interaction.update(painelUsuarioAtualizado(interaction.user.id));
+        await interaction.update(painelUsuarioAtualizado(interaction.user.id, 'commands.config.languageSaved'));
         return true;
     },
 

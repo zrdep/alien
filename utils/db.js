@@ -68,6 +68,18 @@ if (!temAlienName) {
     logger.success('Coluna `alien_name` adicionada à tabela `users`');
 }
 
+// Preferência de onde receber o aviso de "missão concluída": 'off' (padrão,
+// precisa clicar no botão toda vez), 'dm' (sempre na DM) ou 'channel'
+// (sempre no canal onde o /planeta foi usado).
+const temMissionNotifyPref = colunas.some(c => c.name === 'mission_notify_pref');
+if (!temMissionNotifyPref) {
+    db.exec(`
+        ALTER TABLE users
+        ADD COLUMN mission_notify_pref TEXT NOT NULL DEFAULT 'off';
+    `);
+    logger.success('Coluna `mission_notify_pref` adicionada à tabela `users`');
+}
+
 const temShipExcavation = colunas.some(c => c.name === 'ship_excavation_level');
 const temShipPropulsor = colunas.some(c => c.name === 'ship_propulsor_tier');
 const temShipScanner = colunas.some(c => c.name === 'ship_scanner_level');
@@ -419,6 +431,22 @@ const setUserLanguage = (userId, language) => {
         SET language = ?
         WHERE user_id = ?
     `).run(language, userId);
+};
+
+const MISSION_NOTIFY_PREFS = ['off', 'dm', 'channel'];
+
+const getUserMissionNotifyPref = (userId) => {
+    const user = getUser(userId);
+    return MISSION_NOTIFY_PREFS.includes(user.mission_notify_pref) ? user.mission_notify_pref : 'off';
+};
+
+const setUserMissionNotifyPref = (userId, pref) => {
+    if (!MISSION_NOTIFY_PREFS.includes(pref)) return;
+    db.prepare(`
+        UPDATE users
+        SET mission_notify_pref = ?
+        WHERE user_id = ?
+    `).run(pref, userId);
 };
 
 const getUserAlien = (userId) => {
@@ -2056,6 +2084,8 @@ module.exports = {
     acceptTerms,
     getUserLanguage,
     setUserLanguage,
+    getUserMissionNotifyPref,
+    setUserMissionNotifyPref,
     getUserAlien,
     setUserAlien,
     getUserShip,
