@@ -8,7 +8,7 @@ const {
 } = require('discord.js');
 const logger = require('../utils/logger');
 const picocolors = require('picocolors');
-const { versao, changelogMessage } = require('../config.json');
+const { versao, changelogEnabled, changelogMessage } = require('../config.json');
 const {
     hasAcceptedTerms,
     acceptTerms,
@@ -157,6 +157,7 @@ ${tFor(interaction, 'cooldown.text', { seconds: segundos })}`,
 // usuário viu o aviso. Editar `versao` + `changelogMessage` no config.json
 // é o suficiente pra disparar o aviso de novo pra todo mundo.
 const enviarAvisoChangelogSeNecessario = async (interaction) => {
+    if (changelogEnabled === false) return; // desativado no config.json
     if (!versao || !changelogMessage) return;
 
     const idioma = getUserLanguage(interaction.user.id) || 'pt-BR';

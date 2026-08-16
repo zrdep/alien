@@ -5,6 +5,7 @@
 	"guildId": "YOUR_GUILD_ID",
 	"ownerId": "YOUR_USER_ID",
 	"versao": "0.0.0",
+	"changelogEnabled": true,
 	"changelogMessage": {
 		"pt-BR": "",
 		"en-US": ""
