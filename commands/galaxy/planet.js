@@ -85,8 +85,8 @@ const buildHatFoundContent = (interaction, hat) => {
     const hatName = getHatName(hat.key, lang);
     const title = lang === 'en-US' ? 'Hat found!' : 'Chapéu encontrado!';
     const line = lang === 'en-US'
-        ? `You found a **${hatName}** ${emoji} — check it out with \`/alien\`!`
-        : `Você encontrou um(a) **${hatName}** ${emoji} — dá uma olhada com \`/alien\`!`;
+        ? `You found a **${hatName}** ${emoji} — check it out with </alien:1537544781020799120>!`
+        : `Você encontrou um(a) **${hatName}** ${emoji} — dá uma olhada com </alien:1537544781020799120>!`;
     return `\n## <:excited:1536247579061256252> ${title}\n\n${line}\n`;
 };
 

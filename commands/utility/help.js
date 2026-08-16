@@ -30,10 +30,10 @@ function getCategoryData(lang, categoryKey) {
                 ? 'Comandos para viajar no espaço, descobrir novos mundos e gerenciar seus itens:'
                 : 'Commands to travel through space, discover new worlds, and manage your items:',
             commands: [
-                { name: '/alien', desc: isPt ? 'Veja seu alienígena companheiro e sua nave.' : 'View your alien companion and ship.' },
-                { name: isPt ? '/planeta' : '/planet', desc: isPt ? 'Explore planetas misteriosos e envie seu alien em missões de coleta.' : 'Explore mysterious planets and send your alien on resource missions.' },
-                { name: isPt ? '/inventario' : '/inventory', desc: isPt ? 'Veja todos os recursos espaciais coletados nas expedições.' : 'View all space resources collected during expeditions.' },
-                { name: isPt ? '/fabricar' : '/craft', desc: isPt ? 'Fabrique melhorias para a sua nave (Propulsores, Sondas, Scanners).' : 'Craft ship upgrades (Propulsors, Probes, Scanners).' },
+                { name: '</alien:1537544781020799120>', desc: isPt ? 'Veja seu alienígena companheiro e sua nave.' : 'View your alien companion and ship.' },
+                { name: '</planet:1537544781020799123>', desc: isPt ? 'Explore planetas misteriosos e envie seu alien em missões de coleta.' : 'Explore mysterious planets and send your alien on resource missions.' },
+                { name: '</inventory:1537544781020799122>', desc: isPt ? 'Veja todos os recursos espaciais coletados nas expedições.' : 'View all space resources collected during expeditions.' },
+                { name: '</craft:1537544781020799121>', desc: isPt ? 'Fabrique melhorias para a sua nave (Propulsores, Sondas, Scanners).' : 'Craft ship upgrades (Propulsors, Probes, Scanners).' },
             ],
         },
         economy: {
@@ -42,11 +42,11 @@ function getCategoryData(lang, categoryKey) {
                 ? 'Comandos para gerenciar seu saldo de ∩oins e praticar comércio global:'
                 : 'Commands to manage your ∩oins balance and trade globally:',
             commands: [
-                { name: '/daily', desc: isPt ? 'Resgate sua recompensa diária de ∩oins e recursos.' : 'Claim your daily reward of ∩oins and resources.' },
-                { name: isPt ? '/resgatar' : '/redeem', desc: isPt ? 'Resgate conquistas pendentes, presentes e recompensas.' : 'Redeem pending achievements, gifts, and rewards.' },
-                { name: isPt ? '/carteira' : '/wallet', desc: isPt ? 'Consulte sua carteira de ∩oins ou a de outro explorador.' : 'Check your ∩oins wallet or another explorer balance.' },
-                { name: isPt ? '/mercado' : '/market', desc: isPt ? 'Compre e venda recursos no Mercado Global ou na Loja do Sistema.' : 'Buy and sell resources on the Global Market or System Shop.' },
-                { name: isPt ? '/mercadochapeus' : '/hatmarket', desc: isPt ? 'Compre e venda chapéus exclusivos com outros jogadores.' : 'Buy and sell exclusive hats with other players.' },
+                { name: '</daily:1537544781020799118>', desc: isPt ? 'Resgate sua recompensa diária de ∩oins e recursos.' : 'Claim your daily reward of ∩oins and resources.' },
+                { name: '</redeem:1538333297430765702>', desc: isPt ? 'Resgate conquistas pendentes, presentes e recompensas.' : 'Redeem pending achievements, gifts, and rewards.' },
+                { name: '</wallet:1537544781020799119>', desc: isPt ? 'Consulte sua carteira de ∩oins ou a de outro explorador.' : 'Check your ∩oins wallet or another explorer balance.' },
+                { name: '</market:1538040562978922517>', desc: isPt ? 'Compre e venda recursos no Mercado Global ou na Loja do Sistema.' : 'Buy and sell resources on the Global Market or System Shop.' },
+                { name: '</hatmarket:1538040562978922516>', desc: isPt ? 'Compre e venda chapéus exclusivos com outros jogadores.' : 'Buy and sell exclusive hats with other players.' },
             ],
         },
         utility: {
@@ -55,14 +55,14 @@ function getCategoryData(lang, categoryKey) {
                 ? 'Comandos de utilidade geral, estatísticas do jogador e preferências:'
                 : 'General utility commands, player statistics, and preferences:',
             commands: [
-                { name: isPt ? '/perfil' : '/profile', desc: isPt ? 'Veja suas estatísticas espaciais, nave e companheiro alien.' : 'View your space statistics, ship, and alien companion.' },
-                { name: isPt ? '/conquistas' : '/achievements', desc: isPt ? 'Veja todas as conquistas disponíveis e seu progresso nelas.' : 'View all available achievements and your progress toward them.' },
-                { name: '/config user/server', desc: isPt ? 'Altere idioma, aviso de missão concluída (DM/canal/desligado) ou configurações do servidor.' : 'Change language, mission-complete notice (DM/channel/off), or server settings.' },
-                { name: '/tutorial', desc: isPt ? 'Guia interativo passo a passo para aprender a jogar com o ∩lien.' : 'Interactive step-by-step tutorial guide to learn ∩lien.' },
-                { name: '/ranking', desc: isPt ? 'Veja o ranking galáctico: mais ricos, mais explorados e mais.' : 'View the galactic leaderboard: richest, most explored, and more.' },
-                { name: '/botinfo', desc: isPt ? 'Exibe informações sobre o bot ∩lien, desempenho e estatísticas.' : 'Displays information about ∩lien bot, performance, and stats.' },
-                { name: '/ping', desc: isPt ? 'Verifica o tempo de resposta e latência do bot.' : 'Checks bot response time and latency.' },
-                { name: isPt ? '/ajuda' : '/help', desc: isPt ? 'Abre este painel de ajuda categorizado com comandos.' : 'Opens this categorized help menu with commands.' },
+                { name: '</profile:1537544781117263992>', desc: isPt ? 'Veja suas estatísticas espaciais, nave e companheiro alien.' : 'View your space statistics, ship, and alien companion.' },
+                { name: '</achievements:1538040562978922518>', desc: isPt ? 'Veja todas as conquistas disponíveis e seu progresso nelas.' : 'View all available achievements and your progress toward them.' },
+                { name: `</config user:1537544781020799125> / </config server:1537544781020799125>`, desc: isPt ? 'Altere idioma, aviso de missão concluída (DM/canal/desligado) ou configurações do servidor.' : 'Change language, mission-complete notice (DM/channel/off), or server settings.' },
+                { name: '</tutorial:1538040562978922520>', desc: isPt ? 'Guia interativo passo a passo para aprender a jogar com o ∩lien.' : 'Interactive step-by-step tutorial guide to learn ∩lien.' },
+                { name: '</ranking:1538201380437626920>', desc: isPt ? 'Veja o ranking galáctico: mais ricos, mais explorados e mais.' : 'View the galactic leaderboard: richest, most explored, and more.' },
+                { name: '</botinfo:1537544781020799124>', desc: isPt ? 'Exibe informações sobre o bot ∩lien, desempenho e estatísticas.' : 'Displays information about ∩lien bot, performance, and stats.' },
+                { name: '</ping:1537544781020799126>', desc: isPt ? 'Verifica o tempo de resposta e latência do bot.' : 'Checks bot response time and latency.' },
+                { name: '</help:1538040562978922519>', desc: isPt ? 'Abre este painel de ajuda categorizado com comandos.' : 'Opens this categorized help menu with commands.' },
             ],
         },
     };
@@ -92,14 +92,14 @@ function renderHelpContainer(interaction, activeCategory = 'galaxy') {
     );
 
     const commandsText = catData.commands
-        .map((cmd) => `🔹 **\`${cmd.name}\`**\n└ ${cmd.desc}`)
+        .map((cmd) => `🔹 **${cmd.name}**\n└ ${cmd.desc}`)
         .join('\n\n');
 
     const bodyText = new TextDisplayBuilder().setContent(
         `## ${catData.title}\n` +
         `*${catData.desc}*\n\n` +
         `${commandsText}\n\n` +
-        `<:excited:1536247579061256252> **${isPt ? 'Dica para iniciantes:' : 'Tip for beginners:'}** ${isPt ? 'Nunca jogou? Use `/tutorial` para um guia passo a passo!' : "First time here? Use `/tutorial` for a step-by-step guide!"}\n` +
+        `<:excited:1536247579061256252> **${isPt ? 'Dica para iniciantes:' : 'Tip for beginners:'}** ${isPt ? 'Nunca jogou? Use </tutorial:1538040562978922520> para um guia passo a passo!' : 'First time here? Use </tutorial:1538040562978922520> for a step-by-step guide!'}\n` +
         `<:support:1536248470611173466> ${isPt ? 'Precisa de mais ajuda? Fale com a equipe no servidor de suporte.' : 'Need more help? Reach out to the team on the support server.'}`
     );
 
@@ -204,7 +204,7 @@ module.exports = {
         } else {
             const isPt = getUserLanguage(interaction.user.id) === 'pt-BR';
             await interaction.reply({
-                content: isPt ? 'Use o comando `/tutorial` para ver o guia completo!' : 'Use `/tutorial` command to view the complete guide!',
+                content: isPt ? 'Use o comando </tutorial:1538040562978922520> para ver o guia completo!' : 'Use </tutorial:1538040562978922520> to view the complete guide!',
                 flags: MessageFlags.Ephemeral,
             });
         }

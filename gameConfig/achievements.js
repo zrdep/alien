@@ -46,8 +46,8 @@ const ACHIEVEMENTS = [
         threshold: 1,
         name: { 'pt-BR': 'Recrutador Interestelar', 'en-US': 'Interstellar Recruiter' },
         description: {
-            'pt-BR': 'Adicione o ∩lien a um servidor seu e resgate com /resgatar',
-            'en-US': 'Add ∩lien to a server of yours and claim it with /redeem',
+            'pt-BR': 'Adicione o ∩lien a um servidor seu e resgate com </redeem:1538333297430765702>',
+            'en-US': 'Add ∩lien to a server of yours and claim it with </redeem:1538333297430765702>',
         },
         reward: { coins: 2000, resources: [] },
     },
@@ -292,7 +292,7 @@ const ACHIEVEMENTS = [
         type: 'daily_streak',
         threshold: 3,
         name: { 'pt-BR': 'Presença Confirmada', 'en-US': 'Check-in Confirmed' },
-        description: { 'pt-BR': 'Faça 3 /daily consecutivos', 'en-US': 'Do 3 consecutive /daily' },
+        description: { 'pt-BR': 'Faça 3 </daily:1537544781020799118> consecutivos', 'en-US': 'Do 3 consecutive </daily:1537544781020799118>' },
         reward: { coins: 300, resources: [{ key: 'dirt', amount: 30 }] },
     },
     {
@@ -302,7 +302,7 @@ const ACHIEVEMENTS = [
         type: 'daily_streak',
         threshold: 7,
         name: { 'pt-BR': 'Semana Completa', 'en-US': 'Full Week' },
-        description: { 'pt-BR': 'Faça 7 /daily consecutivos (1 semana)', 'en-US': 'Do 7 consecutive /daily (1 week)' },
+        description: { 'pt-BR': 'Faça 7 </daily:1537544781020799118> consecutivos (1 semana)', 'en-US': 'Do 7 consecutive </daily:1537544781020799118> (1 week)' },
         reward: { coins: 2500, resources: [{ key: 'iron', amount: 30 }, { key: 'copper', amount: 30 }] },
     },
     {
@@ -312,7 +312,7 @@ const ACHIEVEMENTS = [
         type: 'daily_streak',
         threshold: 30,
         name: { 'pt-BR': 'Mês de Dedicação', 'en-US': 'Month of Dedication' },
-        description: { 'pt-BR': 'Faça 30 /daily consecutivos (1 mês)', 'en-US': 'Do 30 consecutive /daily (1 month)' },
+        description: { 'pt-BR': 'Faça 30 </daily:1537544781020799118> consecutivos (1 mês)', 'en-US': 'Do 30 consecutive </daily:1537544781020799118> (1 month)' },
         reward: { coins: 25000, resources: [{ key: 'metal', amount: 50 }, { key: 'starFragment', amount: 10 }] },
     },
 

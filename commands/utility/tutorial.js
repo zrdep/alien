@@ -21,6 +21,17 @@ const GIFT_IMAGE_PATH = path.join(__dirname, '..', '..', 'images', 'moedas', GIF
 
 const TOTAL_STEPS = 7;
 
+// Mapeia o nome plano do comando (usado no select menu) pra menção clicável (usada no corpo do passo).
+const COMMAND_MENTIONS = {
+    '/alien': '</alien:1537544781020799120>',
+    '/planet': '</planet:1537544781020799123>',
+    '/daily': '</daily:1537544781020799118>',
+    '/craft': '</craft:1537544781020799121>',
+    '/market': '</market:1538040562978922517>',
+    '/profile': '</profile:1537544781117263992>',
+    '/achievements': '</achievements:1538040562978922518>',
+};
+
 function getStepContent(lang, stepNum) {
     const isPt = lang === 'pt-BR';
 
@@ -30,8 +41,8 @@ function getStepContent(lang, stepNum) {
             cmd: '/alien',
             icon: '<:ovni:1536247726889762847>',
             desc: isPt
-                ? 'Antes de iniciar sua jornada estelar, você precisa escolher seu companheiro alienígena! Use `/alien` para selecionar a cor (roxo, verde, azul, rosa, laranja) e definir um nome especial para ele.'
-                : 'Before starting your stellar journey, choose your alien companion! Use `/alien` to pick a color (purple, green, blue, pink, orange) and give it a special name.',
+                ? 'Antes de iniciar sua jornada estelar, você precisa escolher seu companheiro alienígena! Use </alien:1537544781020799120> para selecionar a cor (roxo, verde, azul, rosa, laranja) e definir um nome especial para ele.'
+                : 'Before starting your stellar journey, choose your alien companion! Use </alien:1537544781020799120> to pick a color (purple, green, blue, pink, orange) and give it a special name.',
         },
         2: {
             title: isPt ? 'Passo 2: Explore Planetas & Missões' : 'Step 2: Explore Planets & Missions',
@@ -70,16 +81,16 @@ function getStepContent(lang, stepNum) {
             cmd: '/profile',
             icon: '<:registry:1536459835921530890>',
             desc: isPt
-                ? 'Acompanhe seu progresso! Consulte seu saldo de moedas em `/wallet`, veja seus itens em `/inventory` e confira suas estatísticas de viagem e equipamentos em `/profile`.'
-                : 'Track your progress! Check your balance in `/wallet`, see items in `/inventory`, and view travel stats and ship equipment in `/profile`.',
+                ? 'Acompanhe seu progresso! Consulte seu saldo de moedas em </wallet:1537544781020799119>, veja seus itens em </inventory:1537544781020799122> e confira suas estatísticas de viagem e equipamentos em </profile:1537544781117263992>.'
+                : 'Track your progress! Check your balance in </wallet:1537544781020799119>, see items in </inventory:1537544781020799122>, and view travel stats and ship equipment in </profile:1537544781117263992>.',
         },
         7: {
             title: isPt ? 'Passo 7: Conquistas & Personalização' : 'Step 7: Achievements & Customization',
             cmd: '/achievements',
             icon: '<:legendary:1536459814475927653>',
             desc: isPt
-                ? 'Você já sabe o essencial! Agora explore `/achievements` para desbloquear conquistas, `/hatmarket` para comprar e vender chapéus exclusivos, e `/config` para ajustar seu idioma. Bons voos, explorador!'
-                : "You know the essentials now! Explore `/achievements` to unlock achievements, `/hatmarket` to buy and sell exclusive hats, and `/config` to adjust your language. Safe travels, explorer!",
+                ? 'Você já sabe o essencial! Agora explore </achievements:1538040562978922518> para desbloquear conquistas, </hatmarket:1538040562978922516> para comprar e vender chapéus exclusivos, e </config user:1537544781020799125> para ajustar seu idioma. Bons voos, explorador!'
+                : 'You know the essentials now! Explore </achievements:1538040562978922518> to unlock achievements, </hatmarket:1538040562978922516> to buy and sell exclusive hats, and </config user:1537544781020799125> to adjust your language. Safe travels, explorer!',
         },
     };
 
@@ -104,12 +115,12 @@ function renderTutorialContainer(interaction, stepNum = 1) {
     );
 
     const footerTip = isLastStep
-        ? `<:sunglasses:1536248455519801386> *${isPt ? 'Você concluiu o tutorial! Use `/help` sempre que precisar consultar um comando.' : "You've completed the tutorial! Use `/help` anytime you need to look up a command."}*`
+        ? `<:sunglasses:1536248455519801386> *${isPt ? 'Você concluiu o tutorial! Use </help:1538040562978922519> sempre que precisar consultar um comando.' : "You've completed the tutorial! Use </help:1538040562978922519> anytime you need to look up a command."}*`
         : `<:excited:1536247579061256252> *${isPt ? 'Use os botões ou o menu abaixo para navegar entre os passos do tutorial!' : 'Use the buttons or the menu below to navigate tutorial steps!'}*`;
 
     const bodyText = new TextDisplayBuilder().setContent(
         `## ${data.icon} ${data.title}\n` +
-        `**${isPt ? 'Comando principal:' : 'Main command:'}** \`${data.cmd}\`\n\n` +
+        `**${isPt ? 'Comando principal:' : 'Main command:'}** ${COMMAND_MENTIONS[data.cmd] ?? data.cmd}\n\n` +
         `${data.desc}\n\n` +
         footerTip
     );
@@ -199,7 +210,7 @@ module.exports = {
             } else {
                 const isPt = getUserLanguage(interaction.user.id) === 'pt-BR';
                 await interaction.reply({
-                    content: isPt ? 'Use o comando `/help` para ver a lista de comandos!' : 'Use `/help` to see command list!',
+                    content: isPt ? 'Use o comando </help:1538040562978922519> para ver a lista de comandos!' : 'Use </help:1538040562978922519> to see command list!',
                     flags: MessageFlags.Ephemeral,
                 });
             }

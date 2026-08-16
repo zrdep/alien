@@ -80,9 +80,9 @@ module.exports = {
             blocks.push(
                 isPt
                     ? `${E_HMM} *Ainda não encontramos nenhum servidor seu com o ∩lien adicionado. ` +
-                      `Adicione o bot num servidor que você controla e rode \`/resgatar\` de novo!*`
+                      `Adicione o bot num servidor que você controla e rode </redeem:1538333297430765702> de novo!*`
                     : `${E_HMM} *We couldn't find any server of yours with ∩lien added yet. ` +
-                      `Add the bot to a server you control and run \`/redeem\` again!*`
+                      `Add the bot to a server you control and run </redeem:1538333297430765702> again!*`
             );
         } else if (inviteResult.status === 'already_unlocked') {
             blocks.push(

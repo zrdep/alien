@@ -18,9 +18,9 @@
       "privacy": "Privacy",
       "privacyText": "We do not share any data with third parties. Everything is stored locally in the bot's database."
     },
-    "tipConfig": "<:sunglasses:1536248455519801386> Want to change my language? Use </config user:1536804847142314078> anytime!",
-    "accepted": "**Terms accepted!** Now you can use all **∩lien** commands.\n\n<:excited:1536247579061256252> **New here?** Use </tutorial:1536804847142314080> to view the step-by-step guide or </help:1536804847142314081> to see all commands!",
-    "alreadyAccepted": "You have already accepted the terms! Use </tutorial:1536804847142314080> to learn how to play or </help:1536804847142314081> to view the list of commands."
+    "tipConfig": "<:sunglasses:1536248455519801386> Want to change my language? Use </config user:1537544781020799125> anytime!",
+    "accepted": "**Terms accepted!** Now you can use all **∩lien** commands.\n\n<:excited:1536247579061256252> **New here?** Use </tutorial:1538040562978922520> to view the step-by-step guide or </help:1538040562978922519> to see all commands!",
+    "alreadyAccepted": "You have already accepted the terms! Use </tutorial:1538040562978922520> to learn how to play or </help:1538040562978922519> to view the list of commands."
   },
   "cooldown": {
     "title": "Easy there, human!",
@@ -30,7 +30,7 @@
     "generic": "An error occurred while executing this command! Contact support."
   },
   "guildGuard": {
-    "userInstall": "<:ovni:1536247726889762847> **User installation detected!**\n\nIn this server, **∩lien** must be used as the server app in the channel set by the staff. Ask a moderator to set it up with </config server:1536804847142314078> or add the bot to the server normally.",
+    "userInstall": "<:ovni:1536247726889762847> **User installation detected!**\n\nIn this server, **∩lien** must be used as the server app in the channel set by the staff. Ask a moderator to set it up with </config server:1537544781020799125> or add the bot to the server normally.",
     "wrongChannel": "<:hmm:1536247599365890139> **Wrong channel!**\n\nIn this server, **∩lien** commands only work in {channel}.",
     "dmNotAllowed": "<:question:1536248373240270888> **This command only works in servers!**\n\nJoin a server with **∩lien** and use the channel allowed by the staff."
   },
@@ -81,7 +81,7 @@
       "languageSaved": "Preferences saved! Language updated successfully. <:passionate:1536247742110634034>",
       "invalidLanguage": "Invalid language.",
       "missionNotifyLabel": "Mission-complete notice",
-      "missionNotifyDesc": "Choose if and where you want to be notified when your alien returns from a /planet mission.",
+      "missionNotifyDesc": "Choose if and where you want to be notified when your alien returns from a </planet:1537544781020799123> mission.",
       "missionNotifyPlaceholder": "Select where to be notified...",
       "missionNotifyOptionOffLabel": "Off",
       "missionNotifyOptionOffDesc": "Don't notify automatically (click the button on each mission instead)",
@@ -101,7 +101,7 @@
       "serverChannelSaved": "Channel set: {channel}",
       "serverChannelCleared": "Restriction removed! The bot works in all channels.",
       "serverLanguageLabel": "Server default language",
-      "serverLanguageDesc": "Language used with members who never picked a personal language in `/config user`. Auto-detected when the bot joined, based on the server's language — but you can change it here.",
+      "serverLanguageDesc": "Language used with members who never picked a personal language in </config user:1537544781020799125>. Auto-detected when the bot joined, based on the server's language — but you can change it here.",
       "serverLanguagePlaceholder": "Select the default language...",
       "serverLanguageSaved": "Server default language updated successfully!",
       "serverGuildOnly": "This command can only be used inside a server.",
@@ -150,11 +150,11 @@
       "savedLabel": "Saved successfully!",
       "invalidColor": "Invalid color. Please try again.",
       "invalidName": "Invalid name. Use between 1 and 12 characters.",
-      "noAlienButton": "You don't have an alien yet. Use </alien:1536760221983051816> first."
+      "noAlienButton": "You don't have an alien yet. Use </alien:1537544781020799120> first."
     },
     "planet": {
       "alienRequired": "You need an alien to explore planets!",
-      "alienRequiredTip": "Use </alien:1536760221983051816> to choose your intergalactic companion.",
+      "alienRequiredTip": "Use </alien:1537544781020799120> to choose your intergalactic companion.",
       "dmDisabled": "This command only works inside servers.",
       "title": "Generated Planet",
       "subtitle": "We captured a planet in your orbit!",
@@ -184,7 +184,7 @@
       "footerLater": "Soon you will be able to name, explore and do much more with this planet!",
       "exploreLabel": "Explore",
       "nextLabel": "Next",
-      "exploreExpired": "This exploration opportunity expired! Generate a new planet with </planet:1536804847142314076>.",
+      "exploreExpired": "This exploration opportunity expired! Generate a new planet with </planet:1537544781020799123>.",
       "exploreBusy": "Your alien is already on a mission! Wait for it to finish.",
       "exploreStartedTitle": "Mission started!",
       "exploreStartedBody": "**{alien}** launched toward **{planet}**! Travel time: **{travel}**.",
@@ -199,7 +199,7 @@
       "missionReturningBody": "**{alien}** is returning with resources from **{planet}**",
       "missionArrivedTitle": "Mission complete!",
       "missionArrivedBody": "**{alien}** returned from **{planet}** and deposited the resources in your inventory!",
-      "missionArrivedTip": "Use </inventory:1536804847142314075> to see everything you collected.",
+      "missionArrivedTip": "Use </inventory:1537544781020799122> to see everything you collected.",
       "notifyButton": "Notify me when it arrives",
       "notifyButtonActive": "Notification enabled",
       "notifyNoMission": "You don't have any mission in progress to notify you about.",
@@ -212,16 +212,16 @@
       "notifyDmWarning": "<:hmm:1536247599365890139> If you pick DMs, make sure your **direct messages are open** for this server — otherwise the bot won't be able to reach you.",
       "notifyEnabledChannel": "<:excited:1536247579061256252> Got it! I'll notify you **in this channel** as soon as the mission is done.",
       "notifyEnabledDm": "<:excited:1536247579061256252> Got it! I'll notify you in your **DMs** as soon as the mission is done. Remember to keep your direct messages open!",
-      "notifyAutoDm": "<:passionate:1536247742110634034> Auto-notify (**DM**) enabled — you set this up in `/config user`.",
-      "notifyAutoChannel": "<:passionate:1536247742110634034> Auto-notify (**this channel**) enabled — you set this up in `/config user`.",
-      "notifyOffHint": "<:hmm:1536247599365890139> Want to be notified automatically? Set it up in `/config user`."
+      "notifyAutoDm": "<:passionate:1536247742110634034> Auto-notify (**DM**) enabled — you set this up in </config user:1537544781020799125>.",
+      "notifyAutoChannel": "<:passionate:1536247742110634034> Auto-notify (**this channel**) enabled — you set this up in </config user:1537544781020799125>.",
+      "notifyOffHint": "<:hmm:1536247599365890139> Want to be notified automatically? Set it up in </config user:1537544781020799125>."
     },
     "inventory": {
       "title": "Galactic Inventory",
       "subtitle": "All resources your aliens collected on expeditions.",
       "coinsLabel": "∩oins Balance",
       "resourcesTitle": "Your Resources",
-      "empty": "Your inventory is empty. Explore planets with </planet:1536804847142314076> and click **Explore**!"
+      "empty": "Your inventory is empty. Explore planets with </planet:1537544781020799123> and click **Explore**!"
     },
     "daily": {
       "claimedTitle": "Daily Reward!",
@@ -292,7 +292,7 @@
       "balanceLabel": "∩oins Balance",
       "alienCompanion": "Companion",
       "dailyStatusLabel": "Daily Status",
-      "dailyAvailable": "Available to claim! Use `/daily`",
+      "dailyAvailable": "Available to claim! Use </daily:1537544781020799118>",
       "dailyClaimed": "Already claimed today (resets in `{time}`)"
     },
     "profile": {
@@ -325,7 +325,7 @@
       },
       "categoryDesc": {
         "coins": "Who has piled up the most ∩oins so far",
-        "planets_seen": "Who has spotted the most planets with `/planet`",
+        "planets_seen": "Who has spotted the most planets with </planet:1537544781020799123>",
         "trips_completed": "Who has completed the most exploration missions",
         "distance_traveled_km": "Who has traveled the most kilometers across the galaxy",
         "total_resources_collected": "Who has collected the most resources on expeditions"

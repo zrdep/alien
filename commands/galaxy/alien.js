@@ -166,7 +166,7 @@ const HAT_TEXT = {
         noneEquipped: 'Nenhum chapéu equipado',
         placeholder: 'Equipar um chapéu...',
         noneOption: 'Nenhum (tirar chapéu)',
-        emptyInventory: 'Você ainda não achou nenhum chapéu. Explore planetas com `/planet` pra ter chance de encontrar um!',
+        emptyInventory: 'Você ainda não achou nenhum chapéu. Explore planetas com </planet:1537544781020799123> pra ter chance de encontrar um!',
     },
     'en-US': {
         title: 'Hats',
@@ -174,7 +174,7 @@ const HAT_TEXT = {
         noneEquipped: 'No hat equipped',
         placeholder: 'Equip a hat...',
         noneOption: 'None (remove hat)',
-        emptyInventory: "You haven't found any hats yet. Explore planets with `/planet` for a chance to find one!",
+        emptyInventory: "You haven't found any hats yet. Explore planets with </planet:1537544781020799123> for a chance to find one!",
     },
 };
 

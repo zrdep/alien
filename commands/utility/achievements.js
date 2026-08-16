@@ -319,12 +319,12 @@ const buildAchievementsView = (interaction, userId, categoryKey, page) => {
                   `${inviteAchievement.emoji} **${inviteAchievement.name['pt-BR']}** — ${inviteAchievement.description['pt-BR']}\n` +
                   `${E_GOLD_COINS} Recompensa: \`${formatNum(rewardCoins, lang)}\` ∩oins\n` +
                   (inviteLink ? `> [Clique aqui pra adicionar o ∩lien num servidor seu](${inviteLink})\n` : '') +
-                  `> Depois de adicionar, use \`/resgatar\` pra confirmar e receber a recompensa!`
+                  `> Depois de adicionar, use </redeem:1538333297430765702> pra confirmar e receber a recompensa!`
                 : `${E_EXCITED} **✨ Special achievement available!**\n` +
                   `${inviteAchievement.emoji} **${inviteAchievement.name['en-US']}** — ${inviteAchievement.description['en-US']}\n` +
                   `${E_GOLD_COINS} Reward: \`${formatNum(rewardCoins, lang)}\` ∩oins\n` +
                   (inviteLink ? `> [Click here to add ∩lien to a server of yours](${inviteLink})\n` : '') +
-                  `> Once added, use \`/redeem\` to confirm and get your reward!`;
+                  `> Once added, use </redeem:1538333297430765702> to confirm and get your reward!`;
 
             container
                 .addTextDisplayComponents(new TextDisplayBuilder().setContent(highlightText))
