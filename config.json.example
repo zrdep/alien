@@ -6,6 +6,8 @@
 	"ownerId": "YOUR_USER_ID",
 	"versao": "0.0.0",
 	"changelogEnabled": true,
+	"backupChannelId": "",
+	"backupIntervalHours": 6,
 	"changelogMessage": {
 		"pt-BR": "",
 		"en-US": ""

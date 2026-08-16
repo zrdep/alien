@@ -5,6 +5,7 @@ const logger = require('../utils/logger');
 const { resolveAllPendingMissions, cleanExpiredPlanetOffers, resolveAllPendingCrafts, hasBotInviteRecord, recordBotInvite, setGuildDefaultLanguageIfUnset } = require('../utils/db');
 const { captureNotifyFlaggedMissions, processNotifyFlaggedMissions } = require('../utils/missionNotifier');
 const { mapDiscordLocaleToLang } = require('../utils/i18n');
+const { scheduleBackups } = require('../utils/backup');
 const { detectInviter } = require('./guildCreate');
 const versao = require('../config.json').versao;
 
@@ -176,6 +177,8 @@ module.exports = {
         backfillGuildDefaultLanguage(client).catch((err) => {
             logger.warn(`Backfill de idioma padrão falhou: ${err.message}`);
         });
+
+        scheduleBackups(client);
 
         logger.success('Pronto para uso!');
         logger.br();

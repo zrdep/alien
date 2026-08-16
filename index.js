@@ -65,4 +65,20 @@ logger.br();
 logger.info('Conectando ao Discord...');
 client.login(token);
 
+// Gera um backup final antes de encerrar (ex.: redeploy na Square Cloud) —
+// cobre a janela entre o último backup periódico e o exato momento em que o
+// processo é derrubado.
+const { runBackup } = require('./utils/backup');
+const encerrarComBackup = async (signal) => {
+    logger.info(`Recebido ${signal} — gerando backup final do banco antes de encerrar...`);
+    try {
+        await runBackup(client);
+    } catch (err) {
+        logger.warn(`Backup final falhou: ${err.message}`);
+    }
+    process.exit(0);
+};
+process.on('SIGINT', () => encerrarComBackup('SIGINT'));
+process.on('SIGTERM', () => encerrarComBackup('SIGTERM'));
+
 require('./support_bot/index.js');

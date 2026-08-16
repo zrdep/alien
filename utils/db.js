@@ -2162,6 +2162,7 @@ const claimAllRedeemables = (userId) => {
 
 module.exports = {
     db,
+    db,
     getUser,
     getChangelogSeenVersion,
     setChangelogSeenVersion,
