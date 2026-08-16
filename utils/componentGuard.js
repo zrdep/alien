@@ -12,7 +12,26 @@ const getComponentOwnerId = (interaction) => {
     return interaction.message?.interaction?.user?.id ?? null;
 };
 
+// Botões de /presentear ficam visíveis pra DUAS pessoas (quem manda e quem
+// recebe), não só pra quem rodou o comando — por isso viram um caso especial
+// aqui: o ID de quem deve receber o presente vai embutido no customId
+// (gift_confirm_<targetId>_<giftId> / gift_cancel_<targetId>_<giftId>), e é
+// liberado tanto pra esse usuário quanto pro dono normal da mensagem.
+const GIFT_BUTTON_PATTERN = /^gift_(?:confirm|cancel)_(\d+)_.+$/;
+
 const isWrongComponentUser = (interaction) => {
+    const customId = interaction.customId;
+    if (typeof customId === 'string') {
+        const giftMatch = customId.match(GIFT_BUTTON_PATTERN);
+        if (giftMatch) {
+            const targetId = giftMatch[1];
+            const ownerId = getComponentOwnerId(interaction);
+            if (interaction.user.id === targetId) return false;
+            if (!ownerId) return false;
+            return ownerId !== interaction.user.id;
+        }
+    }
+
     const ownerId = getComponentOwnerId(interaction);
     if (!ownerId) return false;
     return ownerId !== interaction.user.id;
