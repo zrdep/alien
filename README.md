@@ -188,7 +188,7 @@ Leaderboard Top 10 com 5 categorias, trocáveis por um menu suspenso:
 | Distância Percorrida | <img src="./images/emojis/saturn.png" width="18" valign="middle"> |
 | Recursos Coletados | <img src="./images/emojis/registry.png" width="18" valign="middle"> |
 
-O painel mostra a **foto de perfil do 1º lugar** como destaque e a **posição pessoal de quem usou o comando**, mesmo fora do Top 10.
+O painel mostra um **pódio do 1º, 2º e 3º lugar** como destaque e a **posição pessoal de quem usou o comando**, mesmo fora do Top 10.
 
 ---
 
