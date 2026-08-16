@@ -61,7 +61,7 @@ const RARITIES = [
         planetDistanceMin: 650_000,
         planetDistanceMax: 1_500_000,
         resourceAmountMin: 2,
-        resourceAmountMax: 8,
+        resourceAmountMax: 5,
         missionCoinChances: { bronze: 45, silver: 38, gold: 17 },
     },
     {
@@ -72,8 +72,8 @@ const RARITIES = [
         planetWeight: 10,
         planetDistanceMin: 2_500_000,
         planetDistanceMax: 5_000_000,
-        resourceAmountMin: 2,
-        resourceAmountMax: 6,
+        resourceAmountMin: 1,
+        resourceAmountMax: 3,
         missionCoinChances: { bronze: 35, silver: 42, gold: 23 },
     },
     {
@@ -85,7 +85,7 @@ const RARITIES = [
         planetDistanceMin: 8_000_000,
         planetDistanceMax: 15_000_000,
         resourceAmountMin: 1,
-        resourceAmountMax: 4,
+        resourceAmountMax: 2,
         missionCoinChances: { bronze: 25, silver: 45, gold: 30 },
     },
 
