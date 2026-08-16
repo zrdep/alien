@@ -43,6 +43,7 @@ function getCategoryData(lang, categoryKey) {
                 : 'Commands to manage your ∩oins balance and trade globally:',
             commands: [
                 { name: '/daily', desc: isPt ? 'Resgate sua recompensa diária de ∩oins e recursos.' : 'Claim your daily reward of ∩oins and resources.' },
+                { name: isPt ? '/resgatar' : '/redeem', desc: isPt ? 'Resgate conquistas pendentes, presentes e recompensas.' : 'Redeem pending achievements, gifts, and rewards.' },
                 { name: isPt ? '/carteira' : '/wallet', desc: isPt ? 'Consulte sua carteira de ∩oins ou a de outro explorador.' : 'Check your ∩oins wallet or another explorer balance.' },
                 { name: isPt ? '/mercado' : '/market', desc: isPt ? 'Compre e venda recursos no Mercado Global ou na Loja do Sistema.' : 'Buy and sell resources on the Global Market or System Shop.' },
                 { name: isPt ? '/mercadochapeus' : '/hatmarket', desc: isPt ? 'Compre e venda chapéus exclusivos com outros jogadores.' : 'Buy and sell exclusive hats with other players.' },

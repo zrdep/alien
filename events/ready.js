@@ -2,8 +2,9 @@ const { Events, ActivityType } = require('discord.js');
 const figlet = require('figlet');
 const picocolors = require('picocolors');
 const logger = require('../utils/logger');
-const { resolveAllPendingMissions, cleanExpiredPlanetOffers, resolveAllPendingCrafts } = require('../utils/db');
+const { resolveAllPendingMissions, cleanExpiredPlanetOffers, resolveAllPendingCrafts, hasBotInviteRecord, recordBotInvite } = require('../utils/db');
 const { captureNotifyFlaggedMissions, processNotifyFlaggedMissions } = require('../utils/missionNotifier');
+const { detectInviter } = require('./guildCreate');
 const versao = require('../config.json').versao;
 
 const c = picocolors;
@@ -49,6 +50,34 @@ const atualizarStatus = (client) => {
         activities: [s],
         status: 'online',
     });
+};
+
+// =============================================================================
+// Backfill de bot_invites — cobre servidores em que o bot já estava ANTES da
+// feature de convite/achievement existir (então nunca passaram pelo
+// guildCreate). Roda uma vez ao ligar, em segundo plano (não bloqueia o
+// "Pronto para uso!"), com um pequeno intervalo entre servidores pra não
+// estourar rate limit de audit log.
+// =============================================================================
+const backfillBotInvites = async (client) => {
+    const pendentes = client.guilds.cache.filter((g) => !hasBotInviteRecord(g.id));
+    if (pendentes.size === 0) return;
+
+    let preenchidos = 0;
+    for (const guild of pendentes.values()) {
+        try {
+            const { inviterId, source } = await detectInviter(guild);
+            recordBotInvite(guild.id, inviterId, Date.now(), source);
+            preenchidos++;
+        } catch (err) {
+            logger.warn(`Backfill de convite falhou para "${guild.name}" (${guild.id}): ${err.message}`);
+        }
+        await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+
+    if (preenchidos > 0) {
+        logger.info(`Backfill de convites do bot concluído: ${preenchidos} servidor(es) registrado(s)`);
+    }
 };
 
 module.exports = {
@@ -118,6 +147,10 @@ module.exports = {
         atualizarStatus(client);
         setInterval(() => atualizarStatus(client), 30_000);
         logger.info('Sistema de status rotativo ativado (30s)');
+
+        backfillBotInvites(client).catch((err) => {
+            logger.warn(`Backfill de convites do bot falhou: ${err.message}`);
+        });
 
         logger.success('Pronto para uso!');
         logger.br();

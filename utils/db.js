@@ -152,6 +152,7 @@ const colunasMarketStats = [
     { name: 'shop_sold_count', default: 0 },
     { name: 'craft_completed_count', default: 0 },
     { name: 'coins_total_earned', default: 0 },
+    { name: 'bot_invited', default: 0 },
 ];
 for (const col of colunasMarketStats) {
     if (!colunas.some(c => c.name === col.name)) {
@@ -328,6 +329,47 @@ db.exec(`
         unlocked_at INTEGER NOT NULL,
         PRIMARY KEY (user_id, achievement_id)
     );
+`);
+
+// -- Registro de "quem adicionou o bot em qual servidor" -------------------
+// Preenchido pelo evento guildCreate (bot entrou agora) e por um backfill
+// no ready.js (servidores em que o bot já estava antes dessa feature
+// existir). Usado pra verificar a conquista `invite_bot_1` quando o
+// usuário roda /resgatar — ver claimBotInviteAchievement() mais abaixo.
+db.exec(`
+    CREATE TABLE IF NOT EXISTS bot_invites (
+        guild_id TEXT PRIMARY KEY,
+        inviter_id TEXT,
+        joined_at INTEGER NOT NULL,
+        source TEXT NOT NULL DEFAULT 'unknown'
+    );
+`);
+
+db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_bot_invites_inviter ON bot_invites(inviter_id);
+`);
+
+// -- Sistema genérico de "resgates" (/resgatar) -----------------------------
+// Fonte única pra qualquer recompensa que fica pendente até o usuário
+// reivindicar ativamente com /resgatar — hoje só usado indiretamente pela
+// conquista de convidar o bot, mas pensado pra também suportar presentes
+// futuros enviados manualmente pra um usuário ou pra todo mundo de uma vez
+// (ver createRedeemable / createRedeemableForAllUsers mais abaixo).
+db.exec(`
+    CREATE TABLE IF NOT EXISTS redeemables (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT NOT NULL,
+        title_pt TEXT NOT NULL,
+        title_en TEXT NOT NULL,
+        coins INTEGER NOT NULL DEFAULT 0,
+        resources_json TEXT NOT NULL DEFAULT '[]',
+        created_at INTEGER NOT NULL,
+        claimed_at INTEGER
+    );
+`);
+
+db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_redeemables_user_pending ON redeemables(user_id, claimed_at);
 `);
 
 // =============================================================================
@@ -615,6 +657,7 @@ const getUserProfileStats = (userId) => {
         distanceTraveledKm: user.distance_traveled_km ?? 0,
         tripsCompleted: user.trips_completed ?? 0,
         totalResourcesCollected: user.total_resources_collected ?? 0,
+        botInvited: user.bot_invited ?? 0,
     };
 };
 
@@ -1806,6 +1849,7 @@ const getAchievementCurrentStat = (userId, type) => {
         case 'distance_traveled_km':       return user.distance_traveled_km ?? 0;
         case 'daily_streak':               return user.daily_streak ?? 0;
         case 'craft_completed':            return user.craft_completed_count ?? 0;
+        case 'bot_invited':                return user.bot_invited ?? 0;
         default: return 0;
     }
 };
@@ -1822,7 +1866,7 @@ const checkAchievementsForUser = (userId) => {
         'shop_bought_count', 'shop_sold_count',
         'coins_total_earned', 'planets_seen', 'trips_completed',
         'resources_collected', 'distance_traveled_km', 'daily_streak',
-        'craft_completed',
+        'craft_completed', 'bot_invited',
     ]);
 
     for (const type of allTypes) {
@@ -1882,6 +1926,127 @@ const applyAchievementReward = (userId, achievement) => {
         logger.error(`Falha ao aplicar recompensa da conquista "${achievement.id}" para ${userId}: ${err.message}`);
         return null;
     }
+};
+
+// =============================================================================
+// CONVITE DO BOT (conquista "invite_bot_1" — ver gameConfig/achievements.js)
+// =============================================================================
+const BOT_INVITE_ACHIEVEMENT_ID = 'invite_bot_1';
+
+// Chamado pelo events/guildCreate.js (bot acabou de entrar num servidor) e
+// pelo backfill em events/ready.js (servidores em que o bot já estava).
+// `ON CONFLICT DO NOTHING` garante que só o primeiro registro pra cada
+// servidor conta — não sobrescreve um dado de audit log já capturado.
+const recordBotInvite = (guildId, inviterId, joinedAt = Date.now(), source = 'unknown') => {
+    try {
+        db.prepare(`
+            INSERT INTO bot_invites (guild_id, inviter_id, joined_at, source)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(guild_id) DO NOTHING
+        `).run(guildId, inviterId ?? null, joinedAt, source);
+    } catch (err) {
+        logger.error(`Falha ao registrar convite do bot para o servidor ${guildId}: ${err.message}`);
+    }
+};
+
+const hasBotInviteRecord = (guildId) => {
+    const row = db.prepare('SELECT 1 FROM bot_invites WHERE guild_id = ?').get(guildId);
+    return !!row;
+};
+
+const userHasInvitedBot = (userId) => {
+    const row = db.prepare('SELECT 1 FROM bot_invites WHERE inviter_id = ? LIMIT 1').get(userId);
+    return !!row;
+};
+
+// Chamado pelo /resgatar. Três resultados possíveis:
+//   'already_unlocked' -> usuário já tinha a conquista, nada a fazer
+//   'not_verified'      -> não encontramos nenhum servidor cujo convite
+//                           tenha sido atribuído a esse usuário ainda
+//   'unlocked'           -> acabou de desbloquear agora (reward já aplicado)
+const claimBotInviteAchievement = (userId) => {
+    getUser(userId); // garante que a linha existe antes do UPDATE abaixo
+
+    if (isAchievementUnlocked(userId, BOT_INVITE_ACHIEVEMENT_ID)) {
+        return { status: 'already_unlocked', unlockedAchievements: [] };
+    }
+
+    if (!userHasInvitedBot(userId)) {
+        return { status: 'not_verified', unlockedAchievements: [] };
+    }
+
+    db.prepare('UPDATE users SET bot_invited = 1 WHERE user_id = ?').run(userId);
+    const unlockedAchievements = checkAchievementsForUser(userId);
+    return { status: 'unlocked', unlockedAchievements };
+};
+
+// =============================================================================
+// RESGATES GENÉRICOS (/resgatar)
+// =============================================================================
+// Infraestrutura reaproveitável pra qualquer coisa que precise ficar
+// "esperando" o usuário reivindicar ativamente — hoje só a conquista de
+// convite usa esse fluxo, mas createRedeemable/createRedeemableForAllUsers
+// já deixam pronto pra presentes/eventos futuros mandados manualmente
+// (ex: um comando de admin que chama createRedeemableForAllUsers pra
+// distribuir algo pra todo mundo, sem precisar de UI nova em /resgatar).
+const createRedeemable = (userId, { titlePt, titleEn, coins = 0, resources = [] }) => {
+    db.prepare(`
+        INSERT INTO redeemables (user_id, title_pt, title_en, coins, resources_json, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    `).run(userId, titlePt, titleEn, Math.floor(coins), JSON.stringify(resources), Date.now());
+};
+
+const createRedeemableForAllUsers = ({ titlePt, titleEn, coins = 0, resources = [] }) => {
+    const users = db.prepare('SELECT user_id FROM users').all();
+    const tx = db.transaction(() => {
+        for (const { user_id } of users) {
+            createRedeemable(user_id, { titlePt, titleEn, coins, resources });
+        }
+    });
+    tx();
+    return users.length;
+};
+
+const getPendingRedeemables = (userId) => {
+    return db.prepare(`
+        SELECT id, title_pt AS titlePt, title_en AS titleEn, coins,
+               resources_json AS resourcesJson, created_at AS createdAt
+        FROM redeemables
+        WHERE user_id = ? AND claimed_at IS NULL
+        ORDER BY created_at ASC
+    `).all(userId).map((r) => ({ ...r, resources: JSON.parse(r.resourcesJson || '[]') }));
+};
+
+// Aplica TODOS os resgates pendentes do usuário de uma vez (coins +
+// recursos) e marca cada um como reivindicado. Retorna a lista do que foi
+// aplicado (antes de marcar), pra quem chamou poder montar a mensagem.
+const claimAllRedeemables = (userId) => {
+    const pending = getPendingRedeemables(userId);
+    if (pending.length === 0) return [];
+
+    const tx = db.transaction(() => {
+        const now = Date.now();
+        for (const item of pending) {
+            if (item.coins > 0) {
+                db.prepare('UPDATE users SET coins = coins + ? WHERE user_id = ?').run(item.coins, userId);
+                addCoinsEarned(userId, item.coins);
+            }
+            if (item.resources.length > 0) {
+                const stmt = db.prepare(`
+                    INSERT INTO user_inventory (user_id, resource_key, amount)
+                    VALUES (?, ?, ?)
+                    ON CONFLICT(user_id, resource_key) DO UPDATE SET amount = amount + excluded.amount
+                `);
+                for (const res of item.resources) {
+                    stmt.run(userId, res.key, res.amount);
+                }
+            }
+            db.prepare('UPDATE redeemables SET claimed_at = ? WHERE id = ?').run(now, item.id);
+        }
+    });
+
+    tx();
+    return pending;
 };
 
 module.exports = {
@@ -1970,4 +2135,13 @@ module.exports = {
     getAchievementCurrentStat,
     checkAchievementsForUser,
     applyAchievementReward,
+    BOT_INVITE_ACHIEVEMENT_ID,
+    recordBotInvite,
+    hasBotInviteRecord,
+    userHasInvitedBot,
+    claimBotInviteAchievement,
+    createRedeemable,
+    createRedeemableForAllUsers,
+    getPendingRedeemables,
+    claimAllRedeemables,
 };

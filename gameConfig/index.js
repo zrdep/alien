@@ -128,7 +128,7 @@ const validateGameConfig = ({ throwOnError = true } = {}) => {
         'shop_bought_count', 'shop_sold_count',
         'coins_total_earned', 'planets_seen', 'trips_completed',
         'resources_collected', 'distance_traveled_km', 'daily_streak',
-        'craft_completed',
+        'craft_completed', 'bot_invited',
     ]);
     const seenAchievementIds = new Set();
     for (const ach of achievements.ACHIEVEMENTS) {

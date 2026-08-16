@@ -20,6 +20,7 @@ const {
     getUserMarketStats,
     getUserAchievements,
     getEquippedHat,
+    BOT_INVITE_ACHIEVEMENT_ID,
 } = require('../../utils/db');
 const {
     listAchievementsSorted,
@@ -28,6 +29,7 @@ const {
     RARITY_ORDER,
     getHat,
     RESOURCES,
+    getAchievement,
 } = require('../../gameConfig');
 const { composeAlienWithHat } = require('../../utils/hatImage');
 
@@ -171,6 +173,7 @@ const getAchievementCurrent = (userId, type) => {
         case 'distance_traveled_km':       return profile.distanceTraveledKm;
         case 'daily_streak':               return 0;
         case 'craft_completed':            return stats.craftCompletedCount;
+        case 'bot_invited':                return profile.botInvited;
         default: return 0;
     }
 };
@@ -203,7 +206,8 @@ const buildAchievementBlock = (achievement, unlocked, current, lang) => {
 
     const rewardLines = [];
     if (achievement.reward?.coins > 0) {
-        rewardLines.push(`${E_GOLD_COINS} **Recompensa coins**: \`${formatNum(achievement.reward.coins, lang)}\` ∩oins`);
+        const coinsLabel = lang === 'pt-BR' ? 'Recompensa coins' : 'Coins reward';
+        rewardLines.push(`${E_GOLD_COINS} **${coinsLabel}**: \`${formatNum(achievement.reward.coins, lang)}\` ∩oins`);
     }
     if (achievement.reward?.resources?.length) {
         const parts = achievement.reward.resources.map((r) => {
@@ -213,7 +217,8 @@ const buildAchievementBlock = (achievement, unlocked, current, lang) => {
                 : r.key;
             return `\`${formatNum(r.amount, lang)}\`x ${label}`;
         });
-        rewardLines.push(`${E_DIAMOND} **Recompensa recursos**: ${parts.join(' + ')}`);
+        const resourcesLabel = lang === 'pt-BR' ? 'Recompensa recursos' : 'Resources reward';
+        rewardLines.push(`${E_DIAMOND} **${resourcesLabel}**: ${parts.join(' + ')}`);
     }
 
     return `${statusIcon} ${rarityEmoji} ${achievement.emoji} **${name}** *(Raridade ${achievement.rarity} — ${rarityName})*\n` +
@@ -287,6 +292,45 @@ const buildAchievementsView = (interaction, userId, categoryKey, page) => {
     const container = new ContainerBuilder()
         .addTextDisplayComponents(header)
         .addSeparatorComponents(new SeparatorBuilder());
+
+    // =====================================================================
+    // DESTAQUE: conquista de convidar o bot, se ainda não feita ------------
+    // Só aparece quando o próprio usuário roda /conquistas pra si mesmo
+    // (não faz sentido mandar OUTRA pessoa rodar /resgatar). Fica logo
+    // depois do header, antes de qualquer filtro/página, de propósito —
+    // pra ser a primeira coisa visível.
+    // =====================================================================
+    if (userId === interaction.user.id && !unlockedSet.has(BOT_INVITE_ACHIEVEMENT_ID)) {
+        const inviteAchievement = getAchievement(BOT_INVITE_ACHIEVEMENT_ID);
+        if (inviteAchievement) {
+            let clientId = null;
+            try {
+                clientId = require('../../config.json').clientId;
+            } catch {
+                clientId = null;
+            }
+            const inviteLink = clientId
+                ? `https://discord.com/oauth2/authorize?client_id=${clientId}&scope=bot%20applications.commands&permissions=0`
+                : null;
+
+            const rewardCoins = inviteAchievement.reward?.coins ?? 0;
+            const highlightText = isPt
+                ? `${E_EXCITED} **✨ Conquista especial disponível!**\n` +
+                  `${inviteAchievement.emoji} **${inviteAchievement.name['pt-BR']}** — ${inviteAchievement.description['pt-BR']}\n` +
+                  `${E_GOLD_COINS} Recompensa: \`${formatNum(rewardCoins, lang)}\` ∩oins\n` +
+                  (inviteLink ? `> [Clique aqui pra adicionar o ∩lien num servidor seu](${inviteLink})\n` : '') +
+                  `> Depois de adicionar, use \`/resgatar\` pra confirmar e receber a recompensa!`
+                : `${E_EXCITED} **✨ Special achievement available!**\n` +
+                  `${inviteAchievement.emoji} **${inviteAchievement.name['en-US']}** — ${inviteAchievement.description['en-US']}\n` +
+                  `${E_GOLD_COINS} Reward: \`${formatNum(rewardCoins, lang)}\` ∩oins\n` +
+                  (inviteLink ? `> [Click here to add ∩lien to a server of yours](${inviteLink})\n` : '') +
+                  `> Once added, use \`/redeem\` to confirm and get your reward!`;
+
+            container
+                .addTextDisplayComponents(new TextDisplayBuilder().setContent(highlightText))
+                .addSeparatorComponents(new SeparatorBuilder());
+        }
+    }
 
     // Thumbnail com alien + chapéu, se existir
     const files = [];

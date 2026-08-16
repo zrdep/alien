@@ -25,9 +25,33 @@
 //   - distance_traveled_km:       distância total percorrida (ida+volta)
 //   - daily_streak:               sequência atual de /daily consecutivos
 //   - craft_completed:            número de crafts concluídos
+//   - bot_invited:                usuário confirmou (via /resgatar) que
+//                                  adicionou o bot a um servidor
 // =============================================================================
 
 const ACHIEVEMENTS = [
+    // =========================================================================
+    // COMUNIDADE — CONVIDAR O BOT
+    // =========================================================================
+    // Desbloqueada via /resgatar, não automaticamente feito o check normal
+    // (checkAchievementsForUser continua funcionando igual, mas quem seta o
+    // campo `bot_invited = 1` é o utils/db.js#claimBotInviteAchievement,
+    // chamado pelo comando /resgatar depois de confirmar que o usuário
+    // aparece como quem adicionou o bot em algum servidor).
+    {
+        id: 'invite_bot_1',
+        emoji: '<:support:1536248470611173466>',
+        rarity: 'B',
+        type: 'bot_invited',
+        threshold: 1,
+        name: { 'pt-BR': 'Recrutador Interestelar', 'en-US': 'Interstellar Recruiter' },
+        description: {
+            'pt-BR': 'Adicione o ∩lien a um servidor seu e resgate com /resgatar',
+            'en-US': 'Add ∩lien to a server of yours and claim it with /redeem',
+        },
+        reward: { coins: 2000, resources: [] },
+    },
+
     // =========================================================================
     // MERCADO GLOBAL — VENDAS
     // =========================================================================
