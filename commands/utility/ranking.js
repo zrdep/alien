@@ -152,22 +152,31 @@ const buildRankingPayload = async (interaction, category = DEFAULT_CATEGORY) => 
     const bodyText = new TextDisplayBuilder().setContent(bodyContent);
 
     const files = [];
-    let bodySection;
+    let bodySection = null;
     if (podiumBuffer) {
         files.push({ attachment: podiumBuffer, name: PODIUM_ATTACHMENT_NAME });
         bodySection = new SectionBuilder()
             .addTextDisplayComponents(bodyText)
             .setThumbnailAccessory(new ThumbnailBuilder().setURL(`attachment://${PODIUM_ATTACHMENT_NAME}`));
-    } else {
-        bodySection = new SectionBuilder().addTextDisplayComponents(bodyText);
     }
+    // Sem pódio, `Section` não pode ser usado: no Components V2 do Discord
+    // o accessory (thumbnail/botão) é obrigatório em toda Section, e sem
+    // pódio não temos imagem pra usar como accessory. Nesse caso o texto
+    // vai direto no container, sem Section.
 
     const container = new ContainerBuilder()
         .addTextDisplayComponents(header)
         .addSeparatorComponents(new SeparatorBuilder())
         .addActionRowComponents(buildCategoryMenu(interaction, activeCategory))
-        .addSeparatorComponents(new SeparatorBuilder())
-        .addSectionComponents(bodySection)
+        .addSeparatorComponents(new SeparatorBuilder());
+
+    if (bodySection) {
+        container.addSectionComponents(bodySection);
+    } else {
+        container.addTextDisplayComponents(bodyText);
+    }
+
+    container
         .addSeparatorComponents(new SeparatorBuilder())
         .addTextDisplayComponents(footerText);
 

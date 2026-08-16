@@ -325,7 +325,7 @@
       },
       "categoryDesc": {
         "coins": "Quem acumulou mais ∩oins até agora",
-        "planets_seen": "Quem já avistou mais planetas com </planet:1537544781020799123>",
+        "planets_seen": "Quem já avistou mais planetas com /planeta",
         "trips_completed": "Quem já completou mais missões de exploração",
         "distance_traveled_km": "Quem já viajou mais quilômetros pela galáxia",
         "total_resources_collected": "Quem já coletou mais recursos em expedições"

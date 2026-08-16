@@ -325,7 +325,7 @@
       },
       "categoryDesc": {
         "coins": "Who has piled up the most ∩oins so far",
-        "planets_seen": "Who has spotted the most planets with </planet:1537544781020799123>",
+        "planets_seen": "Who has spotted the most planets with /planet",
         "trips_completed": "Who has completed the most exploration missions",
         "distance_traveled_km": "Who has traveled the most kilometers across the galaxy",
         "total_resources_collected": "Who has collected the most resources on expeditions"
