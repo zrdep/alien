@@ -1200,6 +1200,10 @@ const startCraftJob = (userId, recipe, now = Date.now()) => {
 
     const userShip = getUserShip(userId);
     if (typeof recipe.checkRequirement === 'function' && !recipe.checkRequirement(userShip)) {
+        const { isRecipeAlreadyOwned } = require('./craftRecipes');
+        if (isRecipeAlreadyOwned(recipe, userShip)) {
+            return { success: false, reason: 'already_owned' };
+        }
         return { success: false, reason: 'requirement_not_met' };
     }
 

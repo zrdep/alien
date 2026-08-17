@@ -359,19 +359,19 @@
       "successBody": "Your craft of **{item}** was completed and applied to your ship!",
       "recipes": {
         "propulsor_b": {
-          "title": "Propulsor B — 12,000 km/s",
+          "title": "Propulsor B — {speed}",
           "desc": "Increases travel speed to {speed}."
         },
         "propulsor_c": {
-          "title": "Propulsor C — 36,000 km/s",
+          "title": "Propulsor C — {speed}",
           "desc": "Advanced propulsor for {speed} travel."
         },
         "propulsor_d": {
-          "title": "Propulsor D — 60,000 km/s",
+          "title": "Propulsor D — {speed}",
           "desc": "Epic propulsor capable of crossing the galaxy at {speed}."
         },
         "propulsor_e": {
-          "title": "Propulsor E — 120,000 km/s",
+          "title": "Propulsor E — {speed}",
           "desc": "Legendary propulsor reaching top speed of {speed}."
         },
         "excavation_2": {

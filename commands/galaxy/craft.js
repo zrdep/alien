@@ -25,6 +25,7 @@ const {
     getRecipesByCategory,
     getRecipe,
     getRecipeDescParams,
+    isRecipeAlreadyOwned,
 } = require('../../utils/craftRecipes');
 const { getResourceMeta } = require('../../utils/planetResources');
 const { getResourceLabel } = require('../../utils/resourcesDisplay');
@@ -63,7 +64,7 @@ const buildRecipeMenu = (interaction, category, selectedRecipeId = null) => {
     const lang = getUserLanguage(interaction.user.id);
     const recipes = getRecipesByCategory(category);
     const options = recipes.map((r) => ({
-        label: tFor(interaction, r.titleKey),
+        label: tFor(interaction, r.titleKey, getRecipeDescParams(r, lang)),
         description: tFor(interaction, r.descKey, getRecipeDescParams(r, lang)).slice(0, 100),
         value: r.id,
         default: r.id === selectedRecipeId,
@@ -81,7 +82,7 @@ const buildActiveCraftPanel = (interaction, activeCraft) => {
     const userId = interaction.user.id;
     const lang = getUserLanguage(userId);
     const recipe = getRecipe(activeCraft.recipe_id);
-    const itemTitle = recipe ? tFor(interaction, recipe.titleKey) : activeCraft.recipe_id;
+    const itemTitle = recipe ? tFor(interaction, recipe.titleKey, getRecipeDescParams(recipe, lang)) : activeCraft.recipe_id;
     const eta = formatTimeRemaining(activeCraft.ends_at, lang);
 
     const text = `<:loading:1536247662372982794> **${tFor(interaction, 'commands.craft.inProgressTitle')}**
@@ -107,7 +108,11 @@ const buildCraftPanel = (interaction, category = CATEGORIES.PROPULSOR, selectedR
     const { craft: activeCraft, notice, unlockedAchievements } = resolveActiveCraft(userId);
 
     if (notice && !toastMessage) {
-        const itemTitle = tFor(interaction, notice.titleKey);
+        const noticeRecipe = notice.recipeId ? getRecipe(notice.recipeId) : null;
+        const noticeLang = getUserLanguage(userId);
+        const itemTitle = notice.titleKey
+            ? tFor(interaction, notice.titleKey, noticeRecipe ? getRecipeDescParams(noticeRecipe, noticeLang) : {})
+            : notice.recipeId;
         toastMessage = `<:excited:1536247579061256252> **${tFor(interaction, 'commands.craft.successTitle')}**\n${tFor(interaction, 'commands.craft.successBody', { item: itemTitle })}`;
     }
 
@@ -132,15 +137,17 @@ const buildCraftPanel = (interaction, category = CATEGORIES.PROPULSOR, selectedR
 <:sunglasses:1536248455519801386> ${tFor(interaction, 'commands.craft.subtitle')}
 `);
 
-    const recipeTitle = tFor(interaction, currentRecipe.titleKey);
-    const recipeDesc = tFor(interaction, currentRecipe.descKey, getRecipeDescParams(currentRecipe, lang));
+    const recipeDescParams = getRecipeDescParams(currentRecipe, lang);
+    const recipeTitle = tFor(interaction, currentRecipe.titleKey, recipeDescParams);
+    const recipeDesc = tFor(interaction, currentRecipe.descKey, recipeDescParams);
     const ingredientsTitle = tFor(interaction, 'commands.craft.ingredientsTitle');
     const timeFormatted = formatDuration(currentRecipe.craftSeconds ?? 60, lang);
 
     let allRequirementsMet = true;
     const meetsLevelReq = typeof currentRecipe.checkRequirement === 'function' ? currentRecipe.checkRequirement(userShip) : true;
+    const alreadyOwned = isRecipeAlreadyOwned(currentRecipe, userShip);
 
-    if (!meetsLevelReq) {
+    if (!meetsLevelReq || alreadyOwned) {
         allRequirementsMet = false;
     }
 
@@ -160,7 +167,9 @@ const buildCraftPanel = (interaction, category = CATEGORIES.PROPULSOR, selectedR
     }).join('\n');
 
     let statusWarning = '';
-    if (!meetsLevelReq) {
+    if (alreadyOwned) {
+        statusWarning = `\n\n<:online:1536247711169249391> *${tFor(interaction, 'commands.craft.alreadyMaxLevel')}*`;
+    } else if (!meetsLevelReq) {
         statusWarning = `\n\n<:hmm:1536247599365890139> *${tFor(interaction, 'commands.craft.requirementNotMet')}*`;
     }
 
@@ -273,7 +282,9 @@ module.exports = {
 
         if (!result.success) {
             let errorKey = 'commands.craft.insufficientResources';
-            if (result.reason === 'requirement_not_met') {
+            if (result.reason === 'already_owned') {
+                errorKey = 'commands.craft.alreadyMaxLevel';
+            } else if (result.reason === 'requirement_not_met') {
                 errorKey = 'commands.craft.requirementNotMet';
             } else if (result.reason === 'craft_in_progress') {
                 errorKey = 'commands.craft.busyError';

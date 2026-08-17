@@ -1,4 +1,10 @@
-const { getPropulsorTier, getExcavationTier, getScannerTier, formatSpeed } = require('./ship');
+const {
+    PROPULSOR_TIERS,
+    getPropulsorTier,
+    getExcavationTier,
+    getScannerTier,
+    formatSpeed,
+} = require('./ship');
 
 const CATEGORIES = {
     PROPULSOR: 'propulsor',
@@ -259,6 +265,26 @@ const getRecipeDescParams = (recipe, lang) => {
     }
 };
 
+// Diz se o jogador já possui essa melhoria (ou uma superior) — usado pra
+// distinguir "você já fabricou isso" de "você ainda não desbloqueou o
+// pré-requisito", já que checkRequirement() sozinho retorna `false` nos
+// dois casos.
+const isRecipeAlreadyOwned = (recipe, userShip) => {
+    switch (recipe.category) {
+        case CATEGORIES.PROPULSOR: {
+            const currentIndex = PROPULSOR_TIERS.findIndex((t) => t.code === userShip.propulsorTier);
+            const targetIndex = PROPULSOR_TIERS.findIndex((t) => t.code === recipe.targetTierOrLevel);
+            return currentIndex >= 0 && targetIndex >= 0 && currentIndex >= targetIndex;
+        }
+        case CATEGORIES.EXCAVATION:
+            return (userShip.excavationProbeLevel ?? 1) >= recipe.targetTierOrLevel;
+        case CATEGORIES.SCANNER:
+            return (userShip.starScannerLevel ?? 1) >= recipe.targetTierOrLevel;
+        default:
+            return false;
+    }
+};
+
 module.exports = {
     CATEGORIES,
     CRAFT_RECIPES,
@@ -266,4 +292,5 @@ module.exports = {
     getRecipe,
     getRecipesByCategory,
     getRecipeDescParams,
+    isRecipeAlreadyOwned,
 };

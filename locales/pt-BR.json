@@ -359,19 +359,19 @@
       "successBody": "Sua fabricação de **{item}** foi concluída e aplicada à sua nave!",
       "recipes": {
         "propulsor_b": {
-          "title": "Propulsor B — 12.000 km/s",
+          "title": "Propulsor B — {speed}",
           "desc": "Aumenta a velocidade de viagem para {speed}."
         },
         "propulsor_c": {
-          "title": "Propulsor C — 36.000 km/s",
+          "title": "Propulsor C — {speed}",
           "desc": "Propulsor avançado para viagens de {speed}."
         },
         "propulsor_d": {
-          "title": "Propulsor D — 60.000 km/s",
+          "title": "Propulsor D — {speed}",
           "desc": "Propulsor Épico capaz de cruzar a galáxia a {speed}."
         },
         "propulsor_e": {
-          "title": "Propulsor E — 120.000 km/s",
+          "title": "Propulsor E — {speed}",
           "desc": "Propulsor Lendário atinge velocidade máxima de {speed}."
         },
         "excavation_2": {
