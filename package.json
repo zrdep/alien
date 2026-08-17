@@ -15,11 +15,12 @@
   },
   "keywords": [],
   "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "better-sqlite3": "^13.0.3",
     "discord.js": "^14.27.0",
+    "express": "^5.2.1",
     "figlet": "^1.11.4",
-    "picocolors": "^1.1.1",
-    "@resvg/resvg-js": "^2.6.2"
+    "picocolors": "^1.1.1"
   },
   "devDependencies": {
     "@dicebear/core": "^10.4.0",

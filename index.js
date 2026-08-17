@@ -3,6 +3,8 @@ const path = require('node:path');
 const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
 const { token } = require('./config.json');
 const logger = require('./utils/logger');
+const express = require('express');
+const app = express();
 require('./utils/db');
 
 const { validateGameConfig } = require('./gameConfig');
@@ -60,6 +62,14 @@ for (const file of eventFiles) {
     }
     logger.info(`Evento carregado: ${event.name}${event.once ? ' (once)' : ''}`);
 }
+
+// Site simples (public/index.html)
+app.use(express.static(path.join(__dirname, 'public')));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    logger.success(`Site rodando na porta ${PORT}`);
+});
 
 logger.br();
 logger.info('Conectando ao Discord...');
