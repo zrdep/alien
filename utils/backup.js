@@ -25,7 +25,7 @@ if (!fs.existsSync(BACKUP_DIR)) {
     fs.mkdirSync(BACKUP_DIR, { recursive: true });
 }
 
-const MAX_BACKUPS_KEPT = 10; // rotação: mantém só os N mais recentes em disco
+const MAX_BACKUPS_KEPT = 3; // rotação: mantém só os N mais recentes em disco
 
 const timestamp = () => {
     const d = new Date();
