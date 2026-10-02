@@ -110,10 +110,10 @@ O tempo de viagem (ida e volta) é `distância do planeta ÷ velocidade do propu
 | Tier | Bônus |
 |---|---|
 | <img src="./images/emojis/comum.png" width="18" valign="middle"> **A** | +0% |
-| <img src="./images/emojis/incomum.png" width="18" valign="middle"> **B** | +5% |
-| <img src="./images/emojis/rare.png" width="18" valign="middle"> **C** | +10% |
-| <img src="./images/emojis/epic.png" width="18" valign="middle"> **D** | +18% |
-| <img src="./images/emojis/legendary.png" width="18" valign="middle"> **E** | +28% |
+| <img src="./images/emojis/incomum.png" width="18" valign="middle"> **B** | +10% |
+| <img src="./images/emojis/rare.png" width="18" valign="middle"> **C** | +15% |
+| <img src="./images/emojis/epic.png" width="18" valign="middle"> **D** | +25% |
+| <img src="./images/emojis/legendary.png" width="18" valign="middle"> **E** | +40% |
 
 Aplicado direto na quantidade de cada recurso sorteado no planeta (`utils/planetResources.js`). O bônus aparece explicitamente na tela do `/planet` e nas mensagens de missão, pra ficar claro que já está incluso.
 
@@ -166,11 +166,11 @@ As taxas de 5% funcionam como **sumidouro de moedas** — ajudam a evitar que a 
 
 ## <img src="./images/emojis/legendary.png" width="22" valign="middle"> Conquistas (`/achievements`)
 
-Mais de 25 conquistas rastreadas automaticamente, cobrindo 11 tipos de estatística:
+Mais de 25 conquistas rastreadas automaticamente, cobrindo 13 tipos de estatística (lista única em `gameConfig/achievements.js` → `ACHIEVEMENT_TYPES`):
 
 `planets_seen` - `trips_completed` - `distance_traveled_km` - `resources_collected` - `craft_completed` - `daily_streak` -
 `market_global_bought_count` - `market_global_bought_spent` - `market_global_sold_count` - `market_global_sold_revenue` -
-`shop_bought_count` - `shop_sold_count`
+`shop_bought_count` - `shop_sold_count` - `bot_invited`
 
 Toda ação relevante (`addMissionCompletionStats`, compra/venda, craft, daily) roda uma checagem e desbloqueia automaticamente — sem precisar de comando manual.
 

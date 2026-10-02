@@ -61,7 +61,6 @@ const buildHangarContent = (userId, usage, ship = DEFAULT_SHIP) => {
     const excavationLine = t(userId, 'commands.alien.upgrade.excavation.stat', {
         emoji: getRarityEmoji(excavation.rarityCode),
         rarity: excavationRarity,
-        depth: excavation.depth,
         bonus: excavation.bonus,
     });
 

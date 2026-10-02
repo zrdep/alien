@@ -184,7 +184,6 @@ const colunasMarketStats = [
     { name: 'shop_bought_count', default: 0 },
     { name: 'shop_sold_count', default: 0 },
     { name: 'craft_completed_count', default: 0 },
-    { name: 'coins_total_earned', default: 0 },
     { name: 'bot_invited', default: 0 },
 ];
 for (const col of colunasMarketStats) {
@@ -569,10 +568,9 @@ const addUserCoins = (userId, amount) => {
     const amt = Math.floor(amount);
     db.prepare(`
         UPDATE users
-        SET coins = coins + ?,
-            coins_total_earned = coins_total_earned + ?
+        SET coins = coins + ?
         WHERE user_id = ?
-    `).run(amt, amt, userId);
+    `).run(amt, userId);
 };
 
 const setUserCoins = (userId, amount) => {
@@ -625,10 +623,9 @@ const claimDaily = (userId, dateStr, coinsAmount) => {
         UPDATE users
         SET last_daily_date = ?,
             coins = coins + ?,
-            daily_streak = ?,
-            coins_total_earned = coins_total_earned + ?
+            daily_streak = ?
         WHERE user_id = ?
-    `).run(dateStr, coinsInt, newStreak, coinsInt, userId);
+    `).run(dateStr, coinsInt, newStreak, userId);
 
     const unlockedAchievements = checkAchievementsForUser(userId);
 
@@ -1934,7 +1931,6 @@ const getUserMarketStats = (userId) => {
         shopBoughtCount: user.shop_bought_count ?? 0,
         shopSoldCount: user.shop_sold_count ?? 0,
         craftCompletedCount: user.craft_completed_count ?? 0,
-        coinsTotalEarned: user.coins_total_earned ?? 0,
     };
 };
 
@@ -1989,15 +1985,6 @@ const incrementCraftCompleted = (userId, amount = 1) => {
     }
 };
 
-const addCoinsEarned = (userId, amount) => {
-    if (amount > 0) {
-        getUser(userId);
-        db.prepare(`
-            UPDATE users SET coins_total_earned = coins_total_earned + ? WHERE user_id = ?
-        `).run(Math.floor(amount), userId);
-    }
-};
-
 const getUserAchievements = (userId) => {
     const rows = db.prepare(`
         SELECT achievement_id AS achievementId, unlocked_at AS unlockedAt
@@ -2035,7 +2022,6 @@ const getAchievementCurrentStat = (userId, type) => {
         case 'market_global_bought_spent': return user.market_global_bought_spent ?? 0;
         case 'shop_bought_count':          return user.shop_bought_count ?? 0;
         case 'shop_sold_count':            return user.shop_sold_count ?? 0;
-        case 'coins_total_earned':         return user.coins_total_earned ?? 0;
         case 'planets_seen':               return user.planets_seen ?? 0;
         case 'trips_completed':            return user.trips_completed ?? 0;
         case 'resources_collected':        return user.total_resources_collected ?? 0;
@@ -2048,21 +2034,10 @@ const getAchievementCurrentStat = (userId, type) => {
 };
 
 const checkAchievementsForUser = (userId) => {
-    const { getAchievementsByType, getAchievement } = require('../gameConfig/achievements');
+    const { getAchievementsByType, ACHIEVEMENT_TYPES } = require('../gameConfig/achievements');
     const newlyUnlocked = [];
 
-    const typeSet = new Set();
-    for (const a of getAchievementsByType('__unused__')) typeSet.add(a.type); // no-op
-    const allTypes = new Set([
-        'market_global_sold_count', 'market_global_sold_revenue',
-        'market_global_bought_count', 'market_global_bought_spent',
-        'shop_bought_count', 'shop_sold_count',
-        'coins_total_earned', 'planets_seen', 'trips_completed',
-        'resources_collected', 'distance_traveled_km', 'daily_streak',
-        'craft_completed', 'bot_invited',
-    ]);
-
-    for (const type of allTypes) {
+    for (const type of ACHIEVEMENT_TYPES) {
         const achievements = getAchievementsByType(type);
         if (achievements.length === 0) continue;
         const current = getAchievementCurrentStat(userId, type);
@@ -2094,7 +2069,6 @@ const applyAchievementReward = (userId, achievement) => {
 
         if (rewardCoins > 0) {
             db.prepare('UPDATE users SET coins = coins + ? WHERE user_id = ?').run(rewardCoins, userId);
-            addCoinsEarned(userId, rewardCoins);
         }
 
         if (rewardResources.length > 0) {
@@ -2222,7 +2196,6 @@ const claimAllRedeemables = (userId) => {
         for (const item of pending) {
             if (item.coins > 0) {
                 db.prepare('UPDATE users SET coins = coins + ? WHERE user_id = ?').run(item.coins, userId);
-                addCoinsEarned(userId, item.coins);
             }
             if (item.resources.length > 0) {
                 const stmt = db.prepare(`
@@ -2243,7 +2216,6 @@ const claimAllRedeemables = (userId) => {
 };
 
 module.exports = {
-    db,
     db,
     getUser,
     getChangelogSeenVersion,
@@ -2332,7 +2304,6 @@ module.exports = {
     addShopBoughtStats,
     addShopSoldStats,
     incrementCraftCompleted,
-    addCoinsEarned,
     getUserAchievements,
     isAchievementUnlocked,
     getAchievementCurrentStat,

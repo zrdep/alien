@@ -58,15 +58,6 @@ const EMOJI_DND = '<:dnd:1536247547193204766>';
 const EMOJI_HMM = '<:hmm:1536247599365890139>';
 const EMOJI_LOADING = '<:loading:1536247662372982794>';
 
-const EASTER_EGG_LINES = [
-    'psst... você sabia que já explorei **infinitos planetas** antes de você chegar? Perdi a conta.',
-    'hm... me procurando? *ajusta os óculos imaginários*',
-    'meu segredo? eu só finjo não entender humanos.',
-    'olá! você sabia que sou feito de puro código e **muito café espacial**?',
-    'você quis saber sobre mim? que raro. geralmente sou eu quem fica curioso sobre humanos.',
-    'ei, não sou um alien qualquer. sou o **alien** do bot. tem diferença.',
-    '<:dnd:1536247547193204766> ATENÇÃO: perfil classificado. acesso autorizado. *bip boop*',
-];
 
 module.exports = {
     cooldown: 5,

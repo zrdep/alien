@@ -1,3 +1,10 @@
+> **Documento histórico.** Este é o rascunho original de ideias do jogo.
+> Vários números aqui (velocidades, distâncias, quantidades, chances) **não
+> batem com o jogo atual** — a fonte de verdade é a pasta `gameConfig/`
+> (ver `docs/como-adicionar-conteudo.md`). Ideias ainda não implementadas
+> que continuam válidas: **receitas de evolução do alien** e os **novos
+> crafts** (sonda nebulosa, drone coletor, habitação orbital etc.).
+
 ## Ideia
 
 Cada planeta tem uma raridade e pode dropar até 4 recursos no máximo.

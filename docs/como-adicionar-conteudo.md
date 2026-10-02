@@ -114,15 +114,23 @@ Copie uma receita parecida como modelo:
 ```js
 {
     id: 'propulsor_f',
-    category: 'propulsor',
-    unlocksTier: 'F',            // precisa existir em gameConfig/shipUpgrades.js
+    category: CATEGORIES.PROPULSOR,
+    titleKey: 'commands.craft.recipes.propulsor_f.title', // adicione em pt-BR e en-US
+    descKey: 'commands.craft.recipes.propulsor_f.desc',   // adicione em pt-BR e en-US
+    craftSeconds: 300,
     ingredients: [
         { key: 'darkMatter', amount: 5 },   // key precisa existir em gameConfig/resources.js
         { key: 'starEssence', amount: 10 },
     ],
-    coinsCost: 50000,
+    checkRequirement: (userShip) => userShip.propulsorTier === 'E',
+    applyReward: (db, userId) => {
+        db.prepare('UPDATE users SET ship_propulsor_tier = ? WHERE user_id = ?').run('F', userId);
+    },
+    targetTierOrLevel: 'F',      // precisa existir em gameConfig/shipUpgrades.js
 },
 ```
+
+Receitas consomem só recursos — não existe custo em ∩oins hoje.
 
 `npm run check-config` confere que todo `ingredients[].key` referenciado
 realmente existe em `gameConfig/resources.js` — pega typo na hora.
@@ -141,10 +149,10 @@ Adicione no final do array correspondente (`PROPULSOR_TIERS`,
 { code: 'F', rarityCode: 'F', speedKms: 250_000 },
 
 // Sonda de escavação
-{ level: 6, code: 'F', rarityCode: 'F', depth: 350, bonus: 40 },
+{ level: 6, code: 'F', rarityCode: 'F', bonus: 55 },
 
 // Scanner
-{ level: 6, code: 'F', rarityCode: 'F', range: 40 },
+{ level: 6, code: 'F', rarityCode: 'F', miningMinutes: 7 },
 ```
 
 `rarityCode` precisa apontar pra uma raridade que já existe em
@@ -161,7 +169,7 @@ como conseguir o upgrade.
 | Cor/emoji/distância/chance de raridade        | `gameConfig/rarities.js`             |
 | Nome/emoji/preço/elegibilidade de recurso     | `gameConfig/resources.js`            |
 | O que cai em cada raridade de planeta         | `gameConfig/planetDropTables.js`     |
-| Velocidade/profundidade/alcance da nave       | `gameConfig/shipUpgrades.js`         |
+| Velocidade/bônus/tempo de mineração da nave  | `gameConfig/shipUpgrades.js`         |
 | Receitas de craft e seus custos               | `utils/craftRecipes.js`              |
 | Nome traduzido de uma raridade (pt/en)        | `locales/pt-BR.json` / `en-US.json`  |
 

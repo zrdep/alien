@@ -254,7 +254,7 @@ const getRecipeDescParams = (recipe, lang) => {
         }
         case CATEGORIES.EXCAVATION: {
             const tier = getExcavationTier(recipe.targetTierOrLevel);
-            return { depth: tier.depth, bonus: tier.bonus };
+            return { bonus: tier.bonus };
         }
         case CATEGORIES.SCANNER: {
             const tier = getScannerTier(recipe.targetTierOrLevel);

@@ -4,7 +4,6 @@ const { getDailyEligibleResources } = require('../gameConfig/resources');
 const COIN_TYPES = {
     BRONZE: {
         type: 'bronze',
-        name: 'Bronze',
         emoji: '<:bronze_coins:1536941654295060580>',
         min: 50,
         max: 200,
@@ -12,7 +11,6 @@ const COIN_TYPES = {
     },
     SILVER: {
         type: 'silver',
-        name: 'Prata',
         emoji: '<:silver_coins:1536941657746837597>',
         min: 200,
         max: 500,
@@ -20,7 +18,6 @@ const COIN_TYPES = {
     },
     GOLD: {
         type: 'gold',
-        name: 'Ouro',
         emoji: '<:gold_coins:1536941656178298992>',
         min: 500,
         max: 1000,

@@ -3,7 +3,7 @@
 // =============================================================================
 // Cada tier de upgrade referencia uma raridade (gameConfig/rarities.js) para
 // herdar emoji/cor/label — você só define aqui o que é específico daquele
-// upgrade (velocidade, profundidade, alcance).
+// upgrade (velocidade, bônus de recursos, tempo de mineração).
 //
 // PARA ADICIONAR UM NOVO TIER (ex: propulsor F, depois do E):
 //   1. Garanta que a raridade correspondente existe em gameConfig/rarities.js.
@@ -24,11 +24,11 @@ const PROPULSOR_TIERS = [
 ];
 
 const EXCAVATION_TIERS = [
-    { level: 1, code: 'A', rarityCode: 'A', depth: 50, bonus: 0 },
-    { level: 2, code: 'B', rarityCode: 'B', depth: 80, bonus: 10 },
-    { level: 3, code: 'C', rarityCode: 'C', depth: 120, bonus: 15 },
-    { level: 4, code: 'D', rarityCode: 'D', depth: 180, bonus: 25 },
-    { level: 5, code: 'E', rarityCode: 'E', depth: 250, bonus: 40 },
+    { level: 1, code: 'A', rarityCode: 'A', bonus: 0 },
+    { level: 2, code: 'B', rarityCode: 'B', bonus: 10 },
+    { level: 3, code: 'C', rarityCode: 'C', bonus: 15 },
+    { level: 4, code: 'D', rarityCode: 'D', bonus: 25 },
+    { level: 5, code: 'E', rarityCode: 'E', bonus: 40 },
 ];
 
 // O Scanner Estelar não "vê mais longe" — ele mapeia o subsolo do planeta com

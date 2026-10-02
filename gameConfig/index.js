@@ -129,14 +129,7 @@ const validateGameConfig = ({ throwOnError = true } = {}) => {
     }
 
     // -- Conquistas referenciam raridades válidas e recursos da recompensa ---
-    const validAchievementTypes = new Set([
-        'market_global_sold_count', 'market_global_sold_revenue',
-        'market_global_bought_count', 'market_global_bought_spent',
-        'shop_bought_count', 'shop_sold_count',
-        'coins_total_earned', 'planets_seen', 'trips_completed',
-        'resources_collected', 'distance_traveled_km', 'daily_streak',
-        'craft_completed', 'bot_invited',
-    ]);
+    const validAchievementTypes = new Set(achievements.ACHIEVEMENT_TYPES);
     const seenAchievementIds = new Set();
     for (const ach of achievements.ACHIEVEMENTS) {
         if (seenAchievementIds.has(ach.id)) {

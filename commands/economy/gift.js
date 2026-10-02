@@ -341,8 +341,6 @@ module.exports = {
         // transferInventoryResource em utils/db.js): debita só se o remetente
         // ainda tiver saldo e soma com UPDATE relativo, então nenhum ganho que
         // aconteça ao mesmo tempo (ex: missão concluída) é sobrescrito.
-        // Presente não conta pra `coins_total_earned`, pra não dar pra farmar
-        // conquista se presenteando entre duas contas.
         if (entry.kind === 'coins') {
             if (!transferUserCoins(entry.senderId, entry.targetId, entry.amount)) {
                 await interaction.update(buildContainer(

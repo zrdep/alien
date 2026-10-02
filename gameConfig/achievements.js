@@ -18,7 +18,6 @@
 //   - market_global_bought_spent: total GASTO em ∩oins comprando no mercado global
 //   - shop_bought_count:          qtd total comprada na LOJA DO SISTEMA
 //   - shop_sold_count:            qtd total vendida PARA a loja do sistema
-//   - coins_total_earned:         total de ∩oins já ganhos (acumulado)
 //   - planets_seen:               número de planetas já descobertos (/planet)
 //   - trips_completed:            número de missões de exploração concluídas
 //   - resources_collected:        total de recursos coletados em exploração
@@ -345,6 +344,18 @@ const ACHIEVEMENT_BY_ID = new Map(ACHIEVEMENTS.map((a) => [a.id, a]));
 
 const getAchievement = (id) => ACHIEVEMENT_BY_ID.get(id) ?? null;
 
+// Tipos de estatística aceitos em `type` (ver a lista comentada no topo do
+// arquivo). Fonte única: usado pela validação (gameConfig/index.js) e pela
+// checagem de desbloqueio (utils/db.js#checkAchievementsForUser).
+const ACHIEVEMENT_TYPES = [
+    'market_global_sold_count', 'market_global_sold_revenue',
+    'market_global_bought_count', 'market_global_bought_spent',
+    'shop_bought_count', 'shop_sold_count',
+    'planets_seen', 'trips_completed',
+    'resources_collected', 'distance_traveled_km', 'daily_streak',
+    'craft_completed', 'bot_invited',
+];
+
 const getAchievementsByType = (type) => ACHIEVEMENTS.filter((a) => a.type === type);
 
 const listAchievementsSorted = () => {
@@ -359,6 +370,7 @@ const listAchievementsSorted = () => {
 
 module.exports = {
     ACHIEVEMENTS,
+    ACHIEVEMENT_TYPES,
     getAchievement,
     getAchievementsByType,
     listAchievementsSorted,

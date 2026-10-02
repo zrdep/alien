@@ -22,6 +22,7 @@ const {
 const { generateDailyCoins, generateDailyResources } = require('../../utils/coins');
 const { formatDuration } = require('../../utils/exploration');
 const { notifyAchievementsFollowUp } = require('../../utils/achievementNotifier');
+const { getResourceName } = require('../../gameConfig/resources');
 
 const GIFT_IMAGE_NAME = 'gift_coins.png';
 const GIFT_IMAGE_PATH = path.join(__dirname, '..', '..', 'images', 'moedas', GIFT_IMAGE_NAME);
@@ -44,19 +45,9 @@ module.exports = {
     },
 };
 
-// =============================================================================
-// Lógica de reivindicação em si, reaproveitável fora do comando /daily —
-// usada também pelo painel de daily do Support Bot (support_bot/events/
-// ready.js + interactionCreate.js), que roda no MESMO processo e pode
-// chamar isso direto, sem precisar "invocar" o comando do bot principal via
-// Discord (o que não seria possível entre bots diferentes de qualquer jeito).
-//
-// Retorna `{ payload, unlockedAchievements }` em vez de enviar a resposta
-// sozinha, porque quem chama pode precisar de `editReply` (comando, já
-// deferido) OU `reply`/`editReply` depois de um `deferReply` manual (botão
-// do painel) — cada chamador decide como entregar o `payload`.
-// =============================================================================
-const buildDailyResponse = (interaction, { ephemeral = false } = {}) => {
+// Monta a resposta do /daily (e resgata, se disponível). Retorna
+// `{ payload, unlockedAchievements }` pra quem chama decidir como enviar.
+const buildDailyResponse = (interaction) => {
     const userId = interaction.user.id;
     const lang = getUserLanguage(userId);
     const numLoc = lang === 'pt-BR' ? 'pt-BR' : 'en-US';
@@ -67,16 +58,13 @@ const buildDailyResponse = (interaction, { ephemeral = false } = {}) => {
         files.push({ attachment: GIFT_IMAGE_PATH, name: GIFT_IMAGE_NAME });
     }
 
-    const v2Flags = ephemeral
-        ? (MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral)
-        : MessageFlags.IsComponentsV2;
+    const v2Flags = MessageFlags.IsComponentsV2;
 
     const alien = getUserAlien(userId);
     if (!alien) {
         const payload = {
             content: `<:alien:1536247533502734376> **${tFor(interaction, 'commands.planet.alienRequired')}**\n${tFor(interaction, 'commands.planet.alienRequiredTip')}`,
         };
-        if (ephemeral) payload.flags = MessageFlags.Ephemeral;
         return { payload, unlockedAchievements: [] };
     }
 
@@ -128,7 +116,7 @@ const buildDailyResponse = (interaction, { ephemeral = false } = {}) => {
     const totalCoins = getUserCoins(userId);
 
     const resourcesText = dailyResources
-        .map(r => `${r.emoji} ${tFor(interaction, `commands.daily.resources.${r.key}`)} × ${r.amount}`)
+        .map(r => `${r.emoji} ${getResourceName(r.key, lang)} × ${r.amount}`)
         .join('\n');
 
     const streakBonusText = reward.streakBonus > 0
@@ -170,5 +158,3 @@ const buildDailyResponse = (interaction, { ephemeral = false } = {}) => {
         unlockedAchievements,
     };
 };
-
-module.exports.buildDailyResponse = buildDailyResponse;
