@@ -28,7 +28,6 @@ const {
     startExplorationMission,
     popMissionNotice,
     incrementPlanetsSeen,
-    addUserHat,
     getUserMissionNotifyPref,
 } = require('../../utils/db');
 const { gerarDadosPlaneta } = require('../../utils/planet');
@@ -78,15 +77,17 @@ const buildResourcesContent = (interaction, recursos, bonusPercent = 0) => {
     return `\n## <:excited:1536247579061256252> ${title}\n\n${body}${bonusLine}\n`;
 };
 
+// O chapéu só é entregue quando o alien VOLTA da missão (ver
+// resolveExplorationMission em utils/db.js) — aqui é só o aviso de que este
+// planeta esconde um, pra incentivar a exploração.
 const buildHatFoundContent = (interaction, hat) => {
     if (!hat) return '';
     const lang = getUserLanguage(interaction.user.id);
-    const emoji = getRarityEmoji(hat.rarity);
-    const hatName = getHatName(hat.key, lang);
-    const title = lang === 'en-US' ? 'Hat found!' : 'Chapéu encontrado!';
-    const line = lang === 'en-US'
-        ? `You found a **${hatName}** ${emoji} — check it out with </alien:1537544781020799120>!`
-        : `Você encontrou um(a) **${hatName}** ${emoji} — dá uma olhada com </alien:1537544781020799120>!`;
+    const title = tFor(interaction, 'commands.planet.hatOnPlanetTitle');
+    const line = tFor(interaction, 'commands.planet.hatOnPlanetBody', {
+        emoji: getRarityEmoji(hat.rarity),
+        hat: getHatName(hat.key, lang),
+    });
     return `\n## <:excited:1536247579061256252> ${title}\n\n${line}\n`;
 };
 
@@ -284,11 +285,10 @@ const generatePlanetPng = (seed) => {
 };
 
 const buildFuelEmptyMessage = (interaction, usage) => {
-    const lang = getUserLanguage(interaction.user.id);
-    const mins = usage.nextReset.minutesLeft;
-    return lang === 'en-US'
-        ? `<:sob:1536248436339376138> **Empty fuel tank!** You've completed all 10 space trips for this hour. Recharge and come back in **${mins} minutes** — until then, the ship stays in the hangar. <:ovni:1536247726889762847>`
-        : `<:sob:1536248436339376138> **Tanque de combustível vazio!** Você já fez todas as 10 explorações espaciais desta hora. Recarregue as energias e volte daqui **${mins} minutos** — até lá, a nave fica no hangar. <:ovni:1536247726889762847>`;
+    return `<:sob:1536248436339376138> ${tFor(interaction, 'commands.planet.fuelEmpty', {
+        limit: usage.limit,
+        minutes: usage.nextReset.minutesLeft,
+    })} <:ovni:1536247726889762847>`;
 };
 
 const buildV2TextPayload = (text, extraRows = []) => {
@@ -396,9 +396,6 @@ const generatePlanetReply = async (interaction, usage, arrivalNotice = null) => 
     dados.coins = planetCoins;
 
     const hatFound = rollHatDrop(dados.raridadeCode);
-    if (hatFound) {
-        addUserHat(interaction.user.id, hatFound.key, 1);
-    }
 
     savePlanetOffer(interaction.user.id, dados.seedDicebear, {
         nome: dados.nome,
@@ -406,6 +403,7 @@ const generatePlanetReply = async (interaction, usage, arrivalNotice = null) => 
         raridadeCode: dados.raridadeCode,
         recursos,
         coins: planetCoins,
+        hatKey: hatFound?.key ?? null,
     }, Date.now() + EXPLORE_OFFER_MS);
 
     let pngBuffer = null;
@@ -601,6 +599,7 @@ module.exports = {
             phaseStartedAt: now,
             phaseEndsAt: now + travelSeconds * 1000,
             coinsJson: JSON.stringify(coinsReward),
+            hatKey: offer.payload.hatKey ?? null,
         });
 
         deletePlanetOffer(userId, planetSeed);

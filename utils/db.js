@@ -7,6 +7,9 @@ const { getResourceInfo } = require('./market');
 const { MARKET_CONFIG, getMinListingPrice, getSellerProceeds } = require('../gameConfig/market');
 const { getHat, HAT_MARKET_CONFIG, getMinHatListingPrice, getHatShopPrice, getHatSellerProceeds } = require('../gameConfig/hats');
 const { getScannerMiningMs } = require('../gameConfig/shipUpgrades');
+const { EXPLORATION_CONFIG } = require('../gameConfig/exploration');
+
+const PLANET_VIEWS_PER_HOUR = EXPLORATION_CONFIG.planetViewsPerHour;
 
 const dataDir = path.join(__dirname, '..', 'data');
 if (!fs.existsSync(dataDir)) {
@@ -237,6 +240,17 @@ if (!temNotifyChannel) {
         ADD COLUMN notify_channel_id TEXT;
     `);
     logger.success('Coluna `notify_channel_id` adicionada à tabela `exploration_missions`');
+}
+
+// Chapéu escondido no planeta (sorteado na oferta do /planet). Só vai pro
+// inventário quando o alien volta da missão — ver resolveExplorationMission.
+const temMissionHat = colunasMission.some(c => c.name === 'hat_key');
+if (!temMissionHat) {
+    db.exec(`
+        ALTER TABLE exploration_missions
+        ADD COLUMN hat_key TEXT;
+    `);
+    logger.success('Coluna `hat_key` adicionada à tabela `exploration_missions`');
 }
 
 db.exec(`
@@ -764,9 +778,9 @@ const getPlanetUsageState = (userId, date = new Date()) => {
         return {
             cycleKey,
             uses: 0,
-            limit: 10,
+            limit: PLANET_VIEWS_PER_HOUR,
             canUse: true,
-            remaining: 10,
+            remaining: PLANET_VIEWS_PER_HOUR,
             nextReset: getPlanetNextResetInfo(date),
         };
     }
@@ -774,9 +788,9 @@ const getPlanetUsageState = (userId, date = new Date()) => {
     return {
         cycleKey: row.cycle_key,
         uses: row.uses,
-        limit: 10,
-        canUse: row.uses < 10,
-        remaining: Math.max(0, 10 - row.uses),
+        limit: PLANET_VIEWS_PER_HOUR,
+        canUse: row.uses < PLANET_VIEWS_PER_HOUR,
+        remaining: Math.max(0, PLANET_VIEWS_PER_HOUR - row.uses),
         nextReset: getPlanetNextResetInfo(date),
     };
 };
@@ -799,7 +813,7 @@ const consumePlanetUsage = (userId, date = new Date()) => {
         ...state,
         uses: nextUses,
         canUse: true,
-        remaining: Math.max(0, 10 - nextUses),
+        remaining: Math.max(0, PLANET_VIEWS_PER_HOUR - nextUses),
     };
 };
 
@@ -847,8 +861,8 @@ const startExplorationMission = (userId, data) => {
     db.prepare(`
         INSERT INTO exploration_missions (
             user_id, status, planet_name, planet_seed, planet_distance_km,
-            planet_rarity, resources_json, travel_seconds, phase_started_at, phase_ends_at, coins_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            planet_rarity, resources_json, travel_seconds, phase_started_at, phase_ends_at, coins_json, hat_key
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(user_id) DO UPDATE SET
             status = excluded.status,
             planet_name = excluded.planet_name,
@@ -859,7 +873,8 @@ const startExplorationMission = (userId, data) => {
             travel_seconds = excluded.travel_seconds,
             phase_started_at = excluded.phase_started_at,
             phase_ends_at = excluded.phase_ends_at,
-            coins_json = excluded.coins_json
+            coins_json = excluded.coins_json,
+            hat_key = excluded.hat_key
     `).run(
         userId,
         data.status,
@@ -872,6 +887,7 @@ const startExplorationMission = (userId, data) => {
         data.phaseStartedAt,
         data.phaseEndsAt,
         data.coinsJson ?? null,
+        data.hatKey ?? null,
     );
 };
 
@@ -929,6 +945,52 @@ const getUserInventory = (userId) => {
         key: row.resource_key,
         amount: row.amount,
     }));
+};
+
+// Transferências usadas pelo /gift. Tudo dentro de UMA transação e com
+// UPDATE relativo (coins = coins ± ?), pra nunca sobrescrever um saldo que
+// mudou entre a leitura e a escrita (ex: o destinatário recebeu ∩oins de uma
+// missão no meio do caminho). O débito só acontece se o remetente ainda tiver
+// saldo suficiente (`AND coins >= ?`). Retorna true/false.
+const transferUserCoins = (fromUserId, toUserId, amount) => {
+    const amt = Math.floor(Number(amount));
+    if (!Number.isFinite(amt) || amt <= 0 || fromUserId === toUserId) return false;
+    getUser(fromUserId);
+    getUser(toUserId);
+
+    const tx = db.transaction(() => {
+        const debit = db.prepare(`
+            UPDATE users SET coins = coins - ? WHERE user_id = ? AND coins >= ?
+        `).run(amt, fromUserId, amt);
+        if (debit.changes === 0) return false;
+
+        db.prepare('UPDATE users SET coins = coins + ? WHERE user_id = ?').run(amt, toUserId);
+        return true;
+    });
+
+    return tx();
+};
+
+const transferInventoryResource = (fromUserId, toUserId, resourceKey, amount) => {
+    const amt = Math.floor(Number(amount));
+    if (!Number.isFinite(amt) || amt <= 0 || fromUserId === toUserId) return false;
+
+    const tx = db.transaction(() => {
+        const debit = db.prepare(`
+            UPDATE user_inventory SET amount = amount - ?
+            WHERE user_id = ? AND resource_key = ? AND amount >= ?
+        `).run(amt, fromUserId, resourceKey, amt);
+        if (debit.changes === 0) return false;
+
+        db.prepare(`
+            INSERT INTO user_inventory (user_id, resource_key, amount)
+            VALUES (?, ?, ?)
+            ON CONFLICT(user_id, resource_key) DO UPDATE SET amount = amount + excluded.amount
+        `).run(toUserId, resourceKey, amt);
+        return true;
+    });
+
+    return tx();
 };
 
 const setInventoryResource = (userId, resourceKey, amount) => {
@@ -1059,6 +1121,10 @@ const resolveExplorationMission = (userId, now = Date.now()) => {
             if (coinsReward && coinsReward.amount) {
                 addUserCoins(userId, coinsReward.amount);
             }
+            const hatKey = mission.hat_key && getHat(mission.hat_key) ? mission.hat_key : null;
+            if (hatKey) {
+                addUserHat(userId, hatKey, 1);
+            }
             const totalRecsCount = resources.reduce((sum, item) => sum + (item.amount ?? 0), 0);
             const missionUnlocks = addMissionCompletionStats(userId, mission.planet_distance_km, totalRecsCount).unlockedAchievements;
 
@@ -1068,6 +1134,7 @@ const resolveExplorationMission = (userId, now = Date.now()) => {
                 planetName: mission.planet_name,
                 resources,
                 coins: coinsReward,
+                hatKey,
             };
             setMissionNotice(userId, notice);
             clearExplorationMission(userId);
@@ -1948,6 +2015,17 @@ const isAchievementUnlocked = (userId, achievementId) => {
     return !!row;
 };
 
+// A coluna `daily_streak` só é atualizada quando o jogador resgata o daily,
+// então ela continua mostrando a sequência antiga mesmo depois que ele
+// perdeu um dia. A sequência só está "viva" se o último resgate foi hoje
+// ou ontem (horário de Brasília); caso contrário, o valor real é 0.
+const getEffectiveDailyStreak = (user) => {
+    if (!user.last_daily_date) return 0;
+    const { today } = getDailyState(user.user_id);
+    const alive = user.last_daily_date === today || user.last_daily_date === getYesterdayDateStr(today);
+    return alive ? (user.daily_streak ?? 0) : 0;
+};
+
 const getAchievementCurrentStat = (userId, type) => {
     const user = getUser(userId);
     switch (type) {
@@ -1962,7 +2040,7 @@ const getAchievementCurrentStat = (userId, type) => {
         case 'trips_completed':            return user.trips_completed ?? 0;
         case 'resources_collected':        return user.total_resources_collected ?? 0;
         case 'distance_traveled_km':       return user.distance_traveled_km ?? 0;
-        case 'daily_streak':               return user.daily_streak ?? 0;
+        case 'daily_streak':               return getEffectiveDailyStreak(user);
         case 'craft_completed':            return user.craft_completed_count ?? 0;
         case 'bot_invited':                return user.bot_invited ?? 0;
         default: return 0;
@@ -2217,6 +2295,8 @@ module.exports = {
     getUserCoins,
     addUserCoins,
     setUserCoins,
+    transferUserCoins,
+    transferInventoryResource,
     getDailyState,
     claimDaily,
     resetDailyClaim,

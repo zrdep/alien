@@ -37,6 +37,7 @@ const {
 } = require('../../gameConfig/hats');
 const { getRarityEmoji } = require('../../gameConfig/rarities');
 const { notifyAchievementsFollowUp } = require('../../utils/achievementNotifier');
+const { formatPlace } = require('../../utils/statsFormatter');
 
 const IMAGE_NAME = 'bag_coins.png';
 const IMAGE_PATH = path.join(__dirname, '..', '..', 'images', 'moedas', IMAGE_NAME);
@@ -196,7 +197,7 @@ function renderBrowse(interaction, selectedKey) {
         body = `<:hmm:1536247599365890139> *${t.noListings}*`;
     } else {
         body = listings.map((l, i) => {
-            const rank = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '🔹';
+            const rank = formatPlace(i);
             const seller = l.sellerName || `Usuario#${l.sellerId.substring(0, 4)}`;
             return `${rank} **ID #${l.id}** • ${lang === 'pt-BR' ? 'Vendedor' : 'Seller'}: **${seller}**\n` +
                 `└ **\`${l.price.toLocaleString(lang)}\`** ∩oins`;
@@ -341,7 +342,7 @@ function renderMyListings(interaction) {
         body = listings.map((l) => {
             const hat = getHat(l.hatKey);
             const rarityEmoji = hat ? getRarityEmoji(hat.rarity) : '';
-            return `🔹 **ID #${l.id}** • ${rarityEmoji} ${getHatName(l.hatKey, lang)}\n` +
+            return `<:registry:1536459835921530890> **ID #${l.id}** • ${rarityEmoji} ${getHatName(l.hatKey, lang)}\n` +
                 `└ **\`${l.price.toLocaleString(lang)}\`** ∩oins`;
         }).join('\n\n');
 

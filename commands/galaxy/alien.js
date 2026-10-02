@@ -212,7 +212,7 @@ const buildHatEquipMenu = (interaction) => {
         {
             label: t.noneOption,
             value: HAT_NONE_VALUE,
-            emoji: { name: '❌' },
+            emoji: { id: '1536247547193204766', name: 'dnd' },
             default: !equippedKey,
         },
         ...owned.slice(0, 24).map((o) => {

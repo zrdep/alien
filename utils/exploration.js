@@ -3,6 +3,8 @@ const { getUserLanguage, getUserAlien, getUserShip } = require('./db');
 const { getPropulsorTier, getExcavationBonusPercent } = require('./ship');
 const { getScannerMiningMs } = require('../gameConfig/shipUpgrades');
 const { formatResourcesInline } = require('./resourcesDisplay');
+const { getHat, getHatName } = require('../gameConfig/hats');
+const { getRarityEmoji } = require('../gameConfig/rarities');
 
 const EXPLORE_OFFER_MS = 3 * 60 * 1000;
 // Duração de mineração padrão (tier 1 do Scanner Estelar) — usada só como
@@ -88,6 +90,17 @@ const buildProbeBonusText = (userId) => {
     return `\n<:rock:1536579687407681596> ${t(userId, 'commands.planet.probeBonusLabel', { percent: bonusPercent })}`;
 };
 
+// Linha do chapéu escondido no planeta (missão em andamento) ou já entregue
+// (aviso de chegada). Vazio quando não há chapéu.
+const buildHatText = (userId, hatKey) => {
+    const hat = hatKey ? getHat(hatKey) : null;
+    if (!hat) return '';
+    return `\n${t(userId, 'commands.planet.hatLine', {
+        emoji: getRarityEmoji(hat.rarity),
+        hat: getHatName(hat.key, getUserLanguage(userId)),
+    })}`;
+};
+
 const buildMissionStatusContent = (userId, mission) => {
     const lang = getUserLanguage(userId);
     const alienName = getAlienDisplayName(userId);
@@ -95,6 +108,7 @@ const buildMissionStatusContent = (userId, mission) => {
     const resourcesText = formatResourcesInline(lang, resources);
     const eta = formatTimeRemaining(mission.phase_ends_at, lang);
     const bonusText = buildProbeBonusText(userId);
+    const hatText = buildHatText(userId, mission.hat_key);
 
     const getMissionCoins = () => {
         if (mission.coins_json) {
@@ -119,7 +133,7 @@ const buildMissionStatusContent = (userId, mission) => {
         })}
 
 ${t(userId, 'commands.planet.missionCollectingFor')}
-${resourcesText}${bonusText}${coinsText}
+${resourcesText}${bonusText}${coinsText}${hatText}
 
 <:saturn:1536459943480270959> ${t(userId, 'commands.planet.missionEta', { time: eta })}`;
     }
@@ -136,7 +150,7 @@ ${resourcesText}${bonusText}${coinsText}
         })}
 
 ${t(userId, 'commands.planet.missionCollectingFor')}
-${resourcesText}${bonusText}${coinsDisplayText}
+${resourcesText}${bonusText}${coinsDisplayText}${hatText}
 
 <:loading:1536247662372982794> ${t(userId, 'commands.planet.missionCollectingEta', { time: eta })}`;
     }
@@ -152,7 +166,7 @@ ${resourcesText}${bonusText}${coinsDisplayText}
             planet: mission.planet_name,
         })}
 
-${resourcesText}${bonusText}${coinsText}
+${resourcesText}${bonusText}${coinsText}${hatText}
 
 <:saturn:1536459943480270959> ${t(userId, 'commands.planet.missionEta', { time: eta })}`;
     }
@@ -165,6 +179,7 @@ const buildArrivalNotice = (userId, notice) => {
     const resources = notice.resources ?? [];
     const resourcesText = formatResourcesInline(lang, resources);
     const bonusText = buildProbeBonusText(userId);
+    const hatText = buildHatText(userId, notice.hatKey);
 
     let coinsText = '';
     if (notice.coins && notice.coins.amount) {
@@ -179,7 +194,7 @@ ${t(userId, 'commands.planet.missionArrivedBody', {
         planet: notice.planetName,
     })}
 
-${resourcesText}${bonusText}${coinsText}
+${resourcesText}${bonusText}${coinsText}${hatText}
 
 <:registry:1536459835921530890> ${t(userId, 'commands.planet.missionArrivedTip')}`;
 };

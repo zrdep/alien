@@ -214,7 +214,11 @@
       "notifyEnabledDm": "<:excited:1536247579061256252> Got it! I'll notify you in your **DMs** as soon as the mission is done. Remember to keep your direct messages open!",
       "notifyAutoDm": "<:passionate:1536247742110634034> Auto-notify (**DM**) enabled — you set this up in </config user:1537544781020799125>.",
       "notifyAutoChannel": "<:passionate:1536247742110634034> Auto-notify (**this channel**) enabled — you set this up in </config user:1537544781020799125>.",
-      "notifyOffHint": "<:hmm:1536247599365890139> Want to be notified automatically? Set it up in </config user:1537544781020799125>."
+      "notifyOffHint": "<:hmm:1536247599365890139> Want to be notified automatically? Set it up in </config user:1537544781020799125>.",
+      "fuelEmpty": "**Empty fuel tank!** You've used all {limit} space explorations for this hour. Recharge and come back in **{minutes} minutes** — until then, the ship stays in the hangar.",
+      "hatOnPlanetTitle": "Hat detected!",
+      "hatOnPlanetBody": "The sensors picked up a **{hat}** {emoji} hidden on this planet. Click **Explore** and your alien will bring it back!",
+      "hatLine": "<:sunglasses:1536248455519801386> Hat: {emoji} **{hat}**"
     },
     "inventory": {
       "title": "Galactic Inventory",
@@ -405,6 +409,10 @@
           "desc": "Legendary scanner with the shortest possible mining time: {minutes} minutes."
         }
       }
+    },
+    "achievements": {
+      "previousPage": "◀ Previous",
+      "nextPage": "Next ▶"
     }
   }
 }

@@ -238,8 +238,11 @@ module.exports = {
             return;
         }
 
-        await interaction.editReply(buildCraftPanel(interaction, CATEGORIES.PROPULSOR));
-        await notifyAchievementsFollowUp(interaction, buildCraftPanel(interaction).__craftUnlockedAchievements);
+        // Monta o painel UMA vez: é essa chamada que resolve um craft já
+        // concluído e devolve as conquistas desbloqueadas por ele.
+        const panel = buildCraftPanel(interaction, CATEGORIES.PROPULSOR);
+        await interaction.editReply(panel);
+        await notifyAchievementsFollowUp(interaction, panel.__craftUnlockedAchievements);
     },
 
     async handleSelectMenu(interaction) {

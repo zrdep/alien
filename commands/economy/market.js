@@ -18,6 +18,7 @@ const {
 } = require('discord.js');
 
 const { tFor } = require('../../utils/i18n');
+const { formatPlace } = require('../../utils/statsFormatter');
 const {
     getUserAlien,
     getUserLanguage,
@@ -125,7 +126,7 @@ function renderGlobalMarketContainer(interaction, selectedResourceKey = 'stone',
             const globalIndex = offset + index;
             const priceUnitFormatted = l.pricePerUnit.toLocaleString(numLoc);
             const totalFormatted = (l.pricePerUnit * l.amount).toLocaleString(numLoc);
-            const rankEmoji = globalIndex === 0 ? '🥇' : globalIndex === 1 ? '🥈' : globalIndex === 2 ? '🥉' : '🔹';
+            const rankEmoji = formatPlace(globalIndex);
             const sellerDisplay = l.sellerName || `Usuario#${l.sellerId.substring(0, 4)}`;
             return (
                 `${rankEmoji} **ID #${l.id}** • ${tFor(interaction, 'commands.market.sellerLabel')}: **${sellerDisplay}**\n` +
@@ -331,12 +332,12 @@ function renderMyListingsContainer(interaction) {
                 const resName = res ? (isPt ? res.namePt : res.nameEn) : l.resourceKey;
                 const emoji = res?.emoji ?? '<:rock:1536579687407681596>';
                 return (
-                    `⏰ **ID #${l.id} [EXPIRADO - 7 DIAS]** • ${emoji} **${resName}**\n` +
+                    `<:dnd:1536247547193204766> **ID #${l.id} [EXPIRADO - 7 DIAS]** • ${emoji} **${resName}**\n` +
                     `└ **${l.amount.toLocaleString(numLoc)}x** (${isPt ? 'Sem compradores em 7 dias' : 'No buyers in 7 days'}) • **[Pronto para Resgate]**`
                 );
             }).join('\n\n');
 
-            textBlocks.push(`## ⏰ ${isPt ? 'Anúncios Expirados (Prontos para Resgate)' : 'Expired Listings (Ready to Claim)'}:\n${expiredText}`);
+            textBlocks.push(`## <:dnd:1536247547193204766> ${isPt ? 'Anúncios Expirados (Prontos para Resgate)' : 'Expired Listings (Ready to Claim)'}:\n${expiredText}`);
         }
 
         if (activeListings.length > 0) {
@@ -348,12 +349,12 @@ function renderMyListingsContainer(interaction) {
                 const timeLeft = formatTimeLeft(secondsLeft, isPt);
 
                 return (
-                    `🔹 **ID #${l.id}** • ${emoji} **${resName}**\n` +
-                    `└ **${l.amount.toLocaleString(numLoc)}x** por **\`${l.pricePerUnit.toLocaleString(numLoc)}\`** ∩oins/un • ⏳ Expira em: **${timeLeft}**`
+                    `<:registry:1536459835921530890> **ID #${l.id}** • ${emoji} **${resName}**\n` +
+                    `└ **${l.amount.toLocaleString(numLoc)}x** por **\`${l.pricePerUnit.toLocaleString(numLoc)}\`** ∩oins/un • <:loading:1536247662372982794> Expira em: **${timeLeft}**`
                 );
             }).join('\n\n');
 
-            textBlocks.push(`## 🔹 ${isPt ? 'Anúncios Ativos no Mercado' : 'Active Market Listings'}:\n${activeText}`);
+            textBlocks.push(`## <:registry:1536459835921530890> ${isPt ? 'Anúncios Ativos no Mercado' : 'Active Market Listings'}:\n${activeText}`);
         }
 
         contentText = textBlocks.join('\n\n---\n\n');

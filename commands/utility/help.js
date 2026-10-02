@@ -92,7 +92,7 @@ function renderHelpContainer(interaction, activeCategory = 'galaxy') {
     );
 
     const commandsText = catData.commands
-        .map((cmd) => `🔹 **${cmd.name}**\n└ ${cmd.desc}`)
+        .map((cmd) => `• **${cmd.name}**\n└ ${cmd.desc}`)
         .join('\n\n');
 
     const bodyText = new TextDisplayBuilder().setContent(

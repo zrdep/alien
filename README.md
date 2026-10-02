@@ -142,7 +142,7 @@ Em vez de "alcance" (que não tinha efeito nenhum na versão antiga), o Scanner 
 | <img src="./images/emojis/registry.png" width="16" valign="middle"> Bônus | +3 recursos aleatórios do universo |
 | <img src="./images/emojis/saturn.png" width="16" valign="middle"> Reset | Todo dia à meia-noite (horário de Brasília) |
 
-<img src="./images/emojis/dnd.png" width="16" valign="middle"> Só pode ser resgatado **dentro do servidor de suporte** — em qualquer outro servidor o bot recusa e explica o motivo.
+<img src="./images/emojis/online.png" width="16" valign="middle"> Pode ser resgatado em **qualquer servidor** (ou na DM, via instalação de usuário).
 
 ### <img src="./images/emojis/error.png" width="18" valign="middle"> `/market` — mercado global de recursos
 

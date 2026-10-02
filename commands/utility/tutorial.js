@@ -57,8 +57,8 @@ function getStepContent(lang, stepNum) {
             cmd: '/daily',
             icon: '<:excited:1536247579061256252>',
             desc: isPt
-                ? 'Resgate sua recompensa diária de ∩oins e recursos no canal dedicado do servidor oficial! Mantenha sua sequência de dias ativas para receber bônus crescentes a cada dia.'
-                : 'Claim your daily ∩oins and resource reward in the dedicated official server channel! Keep your streak active to earn higher bonuses every day.',
+                ? 'Resgate sua recompensa diária de ∩oins e recursos com </daily:1537544781020799118> — funciona em qualquer servidor! Mantenha sua sequência de dias ativa para receber bônus crescentes a cada dia.'
+                : 'Claim your daily ∩oins and resource reward with </daily:1537544781020799118> — it works in any server! Keep your streak active to earn higher bonuses every day.',
         },
         4: {
             title: isPt ? 'Passo 4: Melhore sua Nave (Crafting)' : 'Step 4: Upgrade your Ship (Crafting)',
@@ -161,7 +161,8 @@ function renderTutorialContainer(interaction, stepNum = 1) {
             .setDisabled(currentStep <= 1),
         new ButtonBuilder()
             .setCustomId(`tutorial_step_${currentStep + 1}`)
-            .setLabel(isLastStep ? (isPt ? 'Concluído ✔' : 'Done ✔') : (isPt ? 'Próximo ▶' : 'Next ▶'))
+            .setLabel(isLastStep ? (isPt ? 'Concluído' : 'Done') : (isPt ? 'Próximo ▶' : 'Next ▶'))
+            .setEmoji(isLastStep ? '<:online:1536247711169249391>' : '<:ovni:1536247726889762847>')
             .setStyle(ButtonStyle.Primary)
             .setDisabled(isLastStep),
         new ButtonBuilder()

@@ -46,7 +46,21 @@ function formatCount(num, lang = 'pt-BR') {
     return num.toLocaleString(numLoc);
 }
 
+// Emoji de posição usado em listas ranqueadas (/ranking, /market,
+// /hatmarket): top 3 usam os emojis de raridade (lendário → épico → raro)
+// como "pódio" e o resto mostra só o número da posição.
+const PODIUM_EMOJIS = [
+    '<:legendary:1536459814475927653>',
+    '<:epic:1536459798269395044>',
+    '<:rare:1536459780166647878>',
+];
+
+function formatPlace(index) {
+    return PODIUM_EMOJIS[index] ?? `\`#${index + 1}\``;
+}
+
 module.exports = {
     formatDistance,
     formatCount,
+    formatPlace,
 };

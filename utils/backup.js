@@ -61,7 +61,7 @@ const runBackup = async (client = null) => {
             try {
                 const channel = await client.channels.fetch(backupChannelId);
                 await channel.send({
-                    content: `🗄️ Backup automático do banco — ${new Date().toLocaleString('pt-BR')}`,
+                    content: `<:registry:1536459835921530890> Backup automático do banco — ${new Date().toLocaleString('pt-BR')}`,
                     files: [{ attachment: gzPath, name: path.basename(gzPath) }],
                 });
             } catch (err) {

@@ -12,7 +12,7 @@ const {
 
 const { tFor } = require('../../utils/i18n');
 const { getUserLanguage, getLeaderboard, getLeaderboardRank } = require('../../utils/db');
-const { formatDistance, formatCount } = require('../../utils/statsFormatter');
+const { formatDistance, formatCount, formatPlace } = require('../../utils/statsFormatter');
 const { composeRankingPodium } = require('../../utils/rankingPodiumImage');
 const logger = require('../../utils/logger');
 
@@ -51,7 +51,6 @@ const CATEGORY_META = {
 
 const CATEGORY_ORDER = ['coins', 'planets_seen', 'trips_completed', 'distance_traveled_km', 'total_resources_collected'];
 
-const MEDALS = ['🥇', '🥈', '🥉'];
 
 // Resolve nome de exibição pro user_id salvo no banco. Usa o cache do client
 // quando possível (instantâneo) e só bate na API do Discord pra quem ainda
@@ -109,7 +108,7 @@ const buildRankingPayload = async (interaction, category = DEFAULT_CATEGORY) => 
     const rows = getLeaderboard(activeCategory, 10);
 
     const header = new TextDisplayBuilder().setContent(
-        `# 🏆 ${tFor(interaction, 'commands.ranking.title')}\n` +
+        `# <:sunglasses:1536248455519801386> ${tFor(interaction, 'commands.ranking.title')}\n` +
         `${meta.headerEmoji} **${tFor(interaction, `commands.ranking.categories.${activeCategory}`)}** — ${tFor(interaction, `commands.ranking.categoryDesc.${activeCategory}`)}`
     );
 
@@ -122,7 +121,7 @@ const buildRankingPayload = async (interaction, category = DEFAULT_CATEGORY) => 
         const names = await Promise.all(rows.map((row) => resolveDisplayName(interaction.client, row.userId)));
 
         const lines = rows.map((row, index) => {
-            const place = index < 3 ? MEDALS[index] : `\`#${index + 1}\``;
+            const place = formatPlace(index);
             return `${place} **${names[index]}** — \`${meta.format(row.value, lang)}\``;
         });
 

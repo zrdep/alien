@@ -16,6 +16,7 @@ const shipUpgrades = require('./shipUpgrades');
 const market = require('./market');
 const hats = require('./hats');
 const achievements = require('./achievements');
+const exploration = require('./exploration');
 
 const validateGameConfig = ({ throwOnError = true } = {}) => {
     const errors = [];
@@ -107,6 +108,12 @@ const validateGameConfig = ({ throwOnError = true } = {}) => {
         if (fs.existsSync(hatsDir) && !fs.existsSync(path.join(hatsDir, hat.file))) {
             warnings.push(`gameConfig/hats.js: chapéu "${hat.key}" referencia o arquivo "${hat.file}", que não existe em images/hats/`);
         }
+    }
+
+    // -- Regras de exploração fazem sentido ----------------------------------
+    const { planetViewsPerHour } = exploration.EXPLORATION_CONFIG;
+    if (!Number.isInteger(planetViewsPerHour) || planetViewsPerHour < 1) {
+        errors.push(`gameConfig/exploration.js: planetViewsPerHour (${planetViewsPerHour}) deve ser um inteiro >= 1`);
     }
 
     // -- Regras do mercado fazem sentido -------------------------------------
@@ -213,5 +220,6 @@ module.exports = {
     ...market,
     ...hats,
     ...achievements,
+    ...exploration,
     validateGameConfig,
 };

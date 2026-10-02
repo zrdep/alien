@@ -39,6 +39,7 @@ const buildNoticeFromMission = (userId, mission) => {
         planetName: mission.planet_name,
         resources,
         coins,
+        hatKey: mission.hat_key ?? null,
     };
 };
 
@@ -132,7 +133,7 @@ const enableMissionNotification = (client, userId, channelId) => {
 const captureNotifyFlaggedMissions = () => {
     const { db } = require('./db');
     return db.prepare(`
-        SELECT user_id, notify_channel_id, resources_json, coins_json, planet_name
+        SELECT user_id, notify_channel_id, resources_json, coins_json, planet_name, hat_key
         FROM exploration_missions
         WHERE notify_channel_id IS NOT NULL
     `).all();

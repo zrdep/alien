@@ -16,10 +16,9 @@ const {
 const {
     getUserLanguage,
     getUserCoins,
-    setUserCoins,
     getUserInventory,
-    setInventoryResource,
-    addInventoryResources,
+    transferUserCoins,
+    transferInventoryResource,
 } = require('../../utils/db');
 const { RESOURCES } = require('../../gameConfig');
 
@@ -30,6 +29,9 @@ const E_GIFT = '<:gift_coins:1537511597013074030>';
 const E_GOLD = '<:gold_coins:1536941656178298992>';
 const E_SOB  = '<:sob:1536248436339376138>';
 const E_HMM  = '<:hmm:1536247599365890139>';
+const E_ONLINE = '<:online:1536247711169249391>';
+const E_DND    = '<:dnd:1536247547193204766>';
+const E_IDLE   = '<:idle:1536247613681176616>';
 
 const CONFIRM_TIMEOUT_MS = 3 * 60 * 1000; // 3 minutos
 
@@ -90,13 +92,13 @@ const buildConfirmButtons = (giftId, targetId, isPt, disabled = false) => {
         new ButtonBuilder()
             .setCustomId(`gift_confirm_${targetId}_${giftId}`)
             .setLabel(isPt ? 'Confirmar' : 'Confirm')
-            .setEmoji('✅')
+            .setEmoji(E_ONLINE)
             .setStyle(ButtonStyle.Success)
             .setDisabled(disabled),
         new ButtonBuilder()
             .setCustomId(`gift_cancel_${targetId}_${giftId}`)
             .setLabel(isPt ? 'Cancelar' : 'Cancel')
-            .setEmoji('✖️')
+            .setEmoji(E_DND)
             .setStyle(ButtonStyle.Danger)
             .setDisabled(disabled)
     );
@@ -113,7 +115,7 @@ const buildPendingBody = (entry) => {
         const label = confirmed
             ? (isPt ? 'confirmado' : 'confirmed')
             : (isPt ? 'aguardando' : 'waiting');
-        return `${confirmed ? '✅' : '⏳'} <@${userId}> — ${label}`;
+        return `${confirmed ? E_ONLINE : E_IDLE} <@${userId}> — ${label}`;
     };
 
     return (
@@ -335,9 +337,14 @@ module.exports = {
         // nos últimos minutos) antes de mover qualquer coisa de verdade.
         clearPending(giftId);
 
+        // A transferência em si é atômica (ver transferUserCoins /
+        // transferInventoryResource em utils/db.js): debita só se o remetente
+        // ainda tiver saldo e soma com UPDATE relativo, então nenhum ganho que
+        // aconteça ao mesmo tempo (ex: missão concluída) é sobrescrito.
+        // Presente não conta pra `coins_total_earned`, pra não dar pra farmar
+        // conquista se presenteando entre duas contas.
         if (entry.kind === 'coins') {
-            const senderCoins = getUserCoins(entry.senderId);
-            if (senderCoins < entry.amount) {
+            if (!transferUserCoins(entry.senderId, entry.targetId, entry.amount)) {
                 await interaction.update(buildContainer(
                     entry.lang,
                     `${E_SOB} *${isPt ? 'O remetente não tem mais ∩oins suficientes. Presente cancelado.' : 'The sender no longer has enough ∩oins. Gift cancelled.'}*`,
@@ -345,16 +352,8 @@ module.exports = {
                 ));
                 return true;
             }
-            // setUserCoins (não addUserCoins) dos dois lados: presente não
-            // deve contar pra `coins_total_earned` (stat de conquista), senão
-            // dava pra farmar a conquista se presenteando entre duas contas.
-            const receiverCoins = getUserCoins(entry.targetId);
-            setUserCoins(entry.senderId, senderCoins - entry.amount);
-            setUserCoins(entry.targetId, receiverCoins + entry.amount);
         } else {
-            const senderInventory = getUserInventory(entry.senderId);
-            const senderAmount = senderInventory.find((r) => r.key === entry.resourceKey)?.amount ?? 0;
-            if (senderAmount < entry.amount) {
+            if (!transferInventoryResource(entry.senderId, entry.targetId, entry.resourceKey, entry.amount)) {
                 await interaction.update(buildContainer(
                     entry.lang,
                     `${E_SOB} *${isPt ? 'O remetente não tem mais esse recurso suficiente. Presente cancelado.' : 'The sender no longer has enough of that resource. Gift cancelled.'}*`,
@@ -362,8 +361,6 @@ module.exports = {
                 ));
                 return true;
             }
-            setInventoryResource(entry.senderId, entry.resourceKey, senderAmount - entry.amount);
-            addInventoryResources(entry.targetId, [{ key: entry.resourceKey, amount: entry.amount }]);
         }
 
         const body =

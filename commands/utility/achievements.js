@@ -10,14 +10,15 @@ const {
     SeparatorBuilder,
     ActionRowBuilder,
     StringSelectMenuBuilder,
+    ButtonBuilder,
+    ButtonStyle,
 } = require('discord.js');
 
-const { tFor } = require('../../utils/i18n');
+const { t, tFor } = require('../../utils/i18n');
 const {
     getUserLanguage,
     getUserAlien,
-    getUserProfileStats,
-    getUserMarketStats,
+    getAchievementCurrentStat,
     getUserAchievements,
     getEquippedHat,
     BOT_INVITE_ACHIEVEMENT_ID,
@@ -25,7 +26,7 @@ const {
 const {
     listAchievementsSorted,
     getRarityEmoji,
-    getRarity,
+    getRarityLabelKey,
     RARITY_ORDER,
     getHat,
     RESOURCES,
@@ -70,14 +71,14 @@ const E_EARTH       = '<:earth:1536459925495087226>';
 const E_COSMIC_PEARL= '<:cosmic_pearl:1536579648073371658>';
 const E_PING        = '<:ping:1536248338108911626>';
 
-const E_UNLOCKED    = E_ONLINE;   // ✅  → online = "feito", "concluído"
-const E_LOCKED      = E_DND;      // 🔒 → dnd = "bloqueado", "não disponível"
-const E_DIAMOND     = E_COSMIC_PEARL; // 💎 → pérola cósmica = recompensa
-const E_PAGE        = E_BOOK2;    // 📄 → livro 2 = "página"
-const E_SHOP_BUY    = E_CONFIG;   // 🛒 → config = loja (já usado com esse sentido no profile)
-const E_SHOP_SELL   = E_REGISTRY; // 📋 → registry = vender p/ sistema
-const E_FILTER      = E_SETTINGS; // 🔧 → settings = filtro
-const E_LIST_TAB    = E_BOOK;     // 📖 → book = lista / categoria
+const E_UNLOCKED    = E_ONLINE;       // online = "feito", "concluído"
+const E_LOCKED      = E_DND;          // dnd = "bloqueado", "não disponível"
+const E_DIAMOND     = E_COSMIC_PEARL; // pérola cósmica = recompensa
+const E_PAGE        = E_BOOK2;        // livro 2 = "página"
+const E_SHOP_BUY    = E_CONFIG;       // config = loja (já usado com esse sentido no profile)
+const E_SHOP_SELL   = E_REGISTRY;     // registry = vender p/ sistema
+const E_FILTER      = E_SETTINGS;     // settings = filtro
+const E_LIST_TAB    = E_BOOK;         // book = lista / categoria
 
 const RESOURCE_BY_KEY = new Map(RESOURCES.map((r) => [r.key, r]));
 
@@ -144,39 +145,26 @@ const CATEGORIES = [
     ...RARITY_ORDER.map((r) => ({
         key: `rarity_${r}`,
         emoji: getRarityEmoji(r),
-        name: {
-            'pt-BR': `Raridade ${r} — ${getRarity(r).name?.['pt-BR'] ?? r}`,
-            'en-US': `Rarity ${r} — ${getRarity(r).name?.['en-US'] ?? r}`,
-        },
+        // Nome vem do i18n na hora de exibir (ver getCategoryName).
+        rarityCode: r,
         filter: (a) => a.rarity === r,
     })),
 ];
 
+// Label traduzido da raridade (ex: "Raro" / "Rare"), vindo de
+// locales/*.json — as raridades não têm nome próprio em gameConfig.
+const getRarityName = (lang, code) => t(lang, getRarityLabelKey(code));
+
+const getCategoryName = (category, lang) => {
+    if (category.rarityCode) {
+        return `${t(lang, 'commands.planet.rarityLabel')} ${category.rarityCode} — ${getRarityName(lang, category.rarityCode)}`;
+    }
+    return category.name[lang] ?? category.name['pt-BR'];
+};
+
 const ACHIEVEMENTS_PER_PAGE = 6;
 
 const CATEGORY_BY_KEY = new Map(CATEGORIES.map((c) => [c.key, c]));
-
-const getAchievementCurrent = (userId, type) => {
-    const stats = getUserMarketStats(userId);
-    const profile = getUserProfileStats(userId);
-    switch (type) {
-        case 'market_global_sold_count':   return stats.marketGlobalSoldCount;
-        case 'market_global_sold_revenue': return stats.marketGlobalSoldRevenue;
-        case 'market_global_bought_count': return stats.marketGlobalBoughtCount;
-        case 'market_global_bought_spent': return stats.marketGlobalBoughtSpent;
-        case 'shop_bought_count':          return stats.shopBoughtCount;
-        case 'shop_sold_count':            return stats.shopSoldCount;
-        case 'coins_total_earned':         return stats.coinsTotalEarned;
-        case 'planets_seen':               return profile.planetsSeen;
-        case 'trips_completed':            return profile.tripsCompleted;
-        case 'resources_collected':        return profile.totalResourcesCollected;
-        case 'distance_traveled_km':       return profile.distanceTraveledKm;
-        case 'daily_streak':               return 0;
-        case 'craft_completed':            return stats.craftCompletedCount;
-        case 'bot_invited':                return profile.botInvited;
-        default: return 0;
-    }
-};
 
 const formatNum = (n, lang) => (n ?? 0).toLocaleString(lang === 'pt-BR' ? 'pt-BR' : 'en-US');
 
@@ -190,8 +178,8 @@ const buildAchievementBlock = (achievement, unlocked, current, lang) => {
     const name = achievement.name?.[lang] ?? achievement.name?.['pt-BR'] ?? achievement.id;
     const description = achievement.description?.[lang] ?? achievement.description?.['pt-BR'] ?? '';
     const rarityEmoji = getRarityEmoji(achievement.rarity);
-    const rarity = getRarity(achievement.rarity);
-    const rarityName = rarity?.name?.[lang] ?? rarity?.name?.['pt-BR'] ?? achievement.rarity;
+    const rarityName = getRarityName(lang, achievement.rarity);
+    const rarityWord = t(lang, 'commands.planet.rarityLabel');
 
     const statusIcon = unlocked ? E_UNLOCKED : E_IDLE;
     const statusLabel = unlocked
@@ -221,19 +209,22 @@ const buildAchievementBlock = (achievement, unlocked, current, lang) => {
         rewardLines.push(`${E_DIAMOND} **${resourcesLabel}**: ${parts.join(' + ')}`);
     }
 
-    return `${statusIcon} ${rarityEmoji} ${achievement.emoji} **${name}** *(Raridade ${achievement.rarity} — ${rarityName})*\n` +
+    return `${statusIcon} ${rarityEmoji} ${achievement.emoji} **${name}** *(${rarityWord} ${achievement.rarity} — ${rarityName})*\n` +
         `> ${description}\n` +
         `> ${progressText}\n` +
         (rewardLines.length ? rewardLines.map((l) => `> ${l}`).join('\n') + '\n' : '');
 };
 
-const buildCategoryMenu = (interaction, activeKey, lang) => {
+// O dono das conquistas exibidas (que pode ser OUTRO usuário, via opção
+// `user`) vai embutido no customId dos componentes — sem isso, trocar filtro
+// ou página voltava a mostrar as conquistas de quem clicou.
+const buildCategoryMenu = (interaction, targetUserId, activeKey, lang) => {
     const t = {
         placeholder: lang === 'pt-BR' ? 'Filtrar conquistas por categoria...' : 'Filter achievements by category...',
     };
 
     const options = CATEGORIES.map((c) => ({
-        label: c.name[lang] ?? c.name['pt-BR'],
+        label: getCategoryName(c, lang),
         value: c.key,
         emoji: parseCustomEmoji(c.emoji),
         default: c.key === activeKey,
@@ -241,9 +232,29 @@ const buildCategoryMenu = (interaction, activeKey, lang) => {
 
     return new ActionRowBuilder().addComponents(
         new StringSelectMenuBuilder()
-            .setCustomId('achievements_category_pick')
+            .setCustomId(`achievements_category_pick:${targetUserId}`)
             .setPlaceholder(t.placeholder)
             .addOptions(options)
+    );
+};
+
+const buildPaginationRow = (interaction, targetUserId, categoryKey, page, totalPages) => {
+    return new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId(`achievements_page:${targetUserId}:${categoryKey}:${page - 1}`)
+            .setLabel(tFor(interaction, 'commands.achievements.previousPage'))
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(page <= 1),
+        new ButtonBuilder()
+            .setCustomId('achievements_page_info')
+            .setLabel(`${page}/${totalPages}`)
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(true),
+        new ButtonBuilder()
+            .setCustomId(`achievements_page:${targetUserId}:${categoryKey}:${page + 1}`)
+            .setLabel(tFor(interaction, 'commands.achievements.nextPage'))
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(page >= totalPages)
     );
 };
 
@@ -279,13 +290,13 @@ const buildAchievementsView = (interaction, userId, categoryKey, page) => {
     const header = new TextDisplayBuilder().setContent(
         `# ${E_SUNGLASSES} ${t.title}\n\n` +
         `${E_RAINBOW} **${t.progressHeader}**: \`${unlockedCount}/${all.length}\` (\`${overallPct}%\` ${isPt ? 'conquistado' : 'unlocked'})\n` +
-        `${E_FILTER} **${t.filterTitle}**: ${category.emoji} ${category.name[lang] ?? category.name['pt-BR']} ` +
+        `${E_FILTER} **${t.filterTitle}**: ${category.emoji} ${getCategoryName(category, lang)} ` +
         `— \`${filteredUnlocked}/${filtered.length}\` (\`${filteredPct}%\`)` +
         (filtered.length > 0 ? `\n${E_PAGE} **${t.pageLabel}** \`${safePage}\` ${t.of} \`${totalPages}\`` : '')
     );
 
     const blocks = pageItems.map((a) => {
-        const current = getAchievementCurrent(userId, a.type);
+        const current = getAchievementCurrentStat(userId, a.type);
         return buildAchievementBlock(a, unlockedSet.has(a.id), current, lang);
     });
 
@@ -315,12 +326,12 @@ const buildAchievementsView = (interaction, userId, categoryKey, page) => {
 
             const rewardCoins = inviteAchievement.reward?.coins ?? 0;
             const highlightText = isPt
-                ? `${E_EXCITED} **✨ Conquista especial disponível!**\n` +
+                ? `${E_EXCITED} **Conquista especial disponível!**\n` +
                   `${inviteAchievement.emoji} **${inviteAchievement.name['pt-BR']}** — ${inviteAchievement.description['pt-BR']}\n` +
                   `${E_GOLD_COINS} Recompensa: \`${formatNum(rewardCoins, lang)}\` ∩oins\n` +
                   (inviteLink ? `> [Clique aqui pra adicionar o ∩lien num servidor seu](${inviteLink})\n` : '') +
                   `> Depois de adicionar, use </redeem:1538333297430765702> pra confirmar e receber a recompensa!`
-                : `${E_EXCITED} **✨ Special achievement available!**\n` +
+                : `${E_EXCITED} **Special achievement available!**\n` +
                   `${inviteAchievement.emoji} **${inviteAchievement.name['en-US']}** — ${inviteAchievement.description['en-US']}\n` +
                   `${E_GOLD_COINS} Reward: \`${formatNum(rewardCoins, lang)}\` ∩oins\n` +
                   (inviteLink ? `> [Click here to add ∩lien to a server of yours](${inviteLink})\n` : '') +
@@ -380,18 +391,17 @@ const buildAchievementsView = (interaction, userId, categoryKey, page) => {
         }
     }
 
-    container.addActionRowComponents(buildCategoryMenu(interaction, categoryKey, lang));
+    container.addActionRowComponents(buildCategoryMenu(interaction, userId, category.key, lang));
+
+    if (totalPages > 1) {
+        container.addActionRowComponents(buildPaginationRow(interaction, userId, category.key, safePage, totalPages));
+    }
 
     return {
         flags: MessageFlags.IsComponentsV2,
         content: '',
         components: [container],
         files,
-        state: {
-            userId,
-            categoryKey,
-            page: safePage,
-        },
     };
 };
 
@@ -423,9 +433,20 @@ module.exports = {
     },
 
     async handleSelectMenu(interaction) {
-        if (interaction.customId !== 'achievements_category_pick') return false;
+        if (!interaction.customId.startsWith('achievements_category_pick')) return false;
+        // Mensagens antigas (antes do dono ir no customId) caem no próprio usuário.
+        const targetUserId = interaction.customId.split(':')[1] || interaction.user.id;
         const categoryKey = interaction.values[0];
-        const view = buildAchievementsView(interaction, interaction.user.id, categoryKey, 1);
+        const view = buildAchievementsView(interaction, targetUserId, categoryKey, 1);
+        await interaction.update(view);
+        return true;
+    },
+
+    async handleButton(interaction) {
+        if (!interaction.customId.startsWith('achievements_page:')) return false;
+        const [, targetUserId, categoryKey, pageStr] = interaction.customId.split(':');
+        const page = parseInt(pageStr, 10) || 1;
+        const view = buildAchievementsView(interaction, targetUserId, categoryKey, page);
         await interaction.update(view);
         return true;
     },
