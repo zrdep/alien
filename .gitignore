@@ -80,3 +80,4 @@ dist/
 build/
 *.tsbuildinfo
 images/planets
+graphify-out
