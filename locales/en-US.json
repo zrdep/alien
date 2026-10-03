@@ -571,7 +571,6 @@
       "balanceLabel": "Current balance",
       "achievementUnlocked": "Achievement unlocked!",
       "inviteNotVerified": "We couldn't find any server of yours with ∩lien added yet. Add the bot to a server you control and run </redeem:1538333297430765702> again!",
-      "inviteAlreadyUnlocked": "The invite-the-bot achievement is already unlocked — nothing pending there.",
       "giftsRedeemed": "Gifts redeemed!",
       "nothingToRedeem": "Nothing to redeem right now. Check back when there's something new!",
       "pendingNotice": "You have **{count}** gift(s) waiting! Claim them with </redeem:1538333297430765702>."

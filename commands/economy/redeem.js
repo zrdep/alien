@@ -80,11 +80,9 @@ module.exports = {
             blocks.push(
                 `${E_HMM} *${tFor(interaction, 'commands.redeem.inviteNotVerified')}*`
             );
-        } else if (inviteResult.status === 'already_unlocked') {
-            blocks.push(
-                `${E_SUPPORT} *${tFor(interaction, 'commands.redeem.inviteAlreadyUnlocked')}*`
-            );
         }
+        // 'already_unlocked': não mostra nada — quem já tem a conquista não
+        // precisa ser lembrado disso toda vez que resgata algo.
 
         // --- Bloco: presentes/recompensas genéricas --------------------------
         if (claimedRedeemables.length > 0) {
