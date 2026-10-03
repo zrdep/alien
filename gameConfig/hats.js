@@ -17,6 +17,8 @@
 //   Peso (não precisa somar 100) usado pra sortear QUAL chapéu aparece,
 //   depois que o "sorteio geral" (HAT_DROP_CONFIG) já decidiu que um
 //   chapéu VAI aparecer. Pesos maiores = mais comum DENTRO da raridade dele.
+//   O peso ainda é multiplicado por HAT_DROP_CONFIG.hatRarityWeightByPlanet,
+//   que favorece chapéus raros em planetas raros.
 //
 // SOBRE `marketBasePrice`:
 //   Preço de referência (∩oins) usado tanto pra calcular o preço MÍNIMO
@@ -152,6 +154,22 @@ const HAT_DROP_CONFIG = {
         D: 2.2,
         E: 3,
     },
+
+    // Multiplicador do `findChance` de cada chapéu conforme a raridade do
+    // CHAPÉU (coluna) e a do PLANETA (linha). Planeta raro esconde chapéu
+    // raro. Foi calibrado pra manter o total igual ao sorteio antigo (16,44
+    // chapéus a cada 100 planetas vistos) e a proporção geral por raridade
+    // quase igual — só muda ONDE cada um cai:
+    //   chance de lendário: planeta A 0,7% · C 4,8% · E 34,5% (antes 8% em todos)
+    // Detalhes em docs/balanceamento-economia.md.
+    hatRarityWeightByPlanet: {
+        //     chapéu:  A     B     C     D     E
+        A: { A: 1.6, B: 1.2, C: 0.6, D: 0.3, E: 0.1 },
+        B: { A: 1.3, B: 1.3, C: 0.9, D: 0.5, E: 0.25 },
+        C: { A: 1.0, B: 1.0, C: 1.2, D: 0.9, E: 0.6 },
+        D: { A: 0.6, B: 0.8, C: 1.2, D: 1.8, E: 1.8 },
+        E: { A: 0.3, B: 0.5, C: 1.0, D: 2.2, E: 4.0 },
+    },
 };
 
 // =============================================================================
@@ -197,11 +215,14 @@ const rollHatDrop = (planetRarityCode) => {
     if (Math.random() * 100 >= chance) return null;
     if (!HATS.length) return null;
 
-    const totalWeight = HATS.reduce((sum, h) => sum + h.findChance, 0);
+    const rarityWeights = HAT_DROP_CONFIG.hatRarityWeightByPlanet[planetRarityCode] ?? {};
+    const weightOf = (hat) => hat.findChance * (rarityWeights[hat.rarity] ?? 1);
+
+    const totalWeight = HATS.reduce((sum, h) => sum + weightOf(h), 0);
     let roll = Math.random() * totalWeight;
 
     for (const hat of HATS) {
-        roll -= hat.findChance;
+        roll -= weightOf(hat);
         if (roll <= 0) return hat;
     }
 

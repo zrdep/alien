@@ -196,29 +196,24 @@ ${tFor(interaction, 'commands.planet.rarityLabel')}: ${emojiRarity} ${rarityLabe
         ? new TextDisplayBuilder().setContent(buildHatFoundContent(interaction, hatFound))
         : null;
 
-    let section;
-    if (withThumbnail) {
-        try {
-            const thumbnail = new ThumbnailBuilder().setURL(`attachment://${ATTACHMENT_NAME}`);
-            section = new SectionBuilder()
-                .addTextDisplayComponents(detailsTxt)
-                .addTextDisplayComponents(registryTxt)
-                .setThumbnailAccessory(thumbnail);
-        } catch (_err) {
-            section = new SectionBuilder()
-                .addTextDisplayComponents(detailsTxt)
-                .addTextDisplayComponents(registryTxt);
-        }
-    } else {
-        section = new SectionBuilder()
-            .addTextDisplayComponents(detailsTxt)
-            .addTextDisplayComponents(registryTxt);
-    }
-
     const container = new ContainerBuilder()
         .addTextDisplayComponents(header)
-        .addSeparatorComponents(new SeparatorBuilder())
-        .addSectionComponents(section)
+        .addSeparatorComponents(new SeparatorBuilder());
+
+    // Section exige miniatura (o Discord recusa sem). Sem a imagem do
+    // planeta (pasta images/planets não gerada no servidor), vai só o texto.
+    if (withThumbnail) {
+        container.addSectionComponents(
+            new SectionBuilder()
+                .addTextDisplayComponents(detailsTxt)
+                .addTextDisplayComponents(registryTxt)
+                .setThumbnailAccessory(new ThumbnailBuilder().setURL(`attachment://${ATTACHMENT_NAME}`))
+        );
+    } else {
+        container.addTextDisplayComponents(detailsTxt).addTextDisplayComponents(registryTxt);
+    }
+
+    container
         .addSeparatorComponents(new SeparatorBuilder())
         .addTextDisplayComponents(resourcesTxt);
 
@@ -490,7 +485,7 @@ module.exports = {
         const alien = getUserAlien(interaction.user.id);
         if (!alien) {
             await interaction.editReply({
-                content: `<:alien:1536247533502734376> **${tFor(interaction, 'commands.planet.alienRequired')}**\n${tFor(interaction, 'commands.planet.alienRequiredTip')}`,
+                content: `<:ovni:1536247726889762847> **${tFor(interaction, 'commands.planet.alienRequired')}**\n${tFor(interaction, 'commands.planet.alienRequiredTip')}`,
             });
             return;
         }
@@ -661,7 +656,11 @@ module.exports = {
 
         // Preferência salva em /config user: aplica o aviso automaticamente
         // (DM ou canal atual) sem precisar clicar no botão toda missão.
-        const notifyPref = getUserMissionNotifyPref(userId);
+        // Se a preferência é "canal" mas o bot não está nesse servidor
+        // (instalação de usuário) ou é um grupo/DM, ele não consegue postar
+        // ali — então manda na DM.
+        const savedPref = getUserMissionNotifyPref(userId);
+        const notifyPref = savedPref === 'channel' && !interaction.guild ? 'dm' : savedPref;
         if (notifyPref === 'dm') {
             enableMissionNotification(interaction.client, userId, DM_TARGET);
         } else if (notifyPref === 'channel') {

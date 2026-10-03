@@ -35,7 +35,7 @@ const buildNoticeFromMission = (userId, mission) => {
     const alien = getUserAlien(userId);
 
     return {
-        alienName: alien?.name ?? 'Alienígena',
+        alienName: alien?.name ?? null,
         planetName: mission.planet_name,
         resources,
         coins,
@@ -47,23 +47,31 @@ const sendArrivalPingFromNotice = async (client, userId, channelId, notice) => {
     const isDm = channelId === DM_TARGET;
     const payload = buildArrivalNoticeV2Payload(userId, notice, { pingUser: !isDm });
 
-    if (isDm) {
+    const sendDm = async () => {
         try {
             const user = await client.users.fetch(userId);
-            await user.send(payload);
+            await user.send(isDm ? payload : buildArrivalNoticeV2Payload(userId, notice, { pingUser: false }));
         } catch (err) {
             logger.warn(`Não foi possível enviar a notificação de chegada por DM para ${userId} (DMs provavelmente fechadas): ${err.message}`);
         }
+    };
+
+    if (isDm) {
+        await sendDm();
         return;
     }
 
+    // Canal: se o bot não consegue postar ali (sem permissão, canal apagado,
+    // ou o ∩lien foi instalado só pelo usuário e não está no servidor),
+    // cai pra DM em vez de perder o aviso em silêncio.
     try {
         const channel = await client.channels.fetch(channelId);
-        if (!channel || !channel.isTextBased()) return;
+        if (!channel || !channel.isTextBased()) throw new Error('canal indisponível');
 
         await channel.send(payload);
     } catch (err) {
-        logger.warn(`Falha ao enviar notificação de chegada para ${userId}: ${err.message}`);
+        logger.warn(`Falha ao enviar notificação de chegada no canal para ${userId} (${err.message}) — tentando DM`);
+        await sendDm();
     }
 };
 

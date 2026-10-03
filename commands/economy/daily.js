@@ -63,7 +63,7 @@ const buildDailyResponse = (interaction) => {
     const alien = getUserAlien(userId);
     if (!alien) {
         const payload = {
-            content: `<:alien:1536247533502734376> **${tFor(interaction, 'commands.planet.alienRequired')}**\n${tFor(interaction, 'commands.planet.alienRequiredTip')}`,
+            content: `<:ovni:1536247726889762847> **${tFor(interaction, 'commands.planet.alienRequired')}**\n${tFor(interaction, 'commands.planet.alienRequiredTip')}`,
         };
         return { payload, unlockedAchievements: [] };
     }

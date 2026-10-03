@@ -40,6 +40,9 @@ const {
 const { MARKET_CONFIG, getMinListingPrice, getSellerProceeds } = require('../../gameConfig/market');
 const { notifyAchievementsFollowUp } = require('../../utils/achievementNotifier');
 
+// Mesmo valor de MARKET_LISTING_LIFETIME_MS em utils/db.js.
+const LISTING_LIFETIME_DAYS = 7;
+
 const MARKET_IMAGE_NAME = 'bag_coins.png';
 const MARKET_IMAGE_PATH = path.join(__dirname, '..', '..', 'images', 'moedas', MARKET_IMAGE_NAME);
 
@@ -112,7 +115,7 @@ function renderGlobalMarketContainer(interaction, selectedResourceKey = 'stone',
     const totalPages = Math.min(MAX_PAGES, Math.max(1, Math.ceil(total / ITEMS_PER_PAGE)));
 
     const headerTitle = tFor(interaction, 'commands.market.browseTitle', { resource: `${resourceInfo.emoji} ${resourceName}` }) +
-        ` • ${isPt ? 'Pág.' : 'Pg.'} ${currentPage}/${totalPages}`;
+        ` • ${tFor(interaction, 'commands.market.pageShort')} ${currentPage}/${totalPages}`;
     const header = createMarketHeader(interaction, headerTitle);
 
     let listingsText = '';
@@ -127,7 +130,7 @@ function renderGlobalMarketContainer(interaction, selectedResourceKey = 'stone',
             const priceUnitFormatted = l.pricePerUnit.toLocaleString(numLoc);
             const totalFormatted = (l.pricePerUnit * l.amount).toLocaleString(numLoc);
             const rankEmoji = formatPlace(globalIndex);
-            const sellerDisplay = l.sellerName || `Usuario#${l.sellerId.substring(0, 4)}`;
+            const sellerDisplay = l.sellerName || tFor(interaction, 'commands.market.unknownSeller', { id: l.sellerId.substring(0, 4) });
             return (
                 `${rankEmoji} **ID #${l.id}** • ${tFor(interaction, 'commands.market.sellerLabel')}: **${sellerDisplay}**\n` +
                 `└ **${l.amount.toLocaleString(numLoc)}x** ${resourceInfo.emoji} ${resourceName} — **\`${priceUnitFormatted}\`** ∩oins/un (${totalFormatted} ∩oins)`
@@ -135,10 +138,10 @@ function renderGlobalMarketContainer(interaction, selectedResourceKey = 'stone',
         }).join('\n\n');
 
         if (total > MAX_PAGES * ITEMS_PER_PAGE) {
-            listingsText += `\n\n<:config:1536247533502734376> *${isPt
-                ? `Mostrando as 3 primeiras páginas (${MAX_PAGES * ITEMS_PER_PAGE} de ${total} ofertas). Anuncie por um preço menor para figurar entre os mais baratos!`
-                : `Showing first 3 pages (${MAX_PAGES * ITEMS_PER_PAGE} of ${total} offers). List at a lower price to rank among the cheapest!`
-            }*`;
+            listingsText += `\n\n<:config:1536247533502734376> *${tFor(interaction, 'commands.market.showingFirstPages', {
+                shown: MAX_PAGES * ITEMS_PER_PAGE,
+                total,
+            })}*`;
         }
 
         const cheapest = listings[0];
@@ -152,7 +155,10 @@ function renderGlobalMarketContainer(interaction, selectedResourceKey = 'stone',
                         .setStyle(ButtonStyle.Success),
                     new ButtonBuilder()
                         .setCustomId(`market_buy_listing_${cheapest.id}_${cheapest.amount}`)
-                        .setLabel(`Tudo (${cheapest.amount}x • ${(cheapest.pricePerUnit * cheapest.amount).toLocaleString(numLoc)} ∩oins)`)
+                        .setLabel(tFor(interaction, 'commands.market.buyAllButton', {
+                            amount: cheapest.amount,
+                            total: (cheapest.pricePerUnit * cheapest.amount).toLocaleString(numLoc),
+                        }))
                         .setEmoji('<:gold_coins:1536941656178298992>')
                         .setStyle(ButtonStyle.Primary)
                 )
@@ -189,7 +195,7 @@ function renderGlobalMarketContainer(interaction, selectedResourceKey = 'stone',
     const paginationRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId(`market_page_global_${resourceInfo.key}_${currentPage - 1}`)
-            .setLabel(isPt ? '◀ Anterior' : '◀ Previous')
+            .setLabel(tFor(interaction, 'commands.market.previousPage'))
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(currentPage <= 1),
         new ButtonBuilder()
@@ -199,7 +205,7 @@ function renderGlobalMarketContainer(interaction, selectedResourceKey = 'stone',
             .setDisabled(true),
         new ButtonBuilder()
             .setCustomId(`market_page_global_${resourceInfo.key}_${currentPage + 1}`)
-            .setLabel(isPt ? 'Próximo ▶' : 'Next ▶')
+            .setLabel(tFor(interaction, 'commands.market.nextPage'))
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(currentPage >= totalPages || currentPage >= MAX_PAGES)
     );
@@ -239,7 +245,7 @@ function renderSystemShopContainer(interaction, selectedResourceKey = 'stone') {
 
     const bodyText = new TextDisplayBuilder().setContent(
         `${selectedDetails}\n\n` +
-        `## Lista de Preços da Loja Oficial:\n${shopListText}`
+        `## ${tFor(interaction, 'commands.market.shopPriceListTitle')}\n${shopListText}`
     );
 
     const hasImage = fs.existsSync(MARKET_IMAGE_PATH);
@@ -257,12 +263,12 @@ function renderSystemShopContainer(interaction, selectedResourceKey = 'stone') {
     const shopActionRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId(`market_buy_shop_${resourceInfo.key}_1`)
-            .setLabel(`Comprar 1x (${resourceInfo.systemShopPrice.toLocaleString(numLoc)} ∩oins)`)
+            .setLabel(tFor(interaction, 'commands.market.shopBuyButton', { amount: 1, total: resourceInfo.systemShopPrice.toLocaleString(numLoc) }))
             .setEmoji('<:gold_coins:1536941656178298992>')
             .setStyle(ButtonStyle.Success),
         new ButtonBuilder()
             .setCustomId(`market_buy_shop_${resourceInfo.key}_10`)
-            .setLabel(`Comprar 10x (${(resourceInfo.systemShopPrice * 10).toLocaleString(numLoc)} ∩oins)`)
+            .setLabel(tFor(interaction, 'commands.market.shopBuyButton', { amount: 10, total: (resourceInfo.systemShopPrice * 10).toLocaleString(numLoc) }))
             .setEmoji('<:gold_coins:1536941656178298992>')
             .setStyle(ButtonStyle.Primary)
     );
@@ -270,12 +276,12 @@ function renderSystemShopContainer(interaction, selectedResourceKey = 'stone') {
     const sellActionRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId(`market_sell_shop_${resourceInfo.key}_1`)
-            .setLabel(`Vender 1x (${resourceInfo.sellPrice.toLocaleString(numLoc)} ∩oins)`)
+            .setLabel(tFor(interaction, 'commands.market.shopSellButton', { amount: 1, total: resourceInfo.sellPrice.toLocaleString(numLoc) }))
             .setEmoji('<:registry:1536459835921530890>')
             .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
             .setCustomId(`market_sell_shop_${resourceInfo.key}_10`)
-            .setLabel(`Vender 10x (${(resourceInfo.sellPrice * 10).toLocaleString(numLoc)} ∩oins)`)
+            .setLabel(tFor(interaction, 'commands.market.shopSellButton', { amount: 10, total: (resourceInfo.sellPrice * 10).toLocaleString(numLoc) }))
             .setEmoji('<:registry:1536459835921530890>')
             .setStyle(ButtonStyle.Secondary)
     );
@@ -291,8 +297,8 @@ function renderSystemShopContainer(interaction, selectedResourceKey = 'stone') {
     return { components, files, flags: MessageFlags.IsComponentsV2 };
 }
 
-function formatTimeLeft(seconds, isPt) {
-    if (seconds <= 0) return isPt ? 'Expirado' : 'Expired';
+function formatTimeLeft(interaction, seconds) {
+    if (seconds <= 0) return tFor(interaction, 'commands.market.expired');
     const days = Math.floor(seconds / 86400);
     const hours = Math.floor((seconds % 86400) / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -332,12 +338,12 @@ function renderMyListingsContainer(interaction) {
                 const resName = res ? (isPt ? res.namePt : res.nameEn) : l.resourceKey;
                 const emoji = res?.emoji ?? '<:rock:1536579687407681596>';
                 return (
-                    `<:dnd:1536247547193204766> **ID #${l.id} [EXPIRADO - 7 DIAS]** • ${emoji} **${resName}**\n` +
-                    `└ **${l.amount.toLocaleString(numLoc)}x** (${isPt ? 'Sem compradores em 7 dias' : 'No buyers in 7 days'}) • **[Pronto para Resgate]**`
+                    `<:dnd:1536247547193204766> **ID #${l.id} [${tFor(interaction, 'commands.market.expiredTag')}]** • ${emoji} **${resName}**\n` +
+                    `└ **${l.amount.toLocaleString(numLoc)}x** (${tFor(interaction, 'commands.market.expiredLine', { days: LISTING_LIFETIME_DAYS })}) • **[${tFor(interaction, 'commands.market.readyToClaim')}]**`
                 );
             }).join('\n\n');
 
-            textBlocks.push(`## <:dnd:1536247547193204766> ${isPt ? 'Anúncios Expirados (Prontos para Resgate)' : 'Expired Listings (Ready to Claim)'}:\n${expiredText}`);
+            textBlocks.push(`## <:dnd:1536247547193204766> ${tFor(interaction, 'commands.market.expiredListingsTitle')}:\n${expiredText}`);
         }
 
         if (activeListings.length > 0) {
@@ -346,15 +352,19 @@ function renderMyListingsContainer(interaction) {
                 const resName = res ? (isPt ? res.namePt : res.nameEn) : l.resourceKey;
                 const emoji = res?.emoji ?? '<:rock:1536579687407681596>';
                 const secondsLeft = Math.max(0, Math.floor((l.expiresAt - now) / 1000));
-                const timeLeft = formatTimeLeft(secondsLeft, isPt);
+                const timeLeft = formatTimeLeft(interaction, secondsLeft);
 
                 return (
                     `<:registry:1536459835921530890> **ID #${l.id}** • ${emoji} **${resName}**\n` +
-                    `└ **${l.amount.toLocaleString(numLoc)}x** por **\`${l.pricePerUnit.toLocaleString(numLoc)}\`** ∩oins/un • <:loading:1536247662372982794> Expira em: **${timeLeft}**`
+                    `└ ${tFor(interaction, 'commands.market.activeListingLine', {
+                        amount: l.amount.toLocaleString(numLoc),
+                        price: l.pricePerUnit.toLocaleString(numLoc),
+                        time: timeLeft,
+                    })}`
                 );
             }).join('\n\n');
 
-            textBlocks.push(`## <:registry:1536459835921530890> ${isPt ? 'Anúncios Ativos no Mercado' : 'Active Market Listings'}:\n${activeText}`);
+            textBlocks.push(`## <:registry:1536459835921530890> ${tFor(interaction, 'commands.market.activeListingsTitle')}:\n${activeText}`);
         }
 
         contentText = textBlocks.join('\n\n---\n\n');
@@ -365,13 +375,13 @@ function renderMyListingsContainer(interaction) {
             if (isExpired) {
                 return new ButtonBuilder()
                     .setCustomId(`market_cancel_listing_${l.id}`)
-                    .setLabel(`${isPt ? 'Resgatar' : 'Claim'} ID #${l.id}`)
+                    .setLabel(tFor(interaction, 'commands.market.claimButton', { id: l.id }))
                     .setEmoji('<:excited:1536247579061256252>')
                     .setStyle(ButtonStyle.Success);
             }
             return new ButtonBuilder()
                 .setCustomId(`market_cancel_listing_${l.id}`)
-                .setLabel(`${isPt ? 'Cancelar' : 'Cancel'} ID #${l.id}`)
+                .setLabel(tFor(interaction, 'commands.market.cancelIdButton', { id: l.id }))
                 .setEmoji('<:restart:1536248409634246719>')
                 .setStyle(ButtonStyle.Danger);
         });
@@ -457,7 +467,8 @@ module.exports = {
                         .setRequired(false)
                         .addChoices(
                             ...getAllMarketResources().map((r) => ({
-                                name: `${r.namePt} (${r.key})`,
+                                name: r.nameEn,
+                                name_localizations: { 'pt-BR': r.namePt },
                                 value: r.key,
                             }))
                         )
@@ -480,7 +491,8 @@ module.exports = {
                         .setRequired(true)
                         .addChoices(
                             ...getAllMarketResources().map((r) => ({
-                                name: `${r.namePt} (${r.key})`,
+                                name: r.nameEn,
+                                name_localizations: { 'pt-BR': r.namePt },
                                 value: r.key,
                             }))
                         )
@@ -521,7 +533,8 @@ module.exports = {
                         .setRequired(true)
                         .addChoices(
                             ...getAllMarketResources().map((r) => ({
-                                name: `${r.namePt} (${r.key})`,
+                                name: r.nameEn,
+                                name_localizations: { 'pt-BR': r.namePt },
                                 value: r.key,
                             }))
                         )
@@ -553,7 +566,8 @@ module.exports = {
                         .setRequired(true)
                         .addChoices(
                             ...getAllMarketResources().map((r) => ({
-                                name: `${r.namePt} (${r.key})`,
+                                name: r.nameEn,
+                                name_localizations: { 'pt-BR': r.namePt },
                                 value: r.key,
                             }))
                         )
@@ -582,7 +596,7 @@ module.exports = {
         const alien = getUserAlien(interaction.user.id);
         if (!alien) {
             await interaction.editReply({
-                content: `<:alien:1536247533502734376> **${tFor(interaction, 'commands.planet.alienRequired')}**\n${tFor(interaction, 'commands.planet.alienRequiredTip')}`,
+                content: `<:ovni:1536247726889762847> **${tFor(interaction, 'commands.planet.alienRequired')}**\n${tFor(interaction, 'commands.planet.alienRequiredTip')}`,
             });
             return;
         }

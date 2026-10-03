@@ -134,7 +134,7 @@ module.exports = {
         const mainInfoText = new TextDisplayBuilder().setContent(
             `${EMOJI_OVNI} **${tFor(interaction, 'commands.profile.alienLabel')}**: \`${alienName}\`\n` +
             `${EMOJI_COINS_GOLD} **${tFor(interaction, 'commands.profile.coinsLabel')}**: \`${formattedCoins}\` ∩oins\n` +
-            `${EMOJI_RAINBOW} **${isPt ? 'Conquistas' : 'Achievements'}**: \`${unlockedCount}/${totalAchievements}\` (\`${achievementPct}%\` ${isPt ? 'desbloqueado' : 'unlocked'})`
+            `${EMOJI_RAINBOW} **${tFor(interaction, 'commands.profile.achievementsLabel')}**: \`${unlockedCount}/${totalAchievements}\` (\`${achievementPct}%\` ${tFor(interaction, 'commands.profile.achievementsUnlocked')})`
         );
 
         // === Monta thumbnail do perfil, com chapéu equipado se existir ===
@@ -171,9 +171,6 @@ module.exports = {
             }
         }
 
-        if (!mainSection) {
-            mainSection = new SectionBuilder().addTextDisplayComponents(mainInfoText);
-        }
 
         const statsText = new TextDisplayBuilder().setContent(
             `## ${EMOJI_SATURN} ${tFor(interaction, 'commands.profile.statsTitle')}\n\n` +
@@ -185,9 +182,9 @@ module.exports = {
 
         const shipText = new TextDisplayBuilder().setContent(
             `## ${EMOJI_CONFIG} ${tFor(interaction, 'commands.profile.shipTitle')}\n\n` +
-            `${EMOJI_OVNI} **${tFor(interaction, 'commands.profile.propulsor')}**: Tier \`${ship.propulsorTier}\`\n` +
-            `${EMOJI_ROCK} **${tFor(interaction, 'commands.profile.excavation')}**: Nível \`${ship.excavationProbeLevel}\`\n` +
-            `${EMOJI_LOADING} **${tFor(interaction, 'commands.profile.scanner')}**: Nível \`${ship.starScannerLevel}\``
+            `${EMOJI_OVNI} **${tFor(interaction, 'commands.profile.propulsor')}**: ${tFor(interaction, 'commands.profile.tierLabel')} \`${ship.propulsorTier}\`\n` +
+            `${EMOJI_ROCK} **${tFor(interaction, 'commands.profile.excavation')}**: ${tFor(interaction, 'commands.profile.levelLabel')} \`${ship.excavationProbeLevel}\`\n` +
+            `${EMOJI_LOADING} **${tFor(interaction, 'commands.profile.scanner')}**: ${tFor(interaction, 'commands.profile.levelLabel')} \`${ship.starScannerLevel}\``
         );
 
         // === Seção MERCADO GLOBAL (sem "lucro estimado", conforme pedido) ===
@@ -195,20 +192,29 @@ module.exports = {
         const marketSpentFormatted = marketStats.marketGlobalBoughtSpent.toLocaleString(numLoc);
 
         const marketText = new TextDisplayBuilder().setContent(
-            `## ${EMOJI_BAG_COINS} ${isPt ? 'Mercado Global' : 'Global Market'}\n\n` +
-            `${EMOJI_REGISTRY} **${isPt ? 'Total vendido (unid.)' : 'Units sold'}**: \`${marketStats.marketGlobalSoldCount.toLocaleString(numLoc)}\`\n` +
-            `${EMOJI_COINS_GOLD} **${isPt ? 'Receita líquida' : 'Net revenue'}**: \`${marketRevenueFormatted}\` ∩oins\n\n` +
-            `${EMOJI_OVNI} **${isPt ? 'Total comprado (unid.)' : 'Units bought'}**: \`${marketStats.marketGlobalBoughtCount.toLocaleString(numLoc)}\`\n` +
-            `${EMOJI_COINS_GOLD} **${isPt ? 'Total gasto' : 'Total spent'}**: \`${marketSpentFormatted}\` ∩oins\n\n` +
-            `${EMOJI_CONFIG} **${isPt ? 'Loja do Sistema - Comprado' : 'System Shop - Bought'}**: \`${marketStats.shopBoughtCount.toLocaleString(numLoc)}\` unid.\n` +
-            `${EMOJI_BOOK} **${isPt ? 'Loja do Sistema - Vendido' : 'System Shop - Sold'}**: \`${marketStats.shopSoldCount.toLocaleString(numLoc)}\` unid.\n` +
-            `${EMOJI_BOOK2} **${isPt ? 'Crafts concluídos' : 'Crafts completed'}**: \`${marketStats.craftCompletedCount.toLocaleString(numLoc)}\``
+            `## ${EMOJI_BAG_COINS} ${tFor(interaction, 'commands.profile.marketTitle')}\n\n` +
+            `${EMOJI_REGISTRY} **${tFor(interaction, 'commands.profile.unitsSold')}**: \`${marketStats.marketGlobalSoldCount.toLocaleString(numLoc)}\`\n` +
+            `${EMOJI_COINS_GOLD} **${tFor(interaction, 'commands.profile.netRevenue')}**: \`${marketRevenueFormatted}\` ∩oins\n\n` +
+            `${EMOJI_OVNI} **${tFor(interaction, 'commands.profile.unitsBought')}**: \`${marketStats.marketGlobalBoughtCount.toLocaleString(numLoc)}\`\n` +
+            `${EMOJI_COINS_GOLD} **${tFor(interaction, 'commands.profile.totalSpent')}**: \`${marketSpentFormatted}\` ∩oins\n\n` +
+            `${EMOJI_CONFIG} **${tFor(interaction, 'commands.profile.shopBought')}**: \`${marketStats.shopBoughtCount.toLocaleString(numLoc)}\` ${tFor(interaction, 'commands.profile.unitsShort')}\n` +
+            `${EMOJI_BOOK} **${tFor(interaction, 'commands.profile.shopSold')}**: \`${marketStats.shopSoldCount.toLocaleString(numLoc)}\` ${tFor(interaction, 'commands.profile.unitsShort')}\n` +
+            `${EMOJI_BOOK2} **${tFor(interaction, 'commands.profile.craftsCompleted')}**: \`${marketStats.craftCompletedCount.toLocaleString(numLoc)}\``
         );
 
         const container = new ContainerBuilder()
             .addTextDisplayComponents(header)
-            .addSeparatorComponents(new SeparatorBuilder())
-            .addSectionComponents(mainSection)
+            .addSeparatorComponents(new SeparatorBuilder());
+
+        // Section exige miniatura (o Discord recusa sem): quem ainda não tem
+        // alien (ou sem a imagem) ganha só o texto.
+        if (mainSection) {
+            container.addSectionComponents(mainSection);
+        } else {
+            container.addTextDisplayComponents(mainInfoText);
+        }
+
+        container
             .addSeparatorComponents(new SeparatorBuilder())
             .addTextDisplayComponents(statsText)
             .addSeparatorComponents(new SeparatorBuilder())

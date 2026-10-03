@@ -1,3 +1,5 @@
+const { getText } = require('./i18n');
+
 /**
  * Helper to format large numbers (distances, counts) for user profile and stats.
  */
@@ -10,7 +12,7 @@ function formatDistance(distanceKm, lang = 'pt-BR') {
             minimumFractionDigits: 1,
             maximumFractionDigits: 2,
         });
-        return lang === 'pt-BR' ? `${val} bilhões de km` : `${val} billion km`;
+        return getText(lang, 'numbers.billionKm', { value: val });
     }
 
     if (distanceKm >= 1_000_000) {
@@ -18,7 +20,7 @@ function formatDistance(distanceKm, lang = 'pt-BR') {
             minimumFractionDigits: 1,
             maximumFractionDigits: 2,
         });
-        return lang === 'pt-BR' ? `${val} milhões de km` : `${val} million km`;
+        return getText(lang, 'numbers.millionKm', { value: val });
     }
 
     return `${distanceKm.toLocaleString(numLoc)} km`;
@@ -32,7 +34,7 @@ function formatCount(num, lang = 'pt-BR') {
             minimumFractionDigits: 1,
             maximumFractionDigits: 2,
         });
-        return lang === 'pt-BR' ? `${val} bilhões` : `${val} billion`;
+        return getText(lang, 'numbers.billion', { value: val });
     }
 
     if (num >= 10_000_000) {
@@ -40,7 +42,7 @@ function formatCount(num, lang = 'pt-BR') {
             minimumFractionDigits: 1,
             maximumFractionDigits: 2,
         });
-        return lang === 'pt-BR' ? `${val} milhões` : `${val} million`;
+        return getText(lang, 'numbers.million', { value: val });
     }
 
     return num.toLocaleString(numLoc);

@@ -18,6 +18,7 @@ const {
 } = require('discord.js');
 
 const { getUserLanguage } = require('../../utils/db');
+const { getText } = require('../../utils/i18n');
 const {
     getUserHats,
     createHatMarketListing,
@@ -42,90 +43,56 @@ const { formatPlace } = require('../../utils/statsFormatter');
 const IMAGE_NAME = 'bag_coins.png';
 const IMAGE_PATH = path.join(__dirname, '..', '..', 'images', 'moedas', IMAGE_NAME);
 
-const TXT = {
-    'pt-BR': {
-        title: 'Mercado de Chapéus',
-        browseSubtitle: 'Compre chapéus de outros jogadores',
-        sellSubtitle: 'Anuncie um chapéu do seu inventário',
-        myListingsSubtitle: 'Seus anúncios ativos',
-        shopSubtitle: 'Compre chapéus direto da Loja do Sistema, a preço fixo',
-        browseButton: 'Navegar',
-        shopButton: 'Loja',
-        sellButton: 'Vender',
-        myListingsButton: 'Meus Anúncios',
-        switchToMarketButton: 'Ver Mercado',
-        selectHatPlaceholder: 'Selecione um chapéu...',
-        noListings: 'Nenhum anúncio ativo pra esse chapéu ainda.',
-        buyButton: 'Comprar',
-        buyByIdButton: 'Comprar por ID',
-        buyShop1x: (price) => `Comprar 1x (${price.toLocaleString('pt-BR')} ∩oins)`,
-        buyShop5x: (price) => `Comprar 5x (${price.toLocaleString('pt-BR')} ∩oins)`,
-        shopListTitle: 'Lista de Preços da Loja Oficial:',
-        shopNote: 'Chapéus da Loja do Sistema são criados na hora — sem vendedor, sem taxa.',
-        noOwnedHats: 'Você não tem nenhum chapéu pra vender. Explore planetas com </planet:1537544781020799123> pra achar um!',
-        selectHatToSellPlaceholder: 'Selecione o chapéu que quer vender...',
-        noMyListings: 'Você não tem anúncios ativos.',
-        cancelButton: 'Cancelar',
-        sellModalTitle: 'Anunciar chapéu',
-        sellModalPriceLabel: 'Preço (∩oins)',
-        buyModalTitle: 'Comprar por ID',
-        buyModalIdLabel: 'ID do anúncio',
-        invalidValues: 'Valores inválidos.',
-        priceTooLow: (min) => `Preço mínimo pra esse chapéu: **${min.toLocaleString('pt-BR')}** ∩oins.`,
-        hatNotOwned: 'Você não tem esse chapéu (ou já está anunciado).',
-        tooManyListings: (limit) => `Você já tem o máximo de anúncios ativos (${limit}) pra esse chapéu.`,
-        sellSuccess: (name, price) => `<:excited:1536247579061256252> Anúncio criado! **${name}** por **${price.toLocaleString('pt-BR')}** ∩oins.`,
-        listingNotFound: 'Anúncio não encontrado ou já vendido.',
-        cannotBuyOwn: 'Você não pode comprar seu próprio anúncio.',
-        insufficientCoins: (total) => `Você não tem ∩oins suficientes. Precisa de **${total.toLocaleString('pt-BR')}**.`,
-        buySuccess: (name, total) => `<:excited:1536247579061256252> Você comprou **${name}** por **${total.toLocaleString('pt-BR')}** ∩oins!`,
-        buyShopSuccess: (amount, name, total) => `<:excited:1536247579061256252> Você comprou **${amount}x ${name}** da Loja por **${total.toLocaleString('pt-BR')}** ∩oins!`,
-        cancelSuccess: (name) => `Anúncio de **${name}** cancelado — o chapéu voltou pro seu inventário.`,
-        feeNote: (fee) => `*Taxa de venda: ${fee}%*`,
-    },
-    'en-US': {
-        title: 'Hat Market',
-        browseSubtitle: 'Buy hats from other players',
-        sellSubtitle: 'List a hat from your inventory',
-        myListingsSubtitle: 'Your active listings',
-        shopSubtitle: 'Buy hats directly from the System Shop at a fixed price',
-        browseButton: 'Browse',
-        shopButton: 'Shop',
-        sellButton: 'Sell',
-        myListingsButton: 'My Listings',
-        switchToMarketButton: 'View Market',
-        selectHatPlaceholder: 'Select a hat...',
-        noListings: 'No active listings for this hat yet.',
-        buyButton: 'Buy',
-        buyByIdButton: 'Buy by ID',
-        buyShop1x: (price) => `Buy 1x (${price.toLocaleString('en-US')} ∩oins)`,
-        buyShop5x: (price) => `Buy 5x (${price.toLocaleString('en-US')} ∩oins)`,
-        shopListTitle: 'Official Shop Price List:',
-        shopNote: 'System Shop hats are created on the spot — no seller, no fee.',
-        noOwnedHats: "You don't have any hats to sell. Explore planets with </planet:1537544781020799123> to find one!",
-        selectHatToSellPlaceholder: 'Select the hat you want to sell...',
-        noMyListings: "You don't have any active listings.",
-        cancelButton: 'Cancel',
-        sellModalTitle: 'List hat',
-        sellModalPriceLabel: 'Price (∩oins)',
-        buyModalTitle: 'Buy by ID',
-        buyModalIdLabel: 'Listing ID',
-        invalidValues: 'Invalid values.',
-        priceTooLow: (min) => `Minimum price for this hat: **${min.toLocaleString('en-US')}** ∩oins.`,
-        hatNotOwned: "You don't own this hat (or it's already listed).",
-        tooManyListings: (limit) => `You already have the max active listings (${limit}) for this hat.`,
-        sellSuccess: (name, price) => `<:excited:1536247579061256252> Listing created! **${name}** for **${price.toLocaleString('en-US')}** ∩oins.`,
-        listingNotFound: 'Listing not found or already sold.',
-        cannotBuyOwn: 'You cannot buy your own listing.',
-        insufficientCoins: (total) => `You don't have enough ∩oins. You need **${total.toLocaleString('en-US')}**.`,
-        buySuccess: (name, total) => `<:excited:1536247579061256252> You bought **${name}** for **${total.toLocaleString('en-US')}** ∩oins!`,
-        buyShopSuccess: (amount, name, total) => `<:excited:1536247579061256252> You bought **${amount}x ${name}** from the Shop for **${total.toLocaleString('en-US')}** ∩oins!`,
-        cancelSuccess: (name) => `Listing for **${name}** cancelled — the hat is back in your inventory.`,
-        feeNote: (fee) => `*Sale fee: ${fee}%*`,
-    },
+// Textos desta tela — vêm de locales/*.json (commands.hatmarket.*).
+const getTxt = (lang) => {
+    const tl = (key, vars) => getText(lang, `commands.hatmarket.${key}`, vars);
+    const n = (value) => (value ?? 0).toLocaleString(lang === 'en-US' ? 'en-US' : 'pt-BR');
+    return {
+        title: tl('title'),
+        browseSubtitle: tl('browseSubtitle'),
+        sellSubtitle: tl('sellSubtitle'),
+        myListingsSubtitle: tl('myListingsSubtitle'),
+        shopSubtitle: tl('shopSubtitle'),
+        browseButton: tl('browseButton'),
+        shopButton: tl('shopButton'),
+        sellButton: tl('sellButton'),
+        myListingsButton: tl('myListingsButton'),
+        switchToMarketButton: tl('switchToMarketButton'),
+        selectHatPlaceholder: tl('selectHatPlaceholder'),
+        noListings: tl('noListings'),
+        buyButton: tl('buyButton'),
+        buyByIdButton: tl('buyByIdButton'),
+        buyShop1x: (price) => tl('buyShop1x', { price: n(price) }),
+        buyShop5x: (price) => tl('buyShop5x', { price: n(price) }),
+        shopListTitle: tl('shopListTitle'),
+        shopNote: tl('shopNote'),
+        noOwnedHats: tl('noOwnedHats'),
+        selectHatToSellPlaceholder: tl('selectHatToSellPlaceholder'),
+        noMyListings: tl('noMyListings'),
+        cancelButton: tl('cancelButton'),
+        sellModalTitle: tl('sellModalTitle'),
+        sellModalPriceLabel: tl('sellModalPriceLabel'),
+        buyModalTitle: tl('buyModalTitle'),
+        buyModalIdLabel: tl('buyModalIdLabel'),
+        invalidValues: tl('invalidValues'),
+        priceTooLow: (min) => tl('priceTooLow', { min: n(min) }),
+        hatNotOwned: tl('hatNotOwned'),
+        tooManyListings: (limit) => tl('tooManyListings', { limit: limit }),
+        sellSuccess: (name, price) => tl('sellSuccess', { name: name, price: n(price) }),
+        listingNotFound: tl('listingNotFound'),
+        cannotBuyOwn: tl('cannotBuyOwn'),
+        insufficientCoins: (total) => tl('insufficientCoins', { total: n(total) }),
+        buySuccess: (name, total) => tl('buySuccess', { name: name, total: n(total) }),
+        buyShopSuccess: (amount, name, total) => tl('buyShopSuccess', { amount: amount, name: name, total: n(total) }),
+        cancelSuccess: (name) => tl('cancelSuccess', { name: name }),
+        feeNote: (fee) => tl('feeNote', { fee: fee }),
+        sellerLabel: tl('sellerLabel'),
+        priceLabel: tl('priceLabel'),
+        minPriceLabel: tl('minPriceLabel'),
+        unknownSeller: (id) => tl('unknownSeller', { id }),
+    };
 };
 
-const getTxt = (lang) => TXT[lang] ?? TXT['pt-BR'];
 
 const parseCustomEmoji = (emojiString) => {
     const match = /^<a?:(\w+):(\d+)>$/.exec(emojiString ?? '');
@@ -155,9 +122,9 @@ const buildNavRow = (active, t) => new ActionRowBuilder().addComponents(
         .setStyle(ButtonStyle.Secondary)
 );
 
-const buildHatSelectRow = (customId, placeholder, selectedKey, hats) => {
+const buildHatSelectRow = (customId, placeholder, selectedKey, hats, lang) => {
     const options = hats.map((h) => ({
-        label: getHatName(h.key, 'pt-BR'),
+        label: getHatName(h.key, lang),
         value: h.key,
         emoji: parseCustomEmoji(getRarityEmoji(h.rarity)),
         default: h.key === selectedKey,
@@ -198,8 +165,8 @@ function renderBrowse(interaction, selectedKey) {
     } else {
         body = listings.map((l, i) => {
             const rank = formatPlace(i);
-            const seller = l.sellerName || `Usuario#${l.sellerId.substring(0, 4)}`;
-            return `${rank} **ID #${l.id}** • ${lang === 'pt-BR' ? 'Vendedor' : 'Seller'}: **${seller}**\n` +
+            const seller = l.sellerName || t.unknownSeller(l.sellerId.substring(0, 4));
+            return `${rank} **ID #${l.id}** • ${t.sellerLabel}: **${seller}**\n` +
                 `└ **\`${l.price.toLocaleString(lang)}\`** ∩oins`;
         }).join('\n\n');
     }
@@ -215,7 +182,7 @@ function renderBrowse(interaction, selectedKey) {
         .addSeparatorComponents(new SeparatorBuilder())
         .addSectionComponents(section);
 
-    const rows = [container, buildHatSelectRow('hatmarket_select_browse', t.selectHatPlaceholder, hatKey, hats), buildNavRow('browse', t)];
+    const rows = [container, buildHatSelectRow('hatmarket_select_browse', t.selectHatPlaceholder, hatKey, hats, lang), buildNavRow('browse', t)];
 
     if (listings.length) {
         const cheapest = listings[0];
@@ -254,7 +221,7 @@ function renderShop(interaction, selectedKey) {
     const rarityEmoji = hat ? getRarityEmoji(hat.rarity) : '';
     const bodyText = new TextDisplayBuilder().setContent(
         `### ${rarityEmoji} ${getHatName(hatKey, lang)}\n` +
-        `**${lang === 'pt-BR' ? 'Preço' : 'Price'}**: \`${price.toLocaleString(lang)}\` ∩oins\n\n` +
+        `**${t.priceLabel}**: \`${price.toLocaleString(lang)}\` ∩oins\n\n` +
         `${t.shopNote}\n\n` +
         `## ${t.shopListTitle}\n${shopListText}`
     );
@@ -280,7 +247,7 @@ function renderShop(interaction, selectedKey) {
 
     const rows = [
         container,
-        buildHatSelectRow('hatmarket_select_shop', t.selectHatPlaceholder, hatKey, hats),
+        buildHatSelectRow('hatmarket_select_shop', t.selectHatPlaceholder, hatKey, hats, lang),
         buildNavRow('shop', t),
         buyRow,
     ];
@@ -305,11 +272,11 @@ function renderSell(interaction, selectedKey) {
         const rarityEmoji = hat ? getRarityEmoji(hat.rarity) : '';
 
         body = `### ${rarityEmoji} ${getHatName(hatKey, lang)} (x${qty})\n\n` +
-            `${lang === 'pt-BR' ? 'Preço mínimo' : 'Minimum price'}: **\`${minPrice.toLocaleString(lang)}\`** ∩oins\n` +
+            `${t.minPriceLabel}: **\`${minPrice.toLocaleString(lang)}\`** ∩oins\n` +
             `${t.feeNote(HAT_MARKET_CONFIG.saleFeePercent)}`;
 
         const ownedHatDefs = owned.map((o) => getHat(o.hatKey)).filter(Boolean);
-        rows.push(buildHatSelectRow('hatmarket_select_sell', t.selectHatToSellPlaceholder, hatKey, ownedHatDefs));
+        rows.push(buildHatSelectRow('hatmarket_select_sell', t.selectHatToSellPlaceholder, hatKey, ownedHatDefs, lang));
         rows.push(new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId(`hatmarket_open_sell_modal_${hatKey}`)

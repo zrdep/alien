@@ -6,6 +6,7 @@ const {
     SeparatorBuilder,
 } = require('discord.js');
 
+const { tFor } = require('../../utils/i18n');
 const {
     getUserLanguage,
     getUserCoins,
@@ -49,7 +50,6 @@ module.exports = {
     async execute(interaction) {
         const userId = interaction.user.id;
         const lang = getUserLanguage(userId);
-        const isPt = lang === 'pt-BR';
 
         // === 1. Conquista de convidar o bot =================================
         const inviteResult = claimBotInviteAchievement(userId);
@@ -72,23 +72,17 @@ module.exports = {
             const name = inviteAchievement?.name?.[lang] ?? inviteAchievement?.name?.['pt-BR'] ?? 'invite_bot_1';
 
             blocks.push(
-                `${E_EXCITED} **${isPt ? 'Conquista desbloqueada!' : 'Achievement unlocked!'}**\n` +
+                `${E_EXCITED} **${tFor(interaction, 'commands.redeem.achievementUnlocked')}**\n` +
                 `${E_SUPPORT} **${name}**\n` +
                 `> ${E_GOLD_COINS} +${formatNum(reward.coins, lang)} ∩oins`
             );
         } else if (inviteResult.status === 'not_verified') {
             blocks.push(
-                isPt
-                    ? `${E_HMM} *Ainda não encontramos nenhum servidor seu com o ∩lien adicionado. ` +
-                      `Adicione o bot num servidor que você controla e rode </redeem:1538333297430765702> de novo!*`
-                    : `${E_HMM} *We couldn't find any server of yours with ∩lien added yet. ` +
-                      `Add the bot to a server you control and run </redeem:1538333297430765702> again!*`
+                `${E_HMM} *${tFor(interaction, 'commands.redeem.inviteNotVerified')}*`
             );
         } else if (inviteResult.status === 'already_unlocked') {
             blocks.push(
-                isPt
-                    ? `${E_SUPPORT} *A conquista de convidar o bot já está desbloqueada — nada pendente aí.*`
-                    : `${E_SUPPORT} *The invite-the-bot achievement is already unlocked — nothing pending there.*`
+                `${E_SUPPORT} *${tFor(interaction, 'commands.redeem.inviteAlreadyUnlocked')}*`
             );
         }
 
@@ -97,7 +91,7 @@ module.exports = {
             let totalCoins = 0;
             const totalResources = new Map();
             const itemLines = claimedRedeemables.map((item) => {
-                const title = isPt ? item.titlePt : item.titleEn;
+                const title = lang === 'en-US' ? item.titleEn : item.titlePt;
                 const parts = [];
                 if (item.coins > 0) {
                     totalCoins += item.coins;
@@ -113,7 +107,7 @@ module.exports = {
             });
 
             blocks.push(
-                `${E_RAINBOW} **${isPt ? 'Presentes resgatados!' : 'Gifts redeemed!'}**\n\n` +
+                `${E_RAINBOW} **${tFor(interaction, 'commands.redeem.giftsRedeemed')}**\n\n` +
                 itemLines.join('\n')
             );
         }
@@ -121,17 +115,15 @@ module.exports = {
         // --- Nada pendente em geral -------------------------------------------
         if (!somethingHappened && inviteResult.status !== 'not_verified') {
             blocks.push(
-                isPt
-                    ? `${E_HMM} *Nada pra resgatar no momento. Volte aqui quando tiver algo novo!*`
-                    : `${E_HMM} *Nothing to redeem right now. Check back when there's something new!*`
+                `${E_HMM} *${tFor(interaction, 'commands.redeem.nothingToRedeem')}*`
             );
         }
 
         const currentCoins = getUserCoins(userId);
 
         const header = new TextDisplayBuilder().setContent(
-            `# ${somethingHappened ? E_EXCITED : E_SUNGLASSES} ${isPt ? 'Resgatar' : 'Redeem'}\n\n` +
-            `${E_GOLD_COINS} **${isPt ? 'Saldo atual' : 'Current balance'}**: \`${formatNum(currentCoins, lang)}\` ∩oins`
+            `# ${somethingHappened ? E_EXCITED : E_SUNGLASSES} ${tFor(interaction, 'commands.redeem.title')}\n\n` +
+            `${E_GOLD_COINS} **${tFor(interaction, 'commands.redeem.balanceLabel')}**: \`${formatNum(currentCoins, lang)}\` ∩oins`
         );
 
         const container = new ContainerBuilder()

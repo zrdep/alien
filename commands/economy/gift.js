@@ -23,6 +23,9 @@ const {
 const { RESOURCES, MARKET_CONFIG, getSaleFee } = require('../../gameConfig');
 const { t } = require('../../utils/i18n');
 
+// Atalho pros textos desta tela (locales/*.json → commands.gift.*).
+const tg = (lang, key, vars) => t(lang, `commands.gift.${key}`, vars);
+
 // Presentes de ∩oins pagam a mesma taxa do mercado (destruída). Sem isso,
 // passar ∩oins entre contas furava a taxa e o preço mínimo do /market.
 const buildGiftFeeLine = (entry) => {
@@ -57,7 +60,6 @@ const pendingGifts = new Map();
 const formatNum = (n, lang) => (n ?? 0).toLocaleString(lang === 'pt-BR' ? 'pt-BR' : 'en-US');
 
 const describeItem = (entry, lang) => {
-    const isPt = lang === 'pt-BR';
     if (entry.kind === 'coins') {
         return `\`${formatNum(entry.amount, lang)}\` ∩oins`;
     }
@@ -82,13 +84,12 @@ const buildFilesAndSection = (bodyText) => {
 // no momento (interaction atual), então cada handler recebe seu próprio
 // `interaction` pra decidir o idioma do texto que ele mesmo está montando.
 const buildContainer = (lang, bodyContent, buttons) => {
-    const isPt = lang === 'pt-BR';
     const bodyText = new TextDisplayBuilder().setContent(bodyContent);
     const { files, section } = buildFilesAndSection(bodyText);
 
     const container = new ContainerBuilder()
         .addTextDisplayComponents(
-            new TextDisplayBuilder().setContent(`# ${E_GIFT} ${isPt ? 'Presentear' : 'Gift'}`)
+            new TextDisplayBuilder().setContent(`# ${E_GIFT} ${tg(lang, 'title')}`)
         )
         .addSeparatorComponents(new SeparatorBuilder())
         .addSectionComponents(section);
@@ -100,17 +101,17 @@ const buildContainer = (lang, bodyContent, buttons) => {
     return { flags: MessageFlags.IsComponentsV2, components: [container], files };
 };
 
-const buildConfirmButtons = (giftId, targetId, isPt, disabled = false) => {
+const buildConfirmButtons = (giftId, targetId, lang, disabled = false) => {
     return new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId(`gift_confirm_${targetId}_${giftId}`)
-            .setLabel(isPt ? 'Confirmar' : 'Confirm')
+            .setLabel(tg(lang, 'confirmButton'))
             .setEmoji(E_ONLINE)
             .setStyle(ButtonStyle.Success)
             .setDisabled(disabled),
         new ButtonBuilder()
             .setCustomId(`gift_cancel_${targetId}_${giftId}`)
-            .setLabel(isPt ? 'Cancelar' : 'Cancel')
+            .setLabel(tg(lang, 'cancelButton'))
             .setEmoji(E_DND)
             .setStyle(ButtonStyle.Danger)
             .setDisabled(disabled)
@@ -121,13 +122,12 @@ const buildConfirmButtons = (giftId, targetId, isPt, disabled = false) => {
 // quem tá olhando a mensagem no momento, pra não misturar pt/en na mesma
 // mensagem pra quem clica depois.
 const buildPendingBody = (entry) => {
-    const isPt = entry.lang === 'pt-BR';
     const item = describeItem(entry, entry.lang);
 
     const statusLine = (userId, confirmed) => {
         const label = confirmed
-            ? (isPt ? 'confirmado' : 'confirmed')
-            : (isPt ? 'aguardando' : 'waiting');
+            ? tg(entry.lang, 'statusConfirmed')
+            : tg(entry.lang, 'statusWaiting');
         return `${confirmed ? E_ONLINE : E_IDLE} <@${userId}> — ${label}`;
     };
 
@@ -136,7 +136,7 @@ const buildPendingBody = (entry) => {
         `<@${entry.senderId}> **→** <@${entry.targetId}>${buildGiftFeeLine(entry)}\n\n` +
         `${statusLine(entry.senderId, entry.confirmed.has(entry.senderId))}\n` +
         `${statusLine(entry.targetId, entry.confirmed.has(entry.targetId))}\n\n` +
-        `-# ${E_HMM} ${isPt ? 'Ambos precisam confirmar em até 3 minutos, ou o presente é cancelado.' : 'Both must confirm within 3 minutes, or the gift is cancelled.'}`
+        `-# ${E_HMM} ${tg(entry.lang, 'confirmHint')}`
     );
 };
 
@@ -150,13 +150,11 @@ const expireGift = async (giftId) => {
     const entry = pendingGifts.get(giftId);
     if (!entry) return;
     pendingGifts.delete(giftId);
-
-    const isPt = entry.lang === 'pt-BR';
     const body =
-        `${E_SOB} *${isPt ? 'Tempo esgotado, ninguém confirmou a tempo.' : 'Timed out, nobody confirmed in time.'}*`;
+        `${E_SOB} *${tg(entry.lang, 'timedOut')}*`;
 
     try {
-        await entry.message.edit(buildContainer(entry.lang, body, buildConfirmButtons(giftId, entry.targetId, isPt, true)));
+        await entry.message.edit(buildContainer(entry.lang, body, buildConfirmButtons(giftId, entry.targetId, entry.lang, true)));
     } catch {
         // mensagem pode ter sido apagada nesse meio tempo — sem problema
     }
@@ -239,7 +237,6 @@ module.exports = {
     async execute(interaction) {
         const senderId = interaction.user.id;
         const lang = getUserLanguage(senderId);
-        const isPt = lang === 'pt-BR';
         const targetUser = interaction.options.getUser('user', true);
         const amount = interaction.options.getInteger('amount', true);
         const subcommand = interaction.options.getSubcommand();
@@ -248,10 +245,10 @@ module.exports = {
             interaction.editReply(buildContainer(lang, text, null));
 
         if (targetUser.bot) {
-            return simpleReply(`${E_HMM} ${isPt ? 'Você não pode presentear um bot.' : "You can't gift a bot."}`);
+            return simpleReply(`${E_HMM} ${tg(lang, 'cannotGiftBot')}`);
         }
         if (targetUser.id === senderId) {
-            return simpleReply(`${E_HMM} ${isPt ? 'Você não pode presentear a si mesmo.' : "You can't gift yourself."}`);
+            return simpleReply(`${E_HMM} ${tg(lang, 'cannotGiftSelf')}`);
         }
 
         const entry = {
@@ -265,12 +262,10 @@ module.exports = {
         if (subcommand === 'coins') {
             const senderCoins = getUserCoins(senderId);
             if (senderCoins < amount) {
-                return simpleReply(
-                    `${E_SOB} **${isPt ? '∩oins insuficientes!' : 'Not enough ∩oins!'}** ` +
-                    (isPt
-                        ? `Você tem \`${formatNum(senderCoins, lang)}\` mas tentou presentear \`${formatNum(amount, lang)}\`.`
-                        : `You have \`${formatNum(senderCoins, lang)}\` but tried to gift \`${formatNum(amount, lang)}\`.`)
-                );
+                return simpleReply(`${E_SOB} ${tg(lang, 'notEnoughCoins', {
+                    has: formatNum(senderCoins, lang),
+                    amount: formatNum(amount, lang),
+                })}`);
             }
             entry.kind = 'coins';
         } else {
@@ -280,12 +275,11 @@ module.exports = {
             if (senderAmount < amount) {
                 const resource = RESOURCES.find((r) => r.key === resourceKey);
                 const resourceName = resource?.name?.[lang] ?? resource?.name?.['pt-BR'] ?? resourceKey;
-                return simpleReply(
-                    `${E_SOB} **${isPt ? 'Recursos insuficientes!' : 'Not enough resources!'}** ` +
-                    (isPt
-                        ? `Você tem \`${formatNum(senderAmount, lang)}\`x ${resourceName} mas tentou presentear \`${formatNum(amount, lang)}\`.`
-                        : `You have \`${formatNum(senderAmount, lang)}\`x ${resourceName} but tried to gift \`${formatNum(amount, lang)}\`.`)
-                );
+                return simpleReply(`${E_SOB} ${tg(lang, 'notEnoughResources', {
+                    has: formatNum(senderAmount, lang),
+                    resource: resourceName,
+                    amount: formatNum(amount, lang),
+                })}`);
             }
             entry.kind = 'resource';
             entry.resourceKey = resourceKey;
@@ -293,7 +287,7 @@ module.exports = {
 
         const giftId = interaction.id;
         const message = await interaction.editReply(
-            buildContainer(lang, buildPendingBody(entry), buildConfirmButtons(giftId, targetUser.id, isPt))
+            buildContainer(lang, buildPendingBody(entry), buildConfirmButtons(giftId, targetUser.id, lang))
         );
         entry.message = message;
         entry.timeoutHandle = setTimeout(() => expireGift(giftId), CONFIRM_TIMEOUT_MS);
@@ -309,12 +303,11 @@ module.exports = {
         // abaixo (erro "não é seu presente" etc). O container público segue
         // sempre no idioma de quem criou o presente (entry.lang).
         const clickerLang = getUserLanguage(interaction.user.id);
-        const clickerIsPt = clickerLang === 'pt-BR';
         const entry = pendingGifts.get(giftId);
 
         if (!entry) {
             await interaction.reply({
-                content: `${E_HMM} ${clickerIsPt ? 'Esse presente já expirou ou foi resolvido.' : 'This gift already expired or was resolved.'}`,
+                content: `${E_HMM} ${tg(clickerLang, 'expiredOrResolved')}`,
                 flags: MessageFlags.Ephemeral,
             });
             return true;
@@ -324,25 +317,23 @@ module.exports = {
         // aqui, mas uma checagem redundante não custa nada.
         if (interaction.user.id !== entry.senderId && interaction.user.id !== entry.targetId) {
             await interaction.reply({
-                content: `${E_HMM} ${clickerIsPt ? 'Esse presente não é seu.' : "This gift isn't yours."}`,
+                content: `${E_HMM} ${tg(clickerLang, 'notYours')}`,
                 flags: MessageFlags.Ephemeral,
             });
             return true;
         }
 
-        const isPt = entry.lang === 'pt-BR';
-
         if (action === 'cancel') {
             clearPending(giftId);
-            const body = `${E_SOB} *${isPt ? 'Cancelado por' : 'Cancelled by'} <@${interaction.user.id}>.*`;
-            await interaction.update(buildContainer(entry.lang, body, buildConfirmButtons(giftId, entry.targetId, isPt, true)));
+            const body = `${E_SOB} *${tg(entry.lang, 'cancelledBy', { user: `<@${interaction.user.id}>` })}*`;
+            await interaction.update(buildContainer(entry.lang, body, buildConfirmButtons(giftId, entry.targetId, entry.lang, true)));
             return true;
         }
 
         // action === 'confirm'
         entry.confirmed.add(interaction.user.id);
         if (entry.confirmed.size < 2) {
-            await interaction.update(buildContainer(entry.lang, buildPendingBody(entry), buildConfirmButtons(giftId, entry.targetId, isPt)));
+            await interaction.update(buildContainer(entry.lang, buildPendingBody(entry), buildConfirmButtons(giftId, entry.targetId, entry.lang)));
             return true;
         }
 
@@ -358,8 +349,8 @@ module.exports = {
             if (!transferUserCoins(entry.senderId, entry.targetId, entry.amount, getSaleFee(entry.amount))) {
                 await interaction.update(buildContainer(
                     entry.lang,
-                    `${E_SOB} *${isPt ? 'O remetente não tem mais ∩oins suficientes. Presente cancelado.' : 'The sender no longer has enough ∩oins. Gift cancelled.'}*`,
-                    buildConfirmButtons(giftId, entry.targetId, isPt, true)
+                    `${E_SOB} *${tg(entry.lang, 'senderNoCoins')}*`,
+                    buildConfirmButtons(giftId, entry.targetId, entry.lang, true)
                 ));
                 return true;
             }
@@ -367,16 +358,20 @@ module.exports = {
             if (!transferInventoryResource(entry.senderId, entry.targetId, entry.resourceKey, entry.amount)) {
                 await interaction.update(buildContainer(
                     entry.lang,
-                    `${E_SOB} *${isPt ? 'O remetente não tem mais esse recurso suficiente. Presente cancelado.' : 'The sender no longer has enough of that resource. Gift cancelled.'}*`,
-                    buildConfirmButtons(giftId, entry.targetId, isPt, true)
+                    `${E_SOB} *${tg(entry.lang, 'senderNoResource')}*`,
+                    buildConfirmButtons(giftId, entry.targetId, entry.lang, true)
                 ));
                 return true;
             }
         }
 
         const body =
-            `${E_GOLD} *<@${entry.senderId}> ${isPt ? 'presenteou' : 'gifted'} <@${entry.targetId}> ${isPt ? 'com' : 'with'} ${describeItem(entry, entry.lang)}!*${buildGiftFeeLine(entry)}`;
-        await interaction.update(buildContainer(entry.lang, body, buildConfirmButtons(giftId, entry.targetId, isPt, true)));
+            `${E_GOLD} *${tg(entry.lang, 'success', {
+                sender: `<@${entry.senderId}>`,
+                target: `<@${entry.targetId}>`,
+                item: describeItem(entry, entry.lang),
+            })}*${buildGiftFeeLine(entry)}`;
+        await interaction.update(buildContainer(entry.lang, body, buildConfirmButtons(giftId, entry.targetId, entry.lang, true)));
         return true;
     },
 };

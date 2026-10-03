@@ -85,7 +85,24 @@ Totalmente bilíngue (**pt-BR** / **en-US**) via `utils/i18n.js` + `locales/*.js
 </tr>
 </table>
 
-O jogador acompanha o progresso da missão a qualquer momento — o bot avisa automaticamente no canal quando cada fase termina (`utils/missionNotifier.js`).
+O jogador acompanha o progresso da missão a qualquer momento. Quando o alien volta, o bot avisa (`utils/missionNotifier.js`):
+
+- **Onde:** jogador novo já começa com o aviso **no canal** da missão; dá pra trocar pra DM ou desligar em `/config user`. Se o bot não conseguir postar no canal (sem permissão, ou instalado só pelo usuário), o aviso vai pra DM.
+- **Lembrete de daily:** se o `/daily` de hoje ainda não foi resgatado, o aviso lembra — e avisa quando a sequência está em risco.
+
+### <img src="./images/emojis/sunglasses.png" width="18" valign="middle"> Chapéus
+
+Um planeta pode esconder um chapéu (aparece na oferta do `/planet`); ele só vai pro inventário quando o alien **volta da missão**. A raridade do chapéu acompanha a do planeta:
+
+| Planeta | Chance de o chapéu ser lendário |
+|---|---:|
+| <img src="./images/emojis/comum.png" width="18" valign="middle"> Comum | 0,7% |
+| <img src="./images/emojis/incomum.png" width="18" valign="middle"> Incomum | 1,8% |
+| <img src="./images/emojis/rare.png" width="18" valign="middle"> Raro | 4,8% |
+| <img src="./images/emojis/epic.png" width="18" valign="middle"> Épico | 15% |
+| <img src="./images/emojis/legendary.png" width="18" valign="middle"> Lendário | 34,5% |
+
+O total de chapéus no jogo continua o mesmo (≈ 16 a cada 100 planetas vistos); só muda **onde** cada raridade cai. Pesos em `gameConfig/hats.js` → `hatRarityWeightByPlanet`.
 
 ---
 
@@ -207,6 +224,10 @@ Como o piso do mercado entre jogadores é 50% do preço da loja, vender pra outr
 
 Os dois precisam confirmar. Presente de **∩oins paga a mesma taxa de 5%** do mercado (descontada do que o destinatário recebe); presente de recursos não tem taxa.
 
+### <img src="./images/moedas/gift_coins.png" width="18" valign="middle"> `/redeem` — presentes e eventos
+
+O dono do bot cria um **presente para todos** pelo `/painel` (título em pt-BR e en-US, ∩oins e/ou recursos). Cada jogador recebe um aviso no próximo comando e resgata com `/redeem`.
+
 ### <img src="./images/emojis/restart.png" width="18" valign="middle"> Para onde as ∩oins vão (sumidouros)
 
 Taxa de 5% do `/market`, `/hatmarket` e `/gift` · custo em ∩oins dos upgrades e consumíveis · compras na Loja do Sistema e na loja de chapéus. Detalhes e simulação em [`docs/balanceamento-economia.md`](docs/balanceamento-economia.md).
@@ -227,7 +248,7 @@ Toda ação relevante (`addMissionCompletionStats`, compra/venda, craft, daily) 
 
 ## <img src="./images/emojis/saturn.png" width="22" valign="middle"> Ranking (`/ranking`)
 
-Leaderboard Top 10 com 5 categorias, trocáveis por um menu suspenso:
+Leaderboard Top 10 com 5 categorias, trocáveis por um menu suspenso, em dois escopos (botões **Global** / **Este servidor**):
 
 | Categoria | Ícone |
 |---|---|
@@ -238,6 +259,8 @@ Leaderboard Top 10 com 5 categorias, trocáveis por um menu suspenso:
 | Recursos Coletados | <img src="./images/emojis/registry.png" width="18" valign="middle"> |
 
 O painel mostra um **pódio do 1º, 2º e 3º lugar** como destaque e a **posição pessoal de quem usou o comando**, mesmo fora do Top 10.
+
+O ranking **Este servidor** lista quem já usou o bot naquele servidor (tabela `user_guilds`). Não consulta a lista de membros do Discord — seria pesado e exigiria um intent privilegiado. O registro custa 1 escrita por par servidor/jogador por vida do processo (cache em memória), a consulta usa índice e fica 90s em cache. Quem saiu do servidor continua aparecendo.
 
 ---
 

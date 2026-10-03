@@ -7,7 +7,9 @@
     "buttons": {
       "view": "View terms",
       "accept": "Accept",
-      "acceptFull": "Accept and continue"
+      "acceptFull": "Accept and continue",
+      "tutorial": "View Tutorial (/tutorial)",
+      "help": "View Commands (/help)"
     },
     "embed": {
       "title": "∩lien Terms of Service",
@@ -83,7 +85,7 @@
       "missionNotifyOptionDmLabel": "DM",
       "missionNotifyOptionDmDesc": "Always notify in your direct message",
       "missionNotifyOptionChannelLabel": "Channel",
-      "missionNotifyOptionChannelDesc": "Always notify in the channel where the mission started",
+      "missionNotifyOptionChannelDesc": "Always notify in the channel where the mission started (or in DMs if the bot can't post there)",
       "missionNotifySaved": "Notification preference updated! <:passionate:1536247742110634034>",
       "invalidMissionNotifyPref": "Invalid preference.",
       "panelServerTitle": "Server Settings",
@@ -100,7 +102,17 @@
       "serverLanguagePlaceholder": "Select the default language...",
       "serverLanguageSaved": "Server default language updated successfully!",
       "serverGuildOnly": "This command can only be used inside a server.",
-      "serverNoPermission": "You need **Manage Server** permission to change these settings."
+      "serverNoPermission": "You need **Manage Server** permission to change these settings.",
+      "languages": {
+        "pt-BR": {
+          "name": "Portuguese (Brazil)",
+          "desc": "Bot responses in Portuguese"
+        },
+        "en-US": {
+          "name": "English (USA)",
+          "desc": "Bot responses in English"
+        }
+      }
     },
     "alien": {
       "onboardingTitle": "Choose Your Alien",
@@ -145,7 +157,15 @@
       "savedLabel": "Saved successfully!",
       "invalidColor": "Invalid color. Please try again.",
       "invalidName": "Invalid name. Use between 1 and 12 characters.",
-      "noAlienButton": "You don't have an alien yet. Use </alien:1537544781020799120> first."
+      "noAlienButton": "You don't have an alien yet. Use </alien:1537544781020799120> first.",
+      "colorName": {
+        "purple": "Purple",
+        "green": "Green",
+        "blue": "Blue",
+        "pink": "Pink",
+        "orange": "Orange"
+      },
+      "hatEquipError": "You don't own that hat."
     },
     "planet": {
       "alienRequired": "You need an alien to explore planets!",
@@ -212,7 +232,9 @@
       "exploreWithItem": "Explore + {item} ({amount})",
       "exploreWithBoth": "Explore + both",
       "consumableMissing": "You don't have that consumable anymore. Craft another one in </craft:1537544781020799121>.",
-      "boostActiveLine": "**{item}** active: {effect}"
+      "boostActiveLine": "**{item}** active: {effect}",
+      "dailyReminder": "Your </daily:1537544781020799118> is ready to claim today!",
+      "dailyReminderStreak": "Your </daily:1537544781020799118> is ready — don't lose your **{days}**-day streak!"
     },
     "inventory": {
       "title": "Galactic Inventory",
@@ -267,7 +289,25 @@
       "buyModalAmountLabel": "Quantity you want to buy",
       "invalidModalInput": "<:error:1536247565006143528> Enter a valid listing ID and quantity (positive whole numbers).",
       "priceTooLow": "<:error:1536247565006143528> Price too low! The minimum price to sell this resource is **{minPrice} coins/unit** ({percent}% of the System Shop price).",
-      "tooManyListings": "<:error:1536247565006143528> You already have an active listing for this resource. Cancel it or wait for it to sell before creating another (limit: {limit} listing per resource)."
+      "tooManyListings": "<:error:1536247565006143528> You already have an active listing for this resource. Cancel it or wait for it to sell before creating another (limit: {limit} listing per resource).",
+      "pageShort": "Pg.",
+      "showingFirstPages": "Showing first 3 pages ({shown} of {total} offers). List at a lower price to rank among the cheapest!",
+      "buyAllButton": "All ({amount}x • {total} ∩oins)",
+      "previousPage": "◀ Previous",
+      "nextPage": "Next ▶",
+      "unknownSeller": "Player #{id}",
+      "shopPriceListTitle": "Official Shop Price List:",
+      "shopBuyButton": "Buy {amount}x ({total} ∩oins)",
+      "shopSellButton": "Sell {amount}x ({total} ∩oins)",
+      "expired": "Expired",
+      "expiredTag": "EXPIRED",
+      "expiredLine": "No buyers in {days} days",
+      "readyToClaim": "Ready to claim",
+      "expiredListingsTitle": "Expired listings (ready to claim)",
+      "activeListingsTitle": "Active market listings",
+      "activeListingLine": "**{amount}x** for **`{price}`** ∩oins/unit • <:loading:1536247662372982794> Expires in: **{time}**",
+      "claimButton": "Claim ID #{id}",
+      "cancelIdButton": "Cancel ID #{id}"
     },
     "wallet": {
       "myTitle": "My Galactic Wallet",
@@ -293,7 +333,20 @@
       "excavation": "Excavation Probe",
       "scanner": "Star Scanner",
       "botTitle": "This is not a user!",
-      "botBody": "**{user}** is a bot!"
+      "botBody": "**{user}** is a bot!",
+      "achievementsLabel": "Achievements",
+      "achievementsUnlocked": "unlocked",
+      "marketTitle": "Global Market",
+      "unitsSold": "Units sold",
+      "netRevenue": "Net revenue",
+      "unitsBought": "Units bought",
+      "totalSpent": "Total spent",
+      "shopBought": "System Shop - Bought",
+      "shopSold": "System Shop - Sold",
+      "unitsShort": "units",
+      "craftsCompleted": "Crafts completed",
+      "tierLabel": "Tier",
+      "levelLabel": "Level"
     },
     "ranking": {
       "title": "Galactic Ranking",
@@ -316,7 +369,10 @@
       "yourPosition": "Your position",
       "notRanked": "not ranked yet — go play!",
       "empty": "No one has joined this ranking yet. Be the first!",
-      "footer": "Updated every few minutes · Top 10 explorers"
+      "footer": "Updated every few minutes · Top 10 explorers",
+      "scopeGlobal": "Global",
+      "scopeServer": "This server",
+      "unknownUser": "Unknown User ({id})"
     },
     "craft": {
       "title": "Crafting Workshop",
@@ -398,7 +454,45 @@
     },
     "achievements": {
       "previousPage": "◀ Previous",
-      "nextPage": "Next ▶"
+      "nextPage": "Next ▶",
+      "title": "Achievements",
+      "filterTitle": "Current filter",
+      "progressHeader": "Overall progress",
+      "noneFound": "No achievements match this filter. Try another!",
+      "pageLabel": "Page",
+      "pageOf": "of",
+      "unlockedWord": "unlocked",
+      "statusUnlocked": "**Unlocked!**",
+      "statusInProgress": "In progress",
+      "coinsReward": "∩oins reward",
+      "resourcesReward": "Resources reward",
+      "filterPlaceholder": "Filter achievements by category...",
+      "inviteHighlightTitle": "Special achievement available!",
+      "inviteReward": "Reward",
+      "inviteLink": "Click here to add ∩lien to a server of yours",
+      "inviteHowTo": "Once added, use </redeem:1538333297430765702> to confirm and get your reward!",
+      "profileOf": "Profile of",
+      "categories": {
+        "all": "All achievements",
+        "unlocked": "Only unlocked",
+        "locked": "Only locked",
+        "market_sell": "Market: Sales",
+        "market_buy": "Market: Purchases",
+        "shop": "System Shop",
+        "explore": "Exploration",
+        "daily": "Daily / Streak",
+        "craft": "Crafts"
+      },
+      "unlock": {
+        "single": "Achievement unlocked!",
+        "multiple": "Multiple achievements unlocked!",
+        "congrats": "Congrats, you hit a goal and earned rewards!",
+        "countSuffix": "achievement(s)",
+        "rewardsLabel": "Rewards:",
+        "totalCoins": "Total ∩oins",
+        "totalResources": "Total resources",
+        "totalTitle": "ACHIEVEMENT TOTAL (already credited!)"
+      }
     },
     "consumables": {
       "miningKit": {
@@ -409,7 +503,231 @@
       }
     },
     "gift": {
-      "feeLine": "{percent}% fee: `{fee}` ∩oins — the recipient gets `{net}` ∩oins."
+      "feeLine": "{percent}% fee: `{fee}` ∩oins — the recipient gets `{net}` ∩oins.",
+      "title": "Gift",
+      "confirmButton": "Confirm",
+      "cancelButton": "Cancel",
+      "statusConfirmed": "confirmed",
+      "statusWaiting": "waiting",
+      "confirmHint": "Both must confirm within 3 minutes, or the gift is cancelled.",
+      "timedOut": "Timed out, nobody confirmed in time.",
+      "cannotGiftBot": "You can't gift a bot.",
+      "cannotGiftSelf": "You can't gift yourself.",
+      "notEnoughCoins": "**Not enough ∩oins!** You have `{has}` but tried to gift `{amount}`.",
+      "notEnoughResources": "**Not enough resources!** You have `{has}`x {resource} but tried to gift `{amount}`.",
+      "expiredOrResolved": "This gift already expired or was resolved.",
+      "notYours": "This gift isn't yours.",
+      "cancelledBy": "Cancelled by {user}.",
+      "senderNoCoins": "The sender no longer has enough ∩oins. Gift cancelled.",
+      "senderNoResource": "The sender no longer has enough of that resource. Gift cancelled.",
+      "success": "{sender} gifted {target} with {item}!"
+    },
+    "hatmarket": {
+      "title": "Hat Market",
+      "browseSubtitle": "Buy hats from other players",
+      "sellSubtitle": "List a hat from your inventory",
+      "myListingsSubtitle": "Your active listings",
+      "shopSubtitle": "Buy hats directly from the System Shop at a fixed price",
+      "browseButton": "Browse",
+      "shopButton": "Shop",
+      "sellButton": "Sell",
+      "myListingsButton": "My Listings",
+      "switchToMarketButton": "View Market",
+      "selectHatPlaceholder": "Select a hat...",
+      "noListings": "No active listings for this hat yet.",
+      "buyButton": "Buy",
+      "buyByIdButton": "Buy by ID",
+      "buyShop1x": "Buy 1x ({price} ∩oins)",
+      "buyShop5x": "Buy 5x ({price} ∩oins)",
+      "shopListTitle": "Official Shop Price List:",
+      "shopNote": "System Shop hats are created on the spot — no seller, no fee.",
+      "noOwnedHats": "You don't have any hats to sell. Explore planets with </planet:1537544781020799123> to find one!",
+      "selectHatToSellPlaceholder": "Select the hat you want to sell...",
+      "noMyListings": "You don't have any active listings.",
+      "cancelButton": "Cancel",
+      "sellModalTitle": "List hat",
+      "sellModalPriceLabel": "Price (∩oins)",
+      "buyModalTitle": "Buy by ID",
+      "buyModalIdLabel": "Listing ID",
+      "invalidValues": "Invalid values.",
+      "priceTooLow": "Minimum price for this hat: **{min}** ∩oins.",
+      "hatNotOwned": "You don't own this hat (or it's already listed).",
+      "tooManyListings": "You already have the max active listings ({limit}) for this hat.",
+      "sellSuccess": "<:excited:1536247579061256252> Listing created! **{name}** for **{price}** ∩oins.",
+      "listingNotFound": "Listing not found or already sold.",
+      "cannotBuyOwn": "You cannot buy your own listing.",
+      "insufficientCoins": "You don't have enough ∩oins. You need **{total}**.",
+      "buySuccess": "<:excited:1536247579061256252> You bought **{name}** for **{total}** ∩oins!",
+      "buyShopSuccess": "<:excited:1536247579061256252> You bought **{amount}x {name}** from the Shop for **{total}** ∩oins!",
+      "cancelSuccess": "Listing for **{name}** cancelled — the hat is back in your inventory.",
+      "feeNote": "*Sale fee: {fee}%*",
+      "sellerLabel": "Seller",
+      "priceLabel": "Price",
+      "minPriceLabel": "Minimum price",
+      "unknownSeller": "Player #{id}"
+    },
+    "redeem": {
+      "title": "Redeem",
+      "balanceLabel": "Current balance",
+      "achievementUnlocked": "Achievement unlocked!",
+      "inviteNotVerified": "We couldn't find any server of yours with ∩lien added yet. Add the bot to a server you control and run </redeem:1538333297430765702> again!",
+      "inviteAlreadyUnlocked": "The invite-the-bot achievement is already unlocked — nothing pending there.",
+      "giftsRedeemed": "Gifts redeemed!",
+      "nothingToRedeem": "Nothing to redeem right now. Check back when there's something new!",
+      "pendingNotice": "You have **{count}** gift(s) waiting! Claim them with </redeem:1538333297430765702>."
+    },
+    "alienHats": {
+      "title": "Hats",
+      "equippedLabel": "Equipped",
+      "noneEquipped": "No hat equipped",
+      "placeholder": "Equip a hat...",
+      "noneOption": "None (remove hat)",
+      "emptyInventory": "You haven't found any hats yet. Explore planets with </planet:1537544781020799123> for a chance to find one!"
+    },
+    "help": {
+      "title": "Help Center • ∩lien",
+      "countLine": "Explore all {count} available commands, organized by category below:",
+      "tipLabel": "Tip for beginners:",
+      "tipText": "First time here? Use </tutorial:1538040562978922520> for a step-by-step guide!",
+      "supportText": "Need more help? Reach out to the team on the support server.",
+      "selectPlaceholder": "Select a command category...",
+      "tutorialButton": "View Step-by-Step Tutorial",
+      "tutorialFallback": "Use </tutorial:1538040562978922520> to view the complete guide!",
+      "categories": {
+        "galaxy": {
+          "title": "Galaxy & Exploration",
+          "desc": "Commands to travel through space, discover new worlds, and manage your items:",
+          "option": "{count} commands • travel, planets & ship"
+        },
+        "economy": {
+          "title": "Economy & Trade",
+          "desc": "Commands to manage your ∩oins balance and trade globally:",
+          "option": "{count} commands • ∩oins, market & hats"
+        },
+        "utility": {
+          "title": "Utility & Profile",
+          "desc": "General utility commands, player statistics, and preferences:",
+          "option": "{count} commands • profile, achievements & config"
+        }
+      },
+      "commandDesc": {
+        "alien": "View your alien companion and ship.",
+        "planet": "Explore mysterious planets and send your alien on resource missions.",
+        "inventory": "View all space resources collected during expeditions.",
+        "craft": "Craft ship upgrades (Propulsors, Probes, Scanners).",
+        "daily": "Claim your daily reward of ∩oins and resources.",
+        "redeem": "Redeem pending achievements, gifts, and rewards.",
+        "wallet": "Check your ∩oins wallet or another explorer's balance.",
+        "market": "Buy and sell resources on the Global Market or System Shop.",
+        "hatmarket": "Buy and sell exclusive hats with other players.",
+        "profile": "View your space statistics, ship, and alien companion.",
+        "achievements": "View all available achievements and your progress toward them.",
+        "config": "Change language, mission-complete notice (DM/channel/off), or server settings.",
+        "tutorial": "Interactive step-by-step tutorial guide to learn ∩lien.",
+        "ranking": "View the galactic leaderboard (global or this server): richest, most explored, and more.",
+        "botinfo": "Displays information about ∩lien bot, performance, and stats.",
+        "ping": "Checks bot response time and latency.",
+        "help": "Opens this categorized help menu with commands."
+      }
+    },
+    "tutorial": {
+      "steps": {
+        "1": {
+          "title": "Choose your Alien Companion",
+          "desc": "Before starting your stellar journey, choose your alien companion! Use </alien:1537544781020799120> to pick a color (purple, green, blue, pink, orange) and give it a special name."
+        },
+        "2": {
+          "title": "Explore Planets & Missions",
+          "desc": "Discover planets of various rarities and send your alien on space exploration missions. During expeditions, it will collect rare resources and valuable ∩oins for you!"
+        },
+        "3": {
+          "title": "Daily Reward",
+          "desc": "Claim your daily ∩oins and resource reward with </daily:1537544781020799118> — it works in any server! Keep your streak active to earn higher bonuses every day."
+        },
+        "4": {
+          "title": "Upgrade your Ship (Crafting)",
+          "desc": "Use accumulated resources from your inventory to craft upgrades for your ship! Upgrade your Propulsor (more speed), Excavation Probe (more resources per mission), and Star Scanner (less mining time)."
+        },
+        "5": {
+          "title": "Global Resource Market",
+          "desc": "Need ∩oins or a specific resource? List your extra resources on the Global Market for other players or buy items directly from the System Shop."
+        },
+        "6": {
+          "title": "Profile & Statistics",
+          "desc": "Track your progress! Check your balance in </wallet:1537544781020799119>, see items in </inventory:1537544781020799122>, and view travel stats and ship equipment in </profile:1537544781117263992>."
+        },
+        "7": {
+          "title": "Achievements & Customization",
+          "desc": "You know the essentials now! Explore </achievements:1538040562978922518> to unlock achievements, </hatmarket:1538040562978922516> to buy and sell exclusive hats, and </config user:1537544781020799125> to adjust your language. Safe travels, explorer!"
+        }
+      },
+      "header": "Explorer Guide • ∩lien Tutorial",
+      "stepOf": "Step {step} of {total}",
+      "stepTitle": "Step {step}: {title}",
+      "finishedTip": "You've completed the tutorial! Use </help:1538040562978922519> anytime you need to look up a command.",
+      "navTip": "Use the buttons or the menu below to navigate tutorial steps!",
+      "mainCommand": "Main command:",
+      "jumpPlaceholder": "Jump directly to a step...",
+      "previous": "◀ Previous",
+      "next": "Next ▶",
+      "done": "Done",
+      "helpButton": "Commands (/help)",
+      "helpFallback": "Use </help:1538040562978922519> to see the command list!"
+    },
+    "painel": {
+      "title": "Admin panel",
+      "header": "**User:** {user}\n**Alien:** {alien}\n**Coins:** `{coins}` ∩oins\n**Ship:** propulsor `{propulsor}` · excavation `{excavation}` · scanner `{scanner}`",
+      "alienNoName": "no name",
+      "alienNone": "not created yet",
+      "missionTitle": "Exploration mission",
+      "noMission": "No active mission.",
+      "missionBody": "**Planet:** {planet}\n**Current phase:** {phase}\n**Phase duration:** `{duration}`\n**Time left:** `{remaining}`",
+      "status": {
+        "traveling_out": "Heading to the planet",
+        "collecting": "Mining",
+        "traveling_back": "Returning home"
+      },
+      "dailyTitle": "Daily reward",
+      "dailyAvailable": "available",
+      "dailyClaimed": "already claimed today",
+      "dailyBody": "**Status:** {status}\n**Streak:** `{streak}` day(s)",
+      "inventoryTitle": "Inventory",
+      "inventoryEmpty": "Empty inventory.",
+      "buttons": {
+        "skipPhase": "Skip current phase",
+        "skipAll": "Skip to arrival",
+        "refresh": "Refresh",
+        "setResource": "Set resource",
+        "setCoins": "Set coins",
+        "skipDaily": "Reset daily",
+        "giftAll": "Gift to everyone"
+      },
+      "modal": {
+        "resourceLabel": "Resource (e.g. stone, iron, blueCrystal)",
+        "amountLabel": "Amount (whole number, ≥ 0)",
+        "coinsLabel": "Coin amount (whole number, ≥ 0)",
+        "giftAllTitle": "Gift to every player",
+        "titlePtLabel": "Title in Portuguese",
+        "titleEnLabel": "Title in English",
+        "giftCoinsLabel": "∩oins (0 = none)",
+        "giftResourcesLabel": "Resources (optional)",
+        "giftResourcesPlaceholder": "e.g. stone:20, iron:10, blue crystal:2"
+      },
+      "noPermission": "You don't have permission to use this command.",
+      "invalidId": "Invalid ID. Send only the user's numeric Discord ID.",
+      "invalidComponentId": "Invalid ID in this component.",
+      "unknownResource": "Resource \"{resource}\" not recognized.",
+      "invalidAmount": "Invalid amount. Send a whole number greater than or equal to 0.",
+      "invalidCoins": "Invalid ∩oins. Send a whole number greater than or equal to 0.",
+      "giftResourceParseError": "Couldn't understand the resource `{part}`. Use the format `stone:20, iron:10`.",
+      "giftEmpty": "The gift needs ∩oins and/or resources.",
+      "giftAllDone": "Gift **{title}** created for **{total}** players. They claim it with </redeem:1538333297430765702> (and get a notice on their next command)."
     }
+  },
+  "numbers": {
+    "billionKm": "{value} billion km",
+    "millionKm": "{value} million km",
+    "billion": "{value} billion",
+    "million": "{value} million"
   }
 }

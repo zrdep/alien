@@ -14,9 +14,11 @@ const {
     acceptTerms,
     getUserAlien,
     syncUserLanguageWithGuildDefault,
+    recordUserGuild,
     getUserLanguage,
     getChangelogSeenVersion,
     setChangelogSeenVersion,
+    getPendingRedeemablesSummary,
 } = require('../utils/db');
 const { tFor } = require('../utils/i18n');
 const { blockWrongComponentUser } = require('../utils/componentGuard');
@@ -88,16 +90,15 @@ const termosConteudoCompleto = (interaction) => {
 };
 
 const termosJaAceitoButtons = (interaction) => {
-    const isPt = tFor(interaction, 'terms.accepted').includes('Termos aceitos');
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId('terms_open_tutorial')
-            .setLabel(isPt ? 'Ver Tutorial (/tutorial)' : 'View Tutorial (/tutorial)')
+            .setLabel(tFor(interaction, 'terms.buttons.tutorial'))
             .setEmoji('<:book2:1536459861527756952>')
             .setStyle(ButtonStyle.Success),
         new ButtonBuilder()
             .setCustomId('terms_open_help')
-            .setLabel(isPt ? 'Ver Comandos (/help)' : 'View Commands (/help)')
+            .setLabel(tFor(interaction, 'terms.buttons.help'))
             .setEmoji('<:book:1536247508181848134>')
             .setStyle(ButtonStyle.Primary)
     );
@@ -156,6 +157,28 @@ ${tFor(interaction, 'cooldown.text', { seconds: segundos })}`,
 // vê) se a versão do bot em config.json mudou desde a última vez que esse
 // usuário viu o aviso. Editar `versao` + `changelogMessage` no config.json
 // é o suficiente pra disparar o aviso de novo pra todo mundo.
+// Avisa (ephemeral, 1x por presente novo) que o jogador tem algo pendente no
+// /redeem — ex: um "Presente para todos" criado pelo /painel. Guarda em
+// memória o último presente avisado; depois de reiniciar o bot o aviso
+// aparece de novo uma vez, o que é aceitável.
+const lastRedeemNoticeByUser = new Map();
+const avisarPresentePendenteSeNecessario = async (interaction) => {
+    if (interaction.commandName === 'redeem') return;
+
+    const { total, lastId } = getPendingRedeemablesSummary(interaction.user.id);
+    if (!total || lastRedeemNoticeByUser.get(interaction.user.id) === lastId) return;
+    lastRedeemNoticeByUser.set(interaction.user.id, lastId);
+
+    try {
+        await interaction.followUp({
+            content: `<:gift_coins:1537511597013074030> ${tFor(interaction, 'commands.redeem.pendingNotice', { count: total })}`,
+            flags: MessageFlags.Ephemeral,
+        });
+    } catch (err) {
+        logger.warn(`Falha ao avisar presente pendente: ${err.message}`);
+    }
+};
+
 const enviarAvisoChangelogSeNecessario = async (interaction) => {
     if (changelogEnabled === false) return; // desativado no config.json
     if (!versao || !changelogMessage) return;
@@ -182,6 +205,7 @@ module.exports = {
         // com o idioma padrão do servidor onde ele está interagindo agora.
         if (interaction.guildId && interaction.user?.id) {
             syncUserLanguageWithGuildDefault(interaction.user.id, interaction.guildId);
+            recordUserGuild(interaction.user.id, interaction.guildId);
         }
 
         if (interaction.isStringSelectMenu()) {
@@ -340,6 +364,7 @@ module.exports = {
         try {
             await command.execute(interaction);
             await enviarAvisoChangelogSeNecessario(interaction);
+            await avisarPresentePendenteSeNecessario(interaction);
         } catch (error) {
             logger.br();
             logger.div();

@@ -89,43 +89,36 @@ const CATEGORIES = [
     {
         key: 'all',
         emoji: E_RAINBOW,
-        name: { 'pt-BR': 'Todas as conquistas', 'en-US': 'All achievements' },
         filter: () => true,
     },
     {
         key: 'unlocked',
         emoji: E_UNLOCKED,
-        name: { 'pt-BR': 'Apenas conquistadas', 'en-US': 'Only unlocked' },
         filter: (a, unlocked) => unlocked.has(a.id),
     },
     {
         key: 'locked',
         emoji: E_LOCKED,
-        name: { 'pt-BR': 'Apenas bloqueadas', 'en-US': 'Only locked' },
         filter: (a, unlocked) => !unlocked.has(a.id),
     },
     {
         key: 'market_sell',
         emoji: E_REGISTRY,
-        name: { 'pt-BR': 'Mercado: Vendas', 'en-US': 'Market: Sales' },
         filter: (a) => a.type === 'market_global_sold_count' || a.type === 'market_global_sold_revenue',
     },
     {
         key: 'market_buy',
         emoji: E_OVNI,
-        name: { 'pt-BR': 'Mercado: Compras', 'en-US': 'Market: Purchases' },
         filter: (a) => a.type === 'market_global_bought_count' || a.type === 'market_global_bought_spent',
     },
     {
         key: 'shop',
         emoji: E_CONFIG,
-        name: { 'pt-BR': 'Loja do Sistema', 'en-US': 'System Shop' },
         filter: (a) => a.type === 'shop_bought_count' || a.type === 'shop_sold_count',
     },
     {
         key: 'explore',
         emoji: E_SATURN,
-        name: { 'pt-BR': 'Exploração', 'en-US': 'Exploration' },
         filter: (a) =>
             a.type === 'planets_seen' || a.type === 'trips_completed' ||
             a.type === 'resources_collected' || a.type === 'distance_traveled_km',
@@ -133,13 +126,11 @@ const CATEGORIES = [
     {
         key: 'daily',
         emoji: E_ONLINE,
-        name: { 'pt-BR': 'Daily / Streak', 'en-US': 'Daily / Streak' },
         filter: (a) => a.type === 'daily_streak',
     },
     {
         key: 'craft',
         emoji: E_BOOK,
-        name: { 'pt-BR': 'Crafts', 'en-US': 'Crafts' },
         filter: (a) => a.type === 'craft_completed',
     },
     ...RARITY_ORDER.map((r) => ({
@@ -159,7 +150,7 @@ const getCategoryName = (category, lang) => {
     if (category.rarityCode) {
         return `${t(lang, 'commands.planet.rarityLabel')} ${category.rarityCode} — ${getRarityName(lang, category.rarityCode)}`;
     }
-    return category.name[lang] ?? category.name['pt-BR'];
+    return t(lang, `commands.achievements.categories.${category.key}`);
 };
 
 const ACHIEVEMENTS_PER_PAGE = 6;
@@ -183,8 +174,8 @@ const buildAchievementBlock = (achievement, unlocked, current, lang) => {
 
     const statusIcon = unlocked ? E_UNLOCKED : E_IDLE;
     const statusLabel = unlocked
-        ? (lang === 'pt-BR' ? '**Conquistada!**' : '**Unlocked!**')
-        : (lang === 'pt-BR' ? 'Em progresso' : 'In progress');
+        ? t(lang, 'commands.achievements.statusUnlocked')
+        : t(lang, 'commands.achievements.statusInProgress');
 
     const threshold = achievement.threshold;
     const pct = Math.max(0, Math.min(100, Math.floor((current / threshold) * 100)));
@@ -194,7 +185,7 @@ const buildAchievementBlock = (achievement, unlocked, current, lang) => {
 
     const rewardLines = [];
     if (achievement.reward?.coins > 0) {
-        const coinsLabel = lang === 'pt-BR' ? 'Recompensa coins' : 'Coins reward';
+        const coinsLabel = t(lang, 'commands.achievements.coinsReward');
         rewardLines.push(`${E_GOLD_COINS} **${coinsLabel}**: \`${formatNum(achievement.reward.coins, lang)}\` ∩oins`);
     }
     if (achievement.reward?.resources?.length) {
@@ -205,7 +196,7 @@ const buildAchievementBlock = (achievement, unlocked, current, lang) => {
                 : r.key;
             return `\`${formatNum(r.amount, lang)}\`x ${label}`;
         });
-        const resourcesLabel = lang === 'pt-BR' ? 'Recompensa recursos' : 'Resources reward';
+        const resourcesLabel = t(lang, 'commands.achievements.resourcesReward');
         rewardLines.push(`${E_DIAMOND} **${resourcesLabel}**: ${parts.join(' + ')}`);
     }
 
@@ -219,9 +210,6 @@ const buildAchievementBlock = (achievement, unlocked, current, lang) => {
 // `user`) vai embutido no customId dos componentes — sem isso, trocar filtro
 // ou página voltava a mostrar as conquistas de quem clicou.
 const buildCategoryMenu = (interaction, targetUserId, activeKey, lang) => {
-    const t = {
-        placeholder: lang === 'pt-BR' ? 'Filtrar conquistas por categoria...' : 'Filter achievements by category...',
-    };
 
     const options = CATEGORIES.map((c) => ({
         label: getCategoryName(c, lang),
@@ -233,7 +221,7 @@ const buildCategoryMenu = (interaction, targetUserId, activeKey, lang) => {
     return new ActionRowBuilder().addComponents(
         new StringSelectMenuBuilder()
             .setCustomId(`achievements_category_pick:${targetUserId}`)
-            .setPlaceholder(t.placeholder)
+            .setPlaceholder(t(lang, 'commands.achievements.filterPlaceholder'))
             .addOptions(options)
     );
 };
@@ -260,16 +248,14 @@ const buildPaginationRow = (interaction, targetUserId, categoryKey, page, totalP
 
 const buildAchievementsView = (interaction, userId, categoryKey, page) => {
     const lang = getUserLanguage(interaction.user.id);
-    const isPt = lang === 'pt-BR';
-    const t = {
-        title: isPt ? 'Conquistas' : 'Achievements',
-        filterTitle: isPt ? 'Filtro atual' : 'Current filter',
-        progressHeader: isPt ? 'Progresso geral' : 'Overall progress',
-        noneFound: isPt
-            ? `${E_HMM} *Nenhuma conquista encontrada neste filtro. Tente outro!*`
-            : `${E_HMM} *No achievements match this filter. Try another!*`,
-        pageLabel: isPt ? 'Página' : 'Page',
-        of: isPt ? 'de' : 'of',
+    const ta = (key) => t(lang, `commands.achievements.${key}`);
+    const txt = {
+        title: ta('title'),
+        filterTitle: ta('filterTitle'),
+        progressHeader: ta('progressHeader'),
+        noneFound: `${E_HMM} *${ta('noneFound')}*`,
+        pageLabel: ta('pageLabel'),
+        of: ta('pageOf'),
     };
 
     const unlockedSet = new Set(getUserAchievements(userId).map((a) => a.achievementId));
@@ -288,11 +274,11 @@ const buildAchievementsView = (interaction, userId, categoryKey, page) => {
     const filteredPct = filtered.length > 0 ? Math.floor((filteredUnlocked / filtered.length) * 100) : 0;
 
     const header = new TextDisplayBuilder().setContent(
-        `# ${E_SUNGLASSES} ${t.title}\n\n` +
-        `${E_RAINBOW} **${t.progressHeader}**: \`${unlockedCount}/${all.length}\` (\`${overallPct}%\` ${isPt ? 'conquistado' : 'unlocked'})\n` +
-        `${E_FILTER} **${t.filterTitle}**: ${category.emoji} ${getCategoryName(category, lang)} ` +
+        `# ${E_SUNGLASSES} ${txt.title}\n\n` +
+        `${E_RAINBOW} **${txt.progressHeader}**: \`${unlockedCount}/${all.length}\` (\`${overallPct}%\` ${ta('unlockedWord')})\n` +
+        `${E_FILTER} **${txt.filterTitle}**: ${category.emoji} ${getCategoryName(category, lang)} ` +
         `— \`${filteredUnlocked}/${filtered.length}\` (\`${filteredPct}%\`)` +
-        (filtered.length > 0 ? `\n${E_PAGE} **${t.pageLabel}** \`${safePage}\` ${t.of} \`${totalPages}\`` : '')
+        (filtered.length > 0 ? `\n${E_PAGE} **${txt.pageLabel}** \`${safePage}\` ${txt.of} \`${totalPages}\`` : '')
     );
 
     const blocks = pageItems.map((a) => {
@@ -325,17 +311,12 @@ const buildAchievementsView = (interaction, userId, categoryKey, page) => {
                 : null;
 
             const rewardCoins = inviteAchievement.reward?.coins ?? 0;
-            const highlightText = isPt
-                ? `${E_EXCITED} **Conquista especial disponível!**\n` +
-                  `${inviteAchievement.emoji} **${inviteAchievement.name['pt-BR']}** — ${inviteAchievement.description['pt-BR']}\n` +
-                  `${E_GOLD_COINS} Recompensa: \`${formatNum(rewardCoins, lang)}\` ∩oins\n` +
-                  (inviteLink ? `> [Clique aqui pra adicionar o ∩lien num servidor seu](${inviteLink})\n` : '') +
-                  `> Depois de adicionar, use </redeem:1538333297430765702> pra confirmar e receber a recompensa!`
-                : `${E_EXCITED} **Special achievement available!**\n` +
-                  `${inviteAchievement.emoji} **${inviteAchievement.name['en-US']}** — ${inviteAchievement.description['en-US']}\n` +
-                  `${E_GOLD_COINS} Reward: \`${formatNum(rewardCoins, lang)}\` ∩oins\n` +
-                  (inviteLink ? `> [Click here to add ∩lien to a server of yours](${inviteLink})\n` : '') +
-                  `> Once added, use </redeem:1538333297430765702> to confirm and get your reward!`;
+            const highlightText =
+                `${E_EXCITED} **${ta('inviteHighlightTitle')}**\n` +
+                `${inviteAchievement.emoji} **${inviteAchievement.name[lang] ?? inviteAchievement.name['pt-BR']}** — ${inviteAchievement.description[lang] ?? inviteAchievement.description['pt-BR']}\n` +
+                `${E_GOLD_COINS} ${ta('inviteReward')}: \`${formatNum(rewardCoins, lang)}\` ∩oins\n` +
+                (inviteLink ? `> [${ta('inviteLink')}](${inviteLink})\n` : '') +
+                `> ${ta('inviteHowTo')}`;
 
             container
                 .addTextDisplayComponents(new TextDisplayBuilder().setContent(highlightText))
@@ -369,9 +350,9 @@ const buildAchievementsView = (interaction, userId, categoryKey, page) => {
     }
 
     if (thumbUrl) {
-        const displayName = alien?.name ?? (isPt ? 'Alienígena' : 'Alien');
+        const displayName = alien?.name ?? t(lang, 'commands.alien.defaultName');
         const thumbHeaderLine = new TextDisplayBuilder().setContent(
-            `${E_EXCITED} ${isPt ? 'Perfil de' : 'Profile of'} \`${displayName}\``
+            `${E_EXCITED} ${ta('profileOf')} \`${displayName}\``
         );
         const section = new SectionBuilder()
             .addTextDisplayComponents(thumbHeaderLine)
@@ -381,7 +362,7 @@ const buildAchievementsView = (interaction, userId, categoryKey, page) => {
     }
 
     if (blocks.length === 0) {
-        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(t.noneFound));
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(txt.noneFound));
     } else {
         for (let i = 0; i < blocks.length; i++) {
             container.addTextDisplayComponents(new TextDisplayBuilder().setContent(blocks[i]));

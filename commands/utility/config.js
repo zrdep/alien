@@ -29,15 +29,10 @@ const FLAG = {
     'en-US': '🇺🇸',
 };
 
-const NAME = {
-    'pt-BR': { 'pt-BR': 'Português (Brasil)', 'en-US': 'Portuguese (Brazil)' },
-    'en-US': { 'pt-BR': 'Inglês (EUA)', 'en-US': 'English (USA)' },
-};
-
-const DESC = {
-    'pt-BR': { 'pt-BR': 'Respostas do bot em português', 'en-US': 'Bot responses in Portuguese' },
-    'en-US': { 'pt-BR': 'Respostas do bot em inglês', 'en-US': 'Bot responses in English' },
-};
+// Nome/descrição de cada idioma, no idioma de quem está vendo o menu
+// (locales/*.json → commands.config.languages.<código>).
+const langName = (code, viewerLang) => t(viewerLang, `commands.config.languages.${code}.name`);
+const langDesc = (code, viewerLang) => t(viewerLang, `commands.config.languages.${code}.desc`);
 
 const buildLanguageMenu = (userId) => {
     const currentLang = getUserLanguage(userId);
@@ -47,8 +42,8 @@ const buildLanguageMenu = (userId) => {
             .setPlaceholder(t(userId, 'commands.config.languagePlaceholder'))
             .addOptions(
                 SUPPORTED_LANGS.map((code) => ({
-                    label: NAME[code][currentLang],
-                    description: DESC[code][currentLang],
+                    label: langName(code, currentLang),
+                    description: langDesc(code, currentLang),
                     value: code,
                     emoji: FLAG[code],
                     default: code === currentLang,
@@ -87,7 +82,7 @@ const buildHeader = (userId) => {
     return new TextDisplayBuilder().setContent(`
 # <:settings:1536248422686920704> ${t(userId, 'commands.config.panelUserTitle')}
 
-<:alien:1536247533502734376> ${t(userId, 'commands.config.panelUserIntro')}
+<:ovni:1536247726889762847> ${t(userId, 'commands.config.panelUserIntro')}
 `);
 };
 
@@ -99,7 +94,7 @@ const buildLanguageSection = (userId) => {
 
 ${t(userId, 'commands.config.languageDesc')}
 
-**${t(userId, 'commands.config.currentValue')}** ${FLAG[lang]} ${NAME[lang][lang]}
+**${t(userId, 'commands.config.currentValue')}** ${FLAG[lang]} ${langName(lang, lang)}
 `);
 };
 
@@ -173,7 +168,7 @@ ${t(userId, 'commands.config.serverChannelDesc')}
 
 ${t(userId, 'commands.config.serverLanguageDesc')}
 
-**${t(userId, 'commands.config.currentValue')}** ${FLAG[guildDefaultLang]} ${NAME[guildDefaultLang][adminLang]}
+**${t(userId, 'commands.config.currentValue')}** ${FLAG[guildDefaultLang]} ${langName(guildDefaultLang, adminLang)}
 `));
 
     container.addActionRowComponents(
@@ -183,8 +178,8 @@ ${t(userId, 'commands.config.serverLanguageDesc')}
                 .setPlaceholder(t(userId, 'commands.config.serverLanguagePlaceholder'))
                 .addOptions(
                     SUPPORTED_LANGS.map((code) => ({
-                        label: NAME[code][adminLang],
-                        description: DESC[code][adminLang],
+                        label: langName(code, adminLang),
+                        description: langDesc(code, adminLang),
                         value: code,
                         emoji: FLAG[code],
                         default: code === guildDefaultLang,
@@ -335,7 +330,7 @@ module.exports = {
             const code = interaction.values[0];
             if (!SUPPORTED_LANGS.includes(code)) {
                 await interaction.reply({
-                    content: `<:error:1536247536191111248> ${t(interaction.user.id, 'commands.config.invalidLanguage')}`,
+                    content: `<:error:1536247565006143528> ${t(interaction.user.id, 'commands.config.invalidLanguage')}`,
                     flags: MessageFlags.Ephemeral,
                 });
                 return true;
@@ -355,7 +350,7 @@ module.exports = {
             const pref = interaction.values[0];
             if (!['off', 'dm', 'channel'].includes(pref)) {
                 await interaction.reply({
-                    content: `<:error:1536247536191111248> ${t(interaction.user.id, 'commands.config.invalidMissionNotifyPref')}`,
+                    content: `<:error:1536247565006143528> ${t(interaction.user.id, 'commands.config.invalidMissionNotifyPref')}`,
                     flags: MessageFlags.Ephemeral,
                 });
                 return true;
@@ -371,7 +366,7 @@ module.exports = {
         const code = interaction.values[0];
         if (!SUPPORTED_LANGS.includes(code)) {
             await interaction.reply({
-                content: `<:error:1536247536191111248> ${t(interaction.user.id, 'commands.config.invalidLanguage')}`,
+                content: `<:error:1536247565006143528> ${t(interaction.user.id, 'commands.config.invalidLanguage')}`,
                 flags: MessageFlags.Ephemeral,
             });
             return true;

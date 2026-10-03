@@ -304,12 +304,30 @@ upgrades, passa a ser alcançável: os consumíveis contam como craft.
 | Chapéus | **sem mudança de preço** | Agora caem só ao concluir missão (~0,6/h em vez de ~1,6/h). A loja de chapéus continua sendo um sumidouro cosmético |
 | Conquistas | **sem mudança** | As recompensas grandes (300 mil, 1 milhão) estão atrás de metas de centenas de horas. Revisar só se o ranking de ricos explodir |
 
-### Ideia opcional para depois
+### Raridade do chapéu x raridade do planeta (aplicado)
 
-Hoje a raridade do **chapéu** sorteado não depende da raridade do planeta: só a
-chance de aparecer chapéu muda. Um chapéu lendário tem 8% das vezes num planeta
-comum ou num lendário. Pesar o sorteio pela raridade do planeta deixaria
-planetas lendários mais desejados. É uma mudança pequena em `rollHatDrop`.
+Antes, um chapéu lendário tinha 8% de chance em qualquer planeta. Agora o
+sorteio usa `hatRarityWeightByPlanet` (`gameConfig/hats.js`), calibrado pra
+manter o total e quase a mesma proporção por raridade, mudando só onde cada
+uma cai (chapéus a cada 100 planetas vistos, na distribuição natural de
+raridades):
+
+| Raridade do chapéu | Antes | Depois |
+|---|---:|---:|
+| Comum | 5,38 | 5,70 |
+| Incomum | 5,96 | 6,01 |
+| Raro | 2,47 | 2,25 |
+| Épico | 1,31 | 1,21 |
+| Lendário | 1,31 | 1,27 |
+| **Total** | **16,44** | **16,44** |
+
+Chance de o chapéu ser lendário: planeta comum 0,7% · incomum 1,8% · raro
+4,8% · épico 15% · lendário 34,5%.
+
+Ressalva: como jogadores escolhem quais planetas explorar e tendem a ir nos
+raros, a oferta real de chapéus épicos/lendários deve subir um pouco em
+relação à tabela. Vale olhar o preço médio dos anúncios no `/hatmarket`
+depois de algumas semanas.
 
 ---
 

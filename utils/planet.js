@@ -1,5 +1,7 @@
 const { hashNum, hashRange, weightedPick } = require('./hash');
 const { RARITIES, getRarity } = require('../gameConfig/rarities');
+// Mesmo formatador do /profile e /ranking (textos em locales/*.json → numbers.*).
+const { formatDistance } = require('./statsFormatter');
 
 const PREFIXOS = [
     'Andrômeda',
@@ -69,15 +71,6 @@ const roundToNiceZeroes = (num) => {
     return Math.round(num / 1_000) * 1_000;
 };
 
-const formatDistance = (km, lang = 'pt-BR') => {
-    const usePt = lang === 'pt-BR';
-    if (km >= 1_000_000) {
-        const milhoes = (km / 1_000_000).toFixed(1).replace('.', usePt ? ',' : '.');
-        return `${milhoes} ${usePt ? 'milhões' : 'million'} km`;
-    }
-    const miles = km.toLocaleString(usePt ? 'pt-BR' : 'en-US');
-    return `${miles} km`;
-};
 
 const randomSeed = () => {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';

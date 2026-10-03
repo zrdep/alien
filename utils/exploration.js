@@ -1,5 +1,5 @@
 const { t } = require('./i18n');
-const { getUserLanguage, getUserAlien, getUserShip } = require('./db');
+const { getUserLanguage, getUserAlien, getUserShip, getDailyState } = require('./db');
 const { getPropulsorTier, getExcavationBonusPercent } = require('./ship');
 const { getScannerMiningMs } = require('../gameConfig/shipUpgrades');
 const { formatResourcesInline } = require('./resourcesDisplay');
@@ -196,6 +196,18 @@ ${resourcesText}${bonusText}${coinsText}${hatText}
     return '';
 };
 
+// Lembrete do /daily no aviso de chegada (que pode ir pra DM/canal mesmo
+// com o jogador longe). Vazio se o daily de hoje já foi resgatado.
+const buildDailyReminderText = (userId) => {
+    const daily = getDailyState(userId);
+    if (!daily.canClaim) return '';
+    // nextStreak > 1 = resgatou ontem; se não resgatar hoje, perde a sequência.
+    const key = daily.nextStreak > 1
+        ? 'commands.planet.dailyReminderStreak'
+        : 'commands.planet.dailyReminder';
+    return `\n<:passionate:1536247742110634034> ${t(userId, key, { days: daily.nextStreak - 1 })}`;
+};
+
 const buildArrivalNotice = (userId, notice) => {
     const lang = getUserLanguage(userId);
     const resources = notice.resources ?? [];
@@ -212,13 +224,13 @@ const buildArrivalNotice = (userId, notice) => {
     return `<:excited:1536247579061256252> **${t(userId, 'commands.planet.missionArrivedTitle')}**
 
 ${t(userId, 'commands.planet.missionArrivedBody', {
-        alien: notice.alienName,
+        alien: notice.alienName || getAlienDisplayName(userId),
         planet: notice.planetName,
     })}
 
 ${resourcesText}${bonusText}${coinsText}${hatText}
 
-<:registry:1536459835921530890> ${t(userId, 'commands.planet.missionArrivedTip')}`;
+<:registry:1536459835921530890> ${t(userId, 'commands.planet.missionArrivedTip')}${buildDailyReminderText(userId)}`;
 };
 
 // Monta o payload Components V2 da notificação de chegada de missão (usada

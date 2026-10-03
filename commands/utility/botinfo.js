@@ -9,6 +9,7 @@ const {
 } = require('discord.js');
 
 const { tFor } = require('../../utils/i18n');
+const { getUserLanguage } = require('../../utils/db');
 
 module.exports = {
     cooldown: 5,
@@ -20,6 +21,7 @@ module.exports = {
     async execute(interaction) {
         const client = interaction.client;
         const tt = (k) => tFor(interaction, k);
+        const lang = getUserLanguage(interaction.user.id);
 
         const uptimeMs = client.uptime;
 
@@ -62,8 +64,8 @@ ${tt('commands.botinfo.bioLine')}
             .setContent(`
 ## ${tt('commands.botinfo.infoSectionTitle')}
 
-<:ovni:1536247726889762847> **${tt('commands.botinfo.servers')}:** \`${servidores.toLocaleString('pt-BR')}\`
-<:passionate:1536247742110634034> **${tt('commands.botinfo.users')}:** \`${usuarios.toLocaleString('pt-BR')}\`
+<:ovni:1536247726889762847> **${tt('commands.botinfo.servers')}:** \`${servidores.toLocaleString(lang)}\`
+<:passionate:1536247742110634034> **${tt('commands.botinfo.users')}:** \`${usuarios.toLocaleString(lang)}\`
 <:config:1536247533502734376> **${tt('commands.botinfo.commands')}:** \`${comandos}\`
 `);
 

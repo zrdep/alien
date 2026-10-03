@@ -117,6 +117,20 @@ const validateGameConfig = ({ throwOnError = true } = {}) => {
         errors.push(`gameConfig/exploration.js: planetViewsPerHour (${planetViewsPerHour}) deve ser um inteiro >= 1`);
     }
 
+    // -- Pesos de chapéu por raridade de planeta -----------------------------
+    for (const planetCode of rarityCodes) {
+        const row = hats.HAT_DROP_CONFIG.hatRarityWeightByPlanet?.[planetCode];
+        if (!row) {
+            warnings.push(`gameConfig/hats.js: hatRarityWeightByPlanet sem linha pra raridade "${planetCode}" (usa peso 1)`);
+            continue;
+        }
+        for (const [hatRarity, weight] of Object.entries(row)) {
+            if (!rarityCodes.has(hatRarity) || !Number.isFinite(weight) || weight < 0) {
+                errors.push(`gameConfig/hats.js: hatRarityWeightByPlanet.${planetCode}.${hatRarity} inválido (${weight})`);
+            }
+        }
+    }
+
     // -- Regras do mercado fazem sentido -------------------------------------
     const { MARKET_CONFIG } = market;
     if (MARKET_CONFIG.saleFeePercent < 0 || MARKET_CONFIG.saleFeePercent >= 100) {

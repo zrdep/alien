@@ -16,7 +16,8 @@ const {
 } = require('discord.js');
 
 const { getUserLanguage } = require('./db');
-const { getRarityEmoji, getRarity, RESOURCES } = require('../gameConfig');
+const { t } = require('./i18n');
+const { getRarityEmoji, getRarityLabelKey, RESOURCES } = require('../gameConfig');
 
 const EMOJI_SUNGLASSES = '<:sunglasses:1536248455519801386>';
 const EMOJI_EXCITED = '<:excited:1536247579061256252>';
@@ -41,20 +42,14 @@ const buildAchievementUnlockPayload = (interaction, unlocks) => {
     if (!unlocks || unlocks.length === 0) return null;
 
     const lang = getUserLanguage(interaction.user.id);
-    const isPt = lang === 'pt-BR';
-    const numLoc = isPt ? 'pt-BR' : 'en-US';
+    const tu = (key) => t(lang, `commands.achievements.unlock.${key}`);
 
     const onlyOne = unlocks.length === 1;
-    const headerTitle = onlyOne
-        ? (isPt ? 'Conquista desbloqueada!' : 'Achievement unlocked!')
-        : (isPt ? 'Várias conquistas desbloqueadas!' : 'Multiple achievements unlocked!');
+    const headerTitle = onlyOne ? tu('single') : tu('multiple');
 
     const header = new TextDisplayBuilder().setContent(
         `# ${EMOJI_SUNGLASSES} ${headerTitle}\n\n` +
-        `${EMOJI_PASSIONATE} ${isPt
-            ? 'Parabéns, você bateu uma meta e ganhou recompensas!'
-            : 'Congrats, you hit a goal and earned rewards!'} ` +
-        '`' + unlocks.length + '` ' + (isPt ? 'conquista(s)' : 'achievement(s)')
+        `${EMOJI_PASSIONATE} ${tu('congrats')} \`${unlocks.length}\` ${tu('countSuffix')}`
     );
 
     const container = new ContainerBuilder()
@@ -71,8 +66,7 @@ const buildAchievementUnlockPayload = (interaction, unlocks) => {
         const name = achievement.name?.[lang] ?? achievement.name?.['pt-BR'] ?? achievement.id;
         const description = achievement.description?.[lang] ?? achievement.description?.['pt-BR'] ?? '';
         const rarityEmoji = getRarityEmoji(achievement.rarity);
-        const rarityObj = getRarity(achievement.rarity);
-        const rarityName = rarityObj?.name?.[lang] ?? rarityObj?.name?.['pt-BR'] ?? achievement.rarity;
+        const rarityName = t(lang, getRarityLabelKey(achievement.rarity));
 
         const reward = appliedReward ?? { coins: achievement.reward?.coins ?? 0, resources: achievement.reward?.resources ?? [] };
         const rewardLines = [];
@@ -93,9 +87,9 @@ const buildAchievementUnlockPayload = (interaction, unlocks) => {
         }
 
         const blockText =
-            `${rarityEmoji} ${achievement.emoji} **${name}** *(Raridade ${achievement.rarity} — ${rarityName})*\n` +
+            `${rarityEmoji} ${achievement.emoji} **${name}** *(${t(lang, 'commands.planet.rarityLabel')} ${achievement.rarity} — ${rarityName})*\n` +
             `> ${description}\n` +
-            (rewardLines.length ? `> ${EMOJI_RAINBOW} Recompensas:\n> ${rewardLines.join('\n> ')}\n` : '');
+            (rewardLines.length ? `> ${EMOJI_RAINBOW} ${tu('rewardsLabel')}\n> ${rewardLines.join('\n> ')}\n` : '');
 
         totalLines.push(blockText);
     }
@@ -111,7 +105,7 @@ const buildAchievementUnlockPayload = (interaction, unlocks) => {
     if (unlocks.length > 1) {
         const totalItems = [];
         if (totalCoins > 0) {
-            totalItems.push(`${EMOJI_GOLD_COINS} **Total coins**: \`${formatNum(totalCoins, lang)}\` ∩oins`);
+            totalItems.push(`${EMOJI_GOLD_COINS} **${tu('totalCoins')}**: \`${formatNum(totalCoins, lang)}\` ∩oins`);
         }
         if (totalResources.size > 0) {
             const parts = [];
@@ -122,13 +116,13 @@ const buildAchievementUnlockPayload = (interaction, unlocks) => {
                     : k;
                 parts.push(`\`${formatNum(v, lang)}\`x ${label}`);
             }
-            totalItems.push(`${EMOJI_COSMIC_PEARL} **Total recursos**: ${parts.join(' + ')}`);
+            totalItems.push(`${EMOJI_COSMIC_PEARL} **${tu('totalResources')}**: ${parts.join(' + ')}`);
         }
         if (totalItems.length) {
             container
                 .addSeparatorComponents(new SeparatorBuilder())
                 .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-                    `${EMOJI_EXCITED} **${isPt ? 'TOTAL DAS CONQUISTAS (já creditado!)' : 'ACHIEVEMENT TOTAL (already credited!)'}**\n\n` +
+                    `${EMOJI_EXCITED} **${tu('totalTitle')}**\n\n` +
                     totalItems.join('\n')
                 ));
         }

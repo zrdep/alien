@@ -39,7 +39,7 @@ module.exports = {
         const alien = getUserAlien(interaction.user.id);
         if (!alien) {
             await interaction.editReply({
-                content: `<:alien:1536247533502734376> **${tFor(interaction, 'commands.planet.alienRequired')}**\n${tFor(interaction, 'commands.planet.alienRequiredTip')}`,
+                content: `<:ovni:1536247726889762847> **${tFor(interaction, 'commands.planet.alienRequired')}**\n${tFor(interaction, 'commands.planet.alienRequiredTip')}`,
             });
             return;
         }

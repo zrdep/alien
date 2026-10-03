@@ -14,143 +14,95 @@ const {
     ButtonStyle,
 } = require('discord.js');
 
-const { tFor } = require('../../utils/i18n');
+const { tFor, getText } = require('../../utils/i18n');
 const { getUserLanguage } = require('../../utils/db');
 
 const GIFT_IMAGE_NAME = 'bag_coins.png';
 const GIFT_IMAGE_PATH = path.join(__dirname, '..', '..', 'images', 'moedas', GIFT_IMAGE_NAME);
 
-function getCategoryData(lang, categoryKey) {
-    const isPt = lang === 'pt-BR';
+const CATEGORIES = {
+    galaxy: {
+        emoji: '<:ovni:1536247726889762847>',
+        commands: [
+            ['alien', '</alien:1537544781020799120>'],
+            ['planet', '</planet:1537544781020799123>'],
+            ['inventory', '</inventory:1537544781020799122>'],
+            ['craft', '</craft:1537544781020799121>'],
+        ],
+    },
+    economy: {
+        emoji: '<:gold_coins:1536941656178298992>',
+        commands: [
+            ['daily', '</daily:1537544781020799118>'],
+            ['redeem', '</redeem:1538333297430765702>'],
+            ['wallet', '</wallet:1537544781020799119>'],
+            ['market', '</market:1538040562978922517>'],
+            ['hatmarket', '</hatmarket:1538040562978922516>'],
+        ],
+    },
+    utility: {
+        emoji: '<:settings:1536248422686920704>',
+        commands: [
+            ['profile', '</profile:1537544781117263992>'],
+            ['achievements', '</achievements:1538040562978922518>'],
+            ['config', '</config user:1537544781020799125> / </config server:1537544781020799125>'],
+            ['tutorial', '</tutorial:1538040562978922520>'],
+            ['ranking', '</ranking:1538201380437626920>'],
+            ['botinfo', '</botinfo:1537544781020799124>'],
+            ['ping', '</ping:1537544781020799126>'],
+            ['help', '</help:1538040562978922519>'],
+        ],
+    },
+};
 
-    const categories = {
-        galaxy: {
-            title: isPt ? '<:ovni:1536247726889762847> Galáxia & Exploração' : '<:ovni:1536247726889762847> Galaxy & Exploration',
-            desc: isPt
-                ? 'Comandos para viajar no espaço, descobrir novos mundos e gerenciar seus itens:'
-                : 'Commands to travel through space, discover new worlds, and manage your items:',
-            commands: [
-                { name: '</alien:1537544781020799120>', desc: isPt ? 'Veja seu alienígena companheiro e sua nave.' : 'View your alien companion and ship.' },
-                { name: '</planet:1537544781020799123>', desc: isPt ? 'Explore planetas misteriosos e envie seu alien em missões de coleta.' : 'Explore mysterious planets and send your alien on resource missions.' },
-                { name: '</inventory:1537544781020799122>', desc: isPt ? 'Veja todos os recursos espaciais coletados nas expedições.' : 'View all space resources collected during expeditions.' },
-                { name: '</craft:1537544781020799121>', desc: isPt ? 'Fabrique melhorias para a sua nave (Propulsores, Sondas, Scanners).' : 'Craft ship upgrades (Propulsors, Probes, Scanners).' },
-            ],
-        },
-        economy: {
-            title: isPt ? '<:gold_coins:1536941656178298992> Economia & Comércio' : '<:gold_coins:1536941656178298992> Economy & Trade',
-            desc: isPt
-                ? 'Comandos para gerenciar seu saldo de ∩oins e praticar comércio global:'
-                : 'Commands to manage your ∩oins balance and trade globally:',
-            commands: [
-                { name: '</daily:1537544781020799118>', desc: isPt ? 'Resgate sua recompensa diária de ∩oins e recursos.' : 'Claim your daily reward of ∩oins and resources.' },
-                { name: '</redeem:1538333297430765702>', desc: isPt ? 'Resgate conquistas pendentes, presentes e recompensas.' : 'Redeem pending achievements, gifts, and rewards.' },
-                { name: '</wallet:1537544781020799119>', desc: isPt ? 'Consulte sua carteira de ∩oins ou a de outro explorador.' : 'Check your ∩oins wallet or another explorer balance.' },
-                { name: '</market:1538040562978922517>', desc: isPt ? 'Compre e venda recursos no Mercado Global ou na Loja do Sistema.' : 'Buy and sell resources on the Global Market or System Shop.' },
-                { name: '</hatmarket:1538040562978922516>', desc: isPt ? 'Compre e venda chapéus exclusivos com outros jogadores.' : 'Buy and sell exclusive hats with other players.' },
-            ],
-        },
-        utility: {
-            title: isPt ? '<:settings:1536248422686920704> Utilitários & Perfil' : '<:settings:1536248422686920704> Utility & Profile',
-            desc: isPt
-                ? 'Comandos de utilidade geral, estatísticas do jogador e preferências:'
-                : 'General utility commands, player statistics, and preferences:',
-            commands: [
-                { name: '</profile:1537544781117263992>', desc: isPt ? 'Veja suas estatísticas espaciais, nave e companheiro alien.' : 'View your space statistics, ship, and alien companion.' },
-                { name: '</achievements:1538040562978922518>', desc: isPt ? 'Veja todas as conquistas disponíveis e seu progresso nelas.' : 'View all available achievements and your progress toward them.' },
-                { name: `</config user:1537544781020799125> / </config server:1537544781020799125>`, desc: isPt ? 'Altere idioma, aviso de missão concluída (DM/canal/desligado) ou configurações do servidor.' : 'Change language, mission-complete notice (DM/channel/off), or server settings.' },
-                { name: '</tutorial:1538040562978922520>', desc: isPt ? 'Guia interativo passo a passo para aprender a jogar com o ∩lien.' : 'Interactive step-by-step tutorial guide to learn ∩lien.' },
-                { name: '</ranking:1538201380437626920>', desc: isPt ? 'Veja o ranking galáctico: mais ricos, mais explorados e mais.' : 'View the galactic leaderboard: richest, most explored, and more.' },
-                { name: '</botinfo:1537544781020799124>', desc: isPt ? 'Exibe informações sobre o bot ∩lien, desempenho e estatísticas.' : 'Displays information about ∩lien bot, performance, and stats.' },
-                { name: '</ping:1537544781020799126>', desc: isPt ? 'Verifica o tempo de resposta e latência do bot.' : 'Checks bot response time and latency.' },
-                { name: '</help:1538040562978922519>', desc: isPt ? 'Abre este painel de ajuda categorizado com comandos.' : 'Opens this categorized help menu with commands.' },
-            ],
-        },
-    };
-
-    return categories[categoryKey] ?? categories.galaxy;
-}
-
-function getTotalCommandCount(lang) {
-    return ['galaxy', 'economy', 'utility'].reduce(
-        (total, key) => total + getCategoryData(lang, key).commands.length,
-        0
-    );
-}
+const TOTAL_COMMANDS = Object.values(CATEGORIES).reduce((total, cat) => total + cat.commands.length, 0);
 
 function renderHelpContainer(interaction, activeCategory = 'galaxy') {
     const lang = getUserLanguage(interaction.user.id);
-    const catData = getCategoryData(lang, activeCategory);
-    const isPt = lang === 'pt-BR';
-
-    const totalCommands = getTotalCommandCount(lang);
+    const tx = (key, vars) => getText(lang, `commands.help.${key}`, vars);
+    const categoryKey = CATEGORIES[activeCategory] ? activeCategory : 'galaxy';
+    const category = CATEGORIES[categoryKey];
 
     const header = new TextDisplayBuilder().setContent(
-        `# <:book:1536247508181848134> ${isPt ? 'Central de Ajuda • ∩lien' : 'Help Center • ∩lien'}\n` +
-        `<:ovni:1536247726889762847> *${isPt
-            ? `Explore os ${totalCommands} comandos disponíveis, organizados por categoria abaixo:`
-            : `Explore all ${totalCommands} available commands, organized by category below:`}*`
+        `# <:book:1536247508181848134> ${tx('title')}\n` +
+        `<:ovni:1536247726889762847> *${tx('countLine', { count: TOTAL_COMMANDS })}*`
     );
 
-    const commandsText = catData.commands
-        .map((cmd) => `• **${cmd.name}**\n└ ${cmd.desc}`)
+    const commandsText = category.commands
+        .map(([key, mention]) => `• **${mention}**\n└ ${tx(`commandDesc.${key}`)}`)
         .join('\n\n');
 
     const bodyText = new TextDisplayBuilder().setContent(
-        `## ${catData.title}\n` +
-        `*${catData.desc}*\n\n` +
+        `## ${category.emoji} ${tx(`categories.${categoryKey}.title`)}\n` +
+        `*${tx(`categories.${categoryKey}.desc`)}*\n\n` +
         `${commandsText}\n\n` +
-        `<:excited:1536247579061256252> **${isPt ? 'Dica para iniciantes:' : 'Tip for beginners:'}** ${isPt ? 'Nunca jogou? Use </tutorial:1538040562978922520> para um guia passo a passo!' : 'First time here? Use </tutorial:1538040562978922520> for a step-by-step guide!'}\n` +
-        `<:support:1536248470611173466> ${isPt ? 'Precisa de mais ajuda? Fale com a equipe no servidor de suporte.' : 'Need more help? Reach out to the team on the support server.'}`
+        `<:excited:1536247579061256252> **${tx('tipLabel')}** ${tx('tipText')}\n` +
+        `<:support:1536248470611173466> ${tx('supportText')}`
     );
 
     const hasImage = fs.existsSync(GIFT_IMAGE_PATH);
-    let section;
+    const section = new SectionBuilder().addTextDisplayComponents(bodyText);
     if (hasImage) {
-        const thumbnail = new ThumbnailBuilder().setURL(`attachment://${GIFT_IMAGE_NAME}`);
-        section = new SectionBuilder().addTextDisplayComponents(bodyText).setThumbnailAccessory(thumbnail);
-    } else {
-        section = new SectionBuilder().addTextDisplayComponents(bodyText);
+        section.setThumbnailAccessory(new ThumbnailBuilder().setURL(`attachment://${GIFT_IMAGE_NAME}`));
     }
 
     const selectRow = new ActionRowBuilder().addComponents(
         new StringSelectMenuBuilder()
             .setCustomId('help_select_category')
-            .setPlaceholder(isPt ? 'Selecione uma categoria de comandos...' : 'Select a command category...')
-            .addOptions([
-                {
-                    label: isPt ? 'Galáxia & Exploração' : 'Galaxy & Exploration',
-                    description: isPt
-                        ? `${getCategoryData(lang, 'galaxy').commands.length} comandos • viagens, planetas e nave`
-                        : `${getCategoryData(lang, 'galaxy').commands.length} commands • travel, planets & ship`,
-                    value: 'galaxy',
-                    emoji: '<:ovni:1536247726889762847>',
-                    default: activeCategory === 'galaxy',
-                },
-                {
-                    label: isPt ? 'Economia & Comércio' : 'Economy & Trade',
-                    description: isPt
-                        ? `${getCategoryData(lang, 'economy').commands.length} comandos • ∩oins, mercado e chapéus`
-                        : `${getCategoryData(lang, 'economy').commands.length} commands • ∩oins, market & hats`,
-                    value: 'economy',
-                    emoji: '<:gold_coins:1536941656178298992>',
-                    default: activeCategory === 'economy',
-                },
-                {
-                    label: isPt ? 'Utilitários & Perfil' : 'Utility & Profile',
-                    description: isPt
-                        ? `${getCategoryData(lang, 'utility').commands.length} comandos • perfil, conquistas e config`
-                        : `${getCategoryData(lang, 'utility').commands.length} commands • profile, achievements & config`,
-                    value: 'utility',
-                    emoji: '<:settings:1536248422686920704>',
-                    default: activeCategory === 'utility',
-                },
-            ])
+            .setPlaceholder(tx('selectPlaceholder'))
+            .addOptions(Object.entries(CATEGORIES).map(([key, cat]) => ({
+                label: tx(`categories.${key}.title`),
+                description: tx(`categories.${key}.option`, { count: cat.commands.length }),
+                value: key,
+                emoji: cat.emoji,
+                default: categoryKey === key,
+            })))
     );
 
     const tutorialButtonRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId('help_open_tutorial')
-            .setLabel(isPt ? 'Ver Tutorial Passo a Passo' : 'View Step-by-Step Tutorial')
+            .setLabel(tx('tutorialButton'))
             .setEmoji('<:book2:1536459861527756952>')
             .setStyle(ButtonStyle.Success)
     );
@@ -202,9 +154,8 @@ module.exports = {
             const payload = tutorialCommand.renderTutorialContainer(interaction, 1);
             await interaction.update(payload);
         } else {
-            const isPt = getUserLanguage(interaction.user.id) === 'pt-BR';
             await interaction.reply({
-                content: isPt ? 'Use o comando </tutorial:1538040562978922520> para ver o guia completo!' : 'Use </tutorial:1538040562978922520> to view the complete guide!',
+                content: tFor(interaction, 'commands.help.tutorialFallback'),
                 flags: MessageFlags.Ephemeral,
             });
         }

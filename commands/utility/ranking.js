@@ -8,15 +8,22 @@ const {
     SeparatorBuilder,
     ActionRowBuilder,
     StringSelectMenuBuilder,
+    ButtonBuilder,
+    ButtonStyle,
 } = require('discord.js');
 
-const { tFor } = require('../../utils/i18n');
+const { tFor, getText } = require('../../utils/i18n');
 const { getUserLanguage, getLeaderboard, getLeaderboardRank } = require('../../utils/db');
 const { formatDistance, formatCount, formatPlace } = require('../../utils/statsFormatter');
 const { composeRankingPodium } = require('../../utils/rankingPodiumImage');
 const logger = require('../../utils/logger');
 
 const DEFAULT_CATEGORY = 'coins';
+
+// Escopo do ranking: todo mundo, ou só quem já usou o bot neste servidor
+// (ver user_guilds em utils/db.js). O escopo vai no customId do menu e dos
+// botões pra sobreviver às trocas de categoria.
+const SCOPES = { GLOBAL: 'global', SERVER: 'server' };
 const PODIUM_ATTACHMENT_NAME = 'ranking_podium.png';
 
 // Cada categoria: emoji do topo do painel + emoji da linha do menu + como
@@ -56,12 +63,12 @@ const CATEGORY_ORDER = ['coins', 'planets_seen', 'trips_completed', 'distance_tr
 // quando possível (instantâneo) e só bate na API do Discord pra quem ainda
 // não está em cache — em paralelo, então o Top 10 inteiro resolve numa
 // única "rodada" em vez de 10 chamadas sequenciais.
-const resolveDisplayName = async (client, userId) => {
+const resolveDisplayName = async (client, userId, lang) => {
     try {
         const user = await client.users.fetch(userId);
         return user.username;
     } catch {
-        return `Usuário Desconhecido (${userId.slice(-4)})`;
+        return getText(lang, 'commands.ranking.unknownUser', { id: userId.slice(-4) });
     }
 };
 
@@ -83,10 +90,27 @@ const fetchAvatarBuffer = async (client, userId) => {
     }
 };
 
-const buildCategoryMenu = (interaction, activeCategory) => {
+const buildScopeButtons = (interaction, activeCategory, scope) => {
+    return new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId(`ranking_scope:${SCOPES.GLOBAL}:${activeCategory}`)
+            .setLabel(tFor(interaction, 'commands.ranking.scopeGlobal'))
+            .setEmoji('<:earth:1536459925495087226>')
+            .setStyle(scope === SCOPES.GLOBAL ? ButtonStyle.Primary : ButtonStyle.Secondary)
+            .setDisabled(scope === SCOPES.GLOBAL),
+        new ButtonBuilder()
+            .setCustomId(`ranking_scope:${SCOPES.SERVER}:${activeCategory}`)
+            .setLabel(tFor(interaction, 'commands.ranking.scopeServer'))
+            .setEmoji('<:saturn:1536459943480270959>')
+            .setStyle(scope === SCOPES.SERVER ? ButtonStyle.Primary : ButtonStyle.Secondary)
+            .setDisabled(scope === SCOPES.SERVER)
+    );
+};
+
+const buildCategoryMenu = (interaction, activeCategory, scope = SCOPES.GLOBAL) => {
     return new ActionRowBuilder().addComponents(
         new StringSelectMenuBuilder()
-            .setCustomId('ranking_category_select')
+            .setCustomId(`ranking_category_select:${scope}`)
             .setPlaceholder(tFor(interaction, 'commands.ranking.placeholder'))
             .addOptions(
                 CATEGORY_ORDER.map((key) => ({
@@ -100,15 +124,19 @@ const buildCategoryMenu = (interaction, activeCategory) => {
     );
 };
 
-const buildRankingPayload = async (interaction, category = DEFAULT_CATEGORY) => {
+const buildRankingPayload = async (interaction, category = DEFAULT_CATEGORY, requestedScope = SCOPES.GLOBAL) => {
     const lang = getUserLanguage(interaction.user.id);
     const meta = CATEGORY_META[category] ?? CATEGORY_META[DEFAULT_CATEGORY];
     const activeCategory = CATEGORY_META[category] ? category : DEFAULT_CATEGORY;
+    // Fora de servidor (DM) não existe "este servidor".
+    const scope = interaction.guildId && requestedScope === SCOPES.SERVER ? SCOPES.SERVER : SCOPES.GLOBAL;
+    const guildId = scope === SCOPES.SERVER ? interaction.guildId : null;
 
-    const rows = getLeaderboard(activeCategory, 10);
+    const rows = getLeaderboard(activeCategory, 10, guildId);
 
+    const scopeLabel = tFor(interaction, scope === SCOPES.SERVER ? 'commands.ranking.scopeServer' : 'commands.ranking.scopeGlobal');
     const header = new TextDisplayBuilder().setContent(
-        `# <:sunglasses:1536248455519801386> ${tFor(interaction, 'commands.ranking.title')}\n` +
+        `# <:sunglasses:1536248455519801386> ${tFor(interaction, 'commands.ranking.title')} · ${scopeLabel}\n` +
         `${meta.headerEmoji} **${tFor(interaction, `commands.ranking.categories.${activeCategory}`)}** — ${tFor(interaction, `commands.ranking.categoryDesc.${activeCategory}`)}`
     );
 
@@ -118,7 +146,7 @@ const buildRankingPayload = async (interaction, category = DEFAULT_CATEGORY) => 
     if (!rows.length) {
         bodyContent = `<:hmm:1536247599365890139> ${tFor(interaction, 'commands.ranking.empty')}`;
     } else {
-        const names = await Promise.all(rows.map((row) => resolveDisplayName(interaction.client, row.userId)));
+        const names = await Promise.all(rows.map((row) => resolveDisplayName(interaction.client, row.userId, lang)));
 
         const lines = rows.map((row, index) => {
             const place = formatPlace(index);
@@ -138,7 +166,7 @@ const buildRankingPayload = async (interaction, category = DEFAULT_CATEGORY) => 
         podiumBuffer = composeRankingPodium(entriesByRank);
     }
 
-    const rankInfo = getLeaderboardRank(activeCategory, interaction.user.id);
+    const rankInfo = getLeaderboardRank(activeCategory, interaction.user.id, guildId);
     const positionText = rankInfo?.position
         ? `#${rankInfo.position} — \`${meta.format(rankInfo.value, lang)}\``
         : tFor(interaction, 'commands.ranking.notRanked');
@@ -166,8 +194,13 @@ const buildRankingPayload = async (interaction, category = DEFAULT_CATEGORY) => 
     const container = new ContainerBuilder()
         .addTextDisplayComponents(header)
         .addSeparatorComponents(new SeparatorBuilder())
-        .addActionRowComponents(buildCategoryMenu(interaction, activeCategory))
-        .addSeparatorComponents(new SeparatorBuilder());
+        .addActionRowComponents(buildCategoryMenu(interaction, activeCategory, scope));
+
+    if (interaction.guildId) {
+        container.addActionRowComponents(buildScopeButtons(interaction, activeCategory, scope));
+    }
+
+    container.addSeparatorComponents(new SeparatorBuilder());
 
     if (bodySection) {
         container.addSectionComponents(bodySection);
@@ -207,11 +240,22 @@ module.exports = {
     },
 
     async handleSelectMenu(interaction) {
-        if (interaction.customId !== 'ranking_category_select') return false;
+        if (!interaction.customId.startsWith('ranking_category_select')) return false;
 
         await interaction.deferUpdate();
+        const scope = interaction.customId.split(':')[1] ?? SCOPES.GLOBAL;
         const category = interaction.values[0];
-        const payload = await buildRankingPayload(interaction, category);
+        const payload = await buildRankingPayload(interaction, category, scope);
+        await interaction.editReply(payload);
+        return true;
+    },
+
+    async handleButton(interaction) {
+        if (!interaction.customId.startsWith('ranking_scope:')) return false;
+
+        await interaction.deferUpdate();
+        const [, scope, category] = interaction.customId.split(':');
+        const payload = await buildRankingPayload(interaction, category, scope);
         await interaction.editReply(payload);
         return true;
     },

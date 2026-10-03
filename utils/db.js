@@ -71,9 +71,10 @@ if (!temAlienName) {
     logger.success('Coluna `alien_name` adicionada à tabela `users`');
 }
 
-// Preferência de onde receber o aviso de "missão concluída": 'off' (padrão,
-// precisa clicar no botão toda vez), 'dm' (sempre na DM) ou 'channel'
-// (sempre no canal onde o /planeta foi usado).
+// Preferência de onde receber o aviso de "missão concluída": 'off' (precisa
+// clicar no botão toda vez), 'dm' (sempre na DM) ou 'channel' (sempre no
+// canal onde o /planeta foi usado). O DEFAULT da coluna é 'off' (é o que os
+// jogadores antigos têm), mas jogador NOVO nasce com 'channel' — ver getUser.
 const temMissionNotifyPref = colunas.some(c => c.name === 'mission_notify_pref');
 if (!temMissionNotifyPref) {
     db.exec(`
@@ -453,6 +454,18 @@ db.exec(`
 // precisa varrer a tabela inteira pra ordenar toda vez. Com o índice, um
 // "ORDER BY coluna DESC LIMIT 10" vira leitura direta da árvore já
 // ordenada — instantâneo mesmo com muitos jogadores.
+// Em quais servidores cada jogador já usou o bot — alimenta o ranking por
+// servidor sem precisar listar membros pela API do Discord (que exigiria o
+// intent privilegiado GuildMembers e chamadas pesadas). Quem saiu do
+// servidor continua aparecendo; é o preço de não consultar a API.
+db.exec(`
+    CREATE TABLE IF NOT EXISTS user_guilds (
+        guild_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        PRIMARY KEY (guild_id, user_id)
+    );
+`);
+
 db.exec(`
     CREATE INDEX IF NOT EXISTS idx_users_coins ON users(coins DESC);
     CREATE INDEX IF NOT EXISTS idx_users_planets_seen ON users(planets_seen DESC);
@@ -464,7 +477,9 @@ db.exec(`
 const getUser = (userId) => {
     let user = db.prepare('SELECT * FROM users WHERE user_id = ?').get(userId);
     if (!user) {
-        db.prepare('INSERT INTO users (user_id) VALUES (?)').run(userId);
+        // Jogador novo já nasce com o aviso de missão ligado no canal — quem
+        // é novo nem sabe que a missão terminou se o aviso vier desligado.
+        db.prepare("INSERT INTO users (user_id, mission_notify_pref) VALUES (?, 'channel')").run(userId);
         user = db.prepare('SELECT * FROM users WHERE user_id = ?').get(userId);
     }
     return user;
@@ -709,11 +724,28 @@ const LEADERBOARD_COLUMNS = {
 const leaderboardCache = new Map(); // "statKey:limit" -> { rows, expiresAt }
 const LEADERBOARD_CACHE_TTL_MS = 90 * 1000;
 
-const getLeaderboard = (statKey, limit = 10) => {
+// Registra que o jogador usou o bot nesse servidor. Chamado a cada
+// interação, então tem um Set em memória na frente: o INSERT só acontece
+// 1x por par (servidor, jogador) por vida do processo.
+const knownUserGuilds = new Set();
+const KNOWN_USER_GUILDS_MAX = 200_000;
+const insertUserGuildStmt = db.prepare('INSERT OR IGNORE INTO user_guilds (guild_id, user_id) VALUES (?, ?)');
+const recordUserGuild = (userId, guildId) => {
+    if (!userId || !guildId) return;
+    const key = `${guildId}:${userId}`;
+    if (knownUserGuilds.has(key)) return;
+    if (knownUserGuilds.size >= KNOWN_USER_GUILDS_MAX) knownUserGuilds.clear();
+    knownUserGuilds.add(key);
+    insertUserGuildStmt.run(guildId, userId);
+};
+
+// `guildId` opcional: sem ele é o ranking global; com ele, só quem já usou
+// o bot naquele servidor (JOIN com user_guilds pela chave primária).
+const getLeaderboard = (statKey, limit = 10, guildId = null) => {
     const column = LEADERBOARD_COLUMNS[statKey];
     if (!column) return [];
 
-    const cacheKey = `${statKey}:${limit}`;
+    const cacheKey = `${statKey}:${limit}:${guildId ?? 'global'}`;
     const cached = leaderboardCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now()) {
         return cached.rows;
@@ -722,14 +754,25 @@ const getLeaderboard = (statKey, limit = 10) => {
     // `column` vem sempre de LEADERBOARD_COLUMNS (whitelist fixa acima), nunca
     // de input do usuário — por isso é seguro interpolar direto no SQL aqui
     // (SQLite não permite parametrizar nome de coluna/tabela com `?`).
-    const rows = db.prepare(`
-        SELECT user_id AS userId, ${column} AS value
-        FROM users
-        WHERE ${column} > 0
-        ORDER BY ${column} DESC
-        LIMIT ?
-    `).all(limit);
+    const rows = guildId
+        ? db.prepare(`
+            SELECT u.user_id AS userId, u.${column} AS value
+            FROM user_guilds g
+            JOIN users u ON u.user_id = g.user_id
+            WHERE g.guild_id = ? AND u.${column} > 0
+            ORDER BY u.${column} DESC
+            LIMIT ?
+        `).all(guildId, limit)
+        : db.prepare(`
+            SELECT user_id AS userId, ${column} AS value
+            FROM users
+            WHERE ${column} > 0
+            ORDER BY ${column} DESC
+            LIMIT ?
+        `).all(limit);
 
+    // Evita o cache crescer sem limite com muitos servidores diferentes.
+    if (leaderboardCache.size > 2000) leaderboardCache.clear();
     leaderboardCache.set(cacheKey, { rows, expiresAt: Date.now() + LEADERBOARD_CACHE_TTL_MS });
     return rows;
 };
@@ -737,7 +780,7 @@ const getLeaderboard = (statKey, limit = 10) => {
 // Posição exata de 1 jogador numa categoria (pra mostrar "você está em
 // #37" mesmo fora do Top 10) — também 1 query só, contando quantos têm
 // valor maior (não precisa carregar a lista inteira em memória).
-const getLeaderboardRank = (statKey, userId) => {
+const getLeaderboardRank = (statKey, userId, guildId = null) => {
     const column = LEADERBOARD_COLUMNS[statKey];
     if (!column) return null;
 
@@ -745,9 +788,16 @@ const getLeaderboardRank = (statKey, userId) => {
     const value = user?.value ?? 0;
     if (value <= 0) return { value, position: null };
 
-    const { higherCount } = db.prepare(`
-        SELECT COUNT(*) AS higherCount FROM users WHERE ${column} > ?
-    `).get(value);
+    const { higherCount } = guildId
+        ? db.prepare(`
+            SELECT COUNT(*) AS higherCount
+            FROM user_guilds g
+            JOIN users u ON u.user_id = g.user_id
+            WHERE g.guild_id = ? AND u.${column} > ?
+        `).get(guildId, value)
+        : db.prepare(`
+            SELECT COUNT(*) AS higherCount FROM users WHERE ${column} > ?
+        `).get(value);
 
     return { value, position: higherCount + 1 };
 };
@@ -1154,7 +1204,7 @@ const resolveExplorationMission = (userId, now = Date.now()) => {
 
             const alien = getUserAlien(userId);
             notice = {
-                alienName: alien?.name ?? 'Alienígena',
+                alienName: alien?.name ?? null,
                 planetName: mission.planet_name,
                 resources,
                 coins: coinsReward,
@@ -2255,6 +2305,17 @@ const createRedeemableForAllUsers = ({ titlePt, titleEn, coins = 0, resources = 
     return users.length;
 };
 
+// Resumo barato (1 query no índice idx_redeemables_user_pending) usado pra
+// avisar o jogador de que tem presente pra resgatar.
+const getPendingRedeemablesSummary = (userId) => {
+    const row = db.prepare(`
+        SELECT COUNT(*) AS total, MAX(id) AS lastId
+        FROM redeemables
+        WHERE user_id = ? AND claimed_at IS NULL
+    `).get(userId);
+    return { total: row?.total ?? 0, lastId: row?.lastId ?? null };
+};
+
 const getPendingRedeemables = (userId) => {
     return db.prepare(`
         SELECT id, title_pt AS titlePt, title_en AS titleEn, coins,
@@ -2357,6 +2418,7 @@ module.exports = {
     addMissionCompletionStats,
     getLeaderboard,
     getLeaderboardRank,
+    recordUserGuild,
     getUserProfileStats,
     createMarketListing,
     getMarketListingsByResource,
@@ -2401,5 +2463,6 @@ module.exports = {
     createRedeemable,
     createRedeemableForAllUsers,
     getPendingRedeemables,
+    getPendingRedeemablesSummary,
     claimAllRedeemables,
 };

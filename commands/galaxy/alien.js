@@ -19,7 +19,7 @@ const {
     TextInputStyle,
 } = require('discord.js');
 
-const { tFor } = require('../../utils/i18n');
+const { tFor, getText } = require('../../utils/i18n');
 const {
     getUserLanguage,
     getUserAlien,
@@ -49,22 +49,6 @@ const ALIEN_ALL_FILE = 'allAliens.png';
 const IMAGES_DIR = path.join(__dirname, '..', '..', 'images', 'aliens');
 const ALIEN_NAME_MAX = 12;
 
-const COLOR_NAME = {
-    'pt-BR': {
-        purple: 'Roxo',
-        green:  'Verde',
-        blue:   'Azul',
-        pink:   'Rosa',
-        orange: 'Laranja',
-    },
-    'en-US': {
-        purple: 'Purple',
-        green:  'Green',
-        blue:   'Blue',
-        pink:   'Pink',
-        orange: 'Orange',
-    },
-};
 
 const COLOR_EMOJI = {
     purple: { id: '1536771988838940723', name: 'purple' },
@@ -82,10 +66,7 @@ const COLOR_EMOJI_TEXT = {
     orange: '<:orange:1536771978856370308>',
 };
 
-const getColorLabel = (color, lang) => {
-    const names = COLOR_NAME[lang] ?? COLOR_NAME['pt-BR'];
-    return names[color] ?? color;
-};
+const getColorLabel = (color, lang) => getText(lang, `commands.alien.colorName.${color}`);
 
 const imageExists = (fileName) => fs.existsSync(path.join(IMAGES_DIR, fileName));
 
@@ -159,26 +140,19 @@ const parseCustomEmoji = (emojiString) => {
 };
 
 const HAT_NONE_VALUE = '__no_hat__';
-const HAT_TEXT = {
-    'pt-BR': {
-        title: 'Chapéus',
-        equippedLabel: 'Equipado',
-        noneEquipped: 'Nenhum chapéu equipado',
-        placeholder: 'Equipar um chapéu...',
-        noneOption: 'Nenhum (tirar chapéu)',
-        emptyInventory: 'Você ainda não achou nenhum chapéu. Explore planetas com </planet:1537544781020799123> pra ter chance de encontrar um!',
-    },
-    'en-US': {
-        title: 'Hats',
-        equippedLabel: 'Equipped',
-        noneEquipped: 'No hat equipped',
-        placeholder: 'Equip a hat...',
-        noneOption: 'None (remove hat)',
-        emptyInventory: "You haven't found any hats yet. Explore planets with </planet:1537544781020799123> for a chance to find one!",
-    },
+// Textos desta tela — vêm de locales/*.json (commands.alienHats.*).
+const getHatText = (lang) => {
+    const tl = (key, vars) => getText(lang, `commands.alienHats.${key}`, vars);
+    return {
+        title: tl('title'),
+        equippedLabel: tl('equippedLabel'),
+        noneEquipped: tl('noneEquipped'),
+        placeholder: tl('placeholder'),
+        noneOption: tl('noneOption'),
+        emptyInventory: tl('emptyInventory'),
+    };
 };
 
-const getHatText = (lang) => HAT_TEXT[lang] ?? HAT_TEXT['pt-BR'];
 
 const buildHatSectionContent = (interaction) => {
     const lang = getUserLanguage(interaction.user.id);
@@ -197,7 +171,7 @@ const buildHatSectionContent = (interaction) => {
         body = `<:hmm:1536247599365890139> ${t.noneEquipped}`;
     }
 
-    return `\n## <:king:1536459814475927653> ${t.title}\n\n${body}\n`;
+    return `\n## <:sunglasses:1536248455519801386> ${t.title}\n\n${body}\n`;
 };
 
 const buildHatEquipMenu = (interaction) => {
@@ -280,7 +254,7 @@ const buildOnboarding = (interaction) => {
     const intro = tFor(interaction, 'commands.alien.onboardingIntro');
 
     const header = new TextDisplayBuilder().setContent(
-        `# <:alien:1536247533502734376> ${title}\n\n${intro}`
+        `# <:ovni:1536247726889762847> ${title}\n\n${intro}`
     );
 
     const container = new ContainerBuilder().addTextDisplayComponents(header);
@@ -317,7 +291,7 @@ const buildAlienPanel = (interaction, alien, { saved = false } = {}) => {
     const colorLine = `**${tFor(interaction, 'commands.alien.colorLabel')}:** ${COLOR_EMOJI_TEXT[alien.color]} ${colorLabel}`;
 
     const header = new TextDisplayBuilder().setContent(`
-# <:alien:1536247533502734376> ${title}
+# <:ovni:1536247726889762847> ${title}
 
 <:passionate:1536247742110634034> ${tFor(interaction, 'commands.alien.panelGreeting', { name: displayName })}
 `);
@@ -416,7 +390,7 @@ module.exports = {
             const result = setEquippedHat(interaction.user.id, hatKey);
             if (!result.success) {
                 await interaction.reply({
-                    content: `<:error:1536247565006143528> ${tFor(interaction, 'commands.alien.invalidColor')}`,
+                    content: `<:error:1536247565006143528> ${tFor(interaction, 'commands.alien.hatEquipError')}`,
                     flags: MessageFlags.Ephemeral,
                 });
                 return true;

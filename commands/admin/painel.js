@@ -13,10 +13,11 @@ const {
 } = require('discord.js');
 
 const { guildId: OWNER_GUILD_ID, ownerId: OWNER_ID } = require('../../config.json');
+const { tFor } = require('../../utils/i18n');
 
 const {
-    getUser,
     getUserAlien,
+    getUserLanguage,
     getUserShip,
     getUserCoins,
     setUserCoins,
@@ -27,6 +28,7 @@ const {
     forceExpireMissionPhase,
     getDailyState,
     resetDailyClaim,
+    createRedeemableForAllUsers,
 } = require('../../utils/db');
 const { getResourceMeta } = require('../../utils/planetResources');
 const { RESOURCES } = require('../../gameConfig/resources');
@@ -36,40 +38,35 @@ const logger = require('../../utils/logger');
 
 const ID_REGEX = /^\d{15,25}$/;
 
-const STATUS_LABEL = {
-    traveling_out: '<:ovni:1536247726889762847> Indo até o planeta',
-    collecting: '<:rock:1536579687407681596> Minerando',
-    traveling_back: '<:earth:1536459925495087226> Voltando para casa',
+const STATUS_EMOJI = {
+    traveling_out: '<:ovni:1536247726889762847>',
+    collecting: '<:rock:1536579687407681596>',
+    traveling_back: '<:earth:1536459925495087226>',
 };
 
-// Permite digitar tanto a chave interna (stone, blueCrystal...) quanto o nome em
-// português (pedra, cristal azul...) no modal de "setar recursos". Os nomes em
-// português vêm de gameConfig/resources.js — não precisa mais manter uma lista
-// separada aqui: ao adicionar um recurso na config central, ele já fica
-// digitável no painel automaticamente.
+// Permite digitar a chave interna (stone, blueCrystal...) ou o nome em
+// português OU inglês (pedra, stone, cristal azul, blue crystal...) nos
+// modais de recurso. Os nomes vêm de gameConfig/resources.js — ao adicionar
+// um recurso na config central, ele já fica digitável aqui automaticamente.
+const normalizeName = (raw) => raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+
 const RESOURCE_ALIASES = (() => {
     const map = new Map();
 
     for (const resource of RESOURCES) {
         map.set(resource.key.toLowerCase(), resource.key);
-
-        const ptName = resource.name['pt-BR']
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .toLowerCase();
-        map.set(ptName, resource.key);
-        map.set(ptName.replace(/\s+/g, ''), resource.key);
+        for (const name of Object.values(resource.name)) {
+            const clean = normalizeName(name);
+            map.set(clean, resource.key);
+            map.set(clean.replace(/\s+/g, ''), resource.key);
+        }
     }
 
     return map;
 })();
 
 const normalizeResourceInput = (raw) => {
-    const cleaned = raw
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .trim()
-        .toLowerCase();
+    const cleaned = normalizeName(raw);
 
     return RESOURCE_ALIASES.get(cleaned) ?? RESOURCE_ALIASES.get(cleaned.replace(/\s+/g, '')) ?? null;
 };
@@ -77,9 +74,15 @@ const normalizeResourceInput = (raw) => {
 const isOwnerContext = (interaction) =>
     interaction.guildId === OWNER_GUILD_ID && interaction.user.id === OWNER_ID;
 
+// Respostas de erro curtas (ephemeral) do painel.
+const replyHmm = (interaction, key, vars) => interaction.reply({
+    content: `<:hmm:1536247599365890139> ${tFor(interaction, `commands.painel.${key}`, vars)}`,
+    flags: MessageFlags.Ephemeral,
+});
+
 const replyNoPermission = async (interaction) => {
     const payload = {
-        content: '<:dnd:1536247547193204766> Você não tem permissão para usar este comando.',
+        content: `<:dnd:1536247547193204766> ${tFor(interaction, 'commands.painel.noPermission')}`,
         flags: MessageFlags.Ephemeral,
     };
     if (interaction.deferred || interaction.replied) {
@@ -89,14 +92,15 @@ const replyNoPermission = async (interaction) => {
     }
 };
 
-const buildResourceList = (targetId) => {
+const buildResourceList = (interaction, targetId) => {
     const inventory = getUserInventory(targetId);
-    if (!inventory.length) return '_Inventário vazio._';
+    if (!inventory.length) return `_${tFor(interaction, 'commands.painel.inventoryEmpty')}_`;
 
+    const lang = getUserLanguage(interaction.user.id);
     return inventory
         .map((item) => {
             const meta = getResourceMeta(item.key) ?? {};
-            return formatResourceLine('pt-BR', {
+            return formatResourceLine(lang, {
                 key: item.key,
                 amount: item.amount,
                 emoji: meta.emoji ?? '<:registry:1536459835921530890>',
@@ -106,37 +110,41 @@ const buildResourceList = (targetId) => {
         .join('\n');
 };
 
-const buildMissionSection = (targetId) => {
+const buildMissionSection = (interaction, targetId) => {
     resolveExplorationMission(targetId);
     const mission = getExplorationMission(targetId);
 
-    if (!mission) return '_Sem missão ativa._';
+    if (!mission) return `_${tFor(interaction, 'commands.painel.noMission')}_`;
 
-    const label = STATUS_LABEL[mission.status] ?? mission.status;
-    const restante = formatTimeRemaining(mission.phase_ends_at, 'pt-BR');
+    const lang = getUserLanguage(interaction.user.id);
+    const label = STATUS_EMOJI[mission.status]
+        ? `${STATUS_EMOJI[mission.status]} ${tFor(interaction, `commands.painel.status.${mission.status}`)}`
+        : mission.status;
+    const restante = formatTimeRemaining(mission.phase_ends_at, lang);
     const duracaoFase = formatDuration(
         Math.max(0, Math.round((mission.phase_ends_at - mission.phase_started_at) / 1000)),
-        'pt-BR'
+        lang
     );
 
-    return `**Planeta:** ${mission.planet_name}
-**Fase atual:** ${label}
-**Duração da fase:** \`${duracaoFase}\`
-**Tempo restante:** \`${restante}\``;
+    return tFor(interaction, 'commands.painel.missionBody', {
+        planet: mission.planet_name,
+        phase: label,
+        duration: duracaoFase,
+        remaining: restante,
+    });
 };
 
-const buildDailySection = (targetId) => {
+const buildDailySection = (interaction, targetId) => {
     const state = getDailyState(targetId);
     const status = state.canClaim
-        ? '<:excited:1536247579061256252> disponível'
-        : '<:dnd:1536247547193204766> já resgatada hoje';
+        ? `<:excited:1536247579061256252> ${tFor(interaction, 'commands.painel.dailyAvailable')}`
+        : `<:dnd:1536247547193204766> ${tFor(interaction, 'commands.painel.dailyClaimed')}`;
 
-    return `**Status:** ${status}
-**Sequência:** \`${state.currentStreak}\` dia(s)`;
+    return tFor(interaction, 'commands.painel.dailyBody', { status, streak: state.currentStreak });
 };
 
 const buildPainelPayload = (interaction, targetId) => {
-    const user = getUser(targetId);
+    const lang = getUserLanguage(interaction.user.id);
     const alien = getUserAlien(targetId);
     const coins = getUserCoins(targetId);
     const ship = getUserShip(targetId);
@@ -144,24 +152,30 @@ const buildPainelPayload = (interaction, targetId) => {
     const dailyState = getDailyState(targetId);
 
     const header = new TextDisplayBuilder().setContent(
-`# <:settings:1536247760373088266> Painel administrativo
+`# <:settings:1536248422686920704> ${tFor(interaction, 'commands.painel.title')}
 
-**Usuário:** <@${targetId}> (\`${targetId}\`)
-**Alienígena:** ${alien ? (alien.name ?? '_sem nome_') : '_ainda não criou_'}
-**Moedas:** \`${coins.toLocaleString('pt-BR')}\` ∩oins
-**Nave:** propulsor \`${ship.propulsorTier}\` · escavação \`${ship.excavationProbeLevel}\` · scanner \`${ship.starScannerLevel}\``
+${tFor(interaction, 'commands.painel.header', {
+    user: `<@${targetId}> (\`${targetId}\`)`,
+    alien: alien
+        ? (alien.name ?? `_${tFor(interaction, 'commands.painel.alienNoName')}_`)
+        : `_${tFor(interaction, 'commands.painel.alienNone')}_`,
+    coins: coins.toLocaleString(lang),
+    propulsor: ship.propulsorTier,
+    excavation: ship.excavationProbeLevel,
+    scanner: ship.starScannerLevel,
+})}`
     );
 
     const missionTxt = new TextDisplayBuilder().setContent(
-`## <:ovni:1536247726889762847> Missão de exploração\n${buildMissionSection(targetId)}`
+`## <:ovni:1536247726889762847> ${tFor(interaction, 'commands.painel.missionTitle')}\n${buildMissionSection(interaction, targetId)}`
     );
 
     const dailyTxt = new TextDisplayBuilder().setContent(
-`## <:gold_coins:1536941656178298992> Recompensa diária\n${buildDailySection(targetId)}`
+`## <:gold_coins:1536941656178298992> ${tFor(interaction, 'commands.painel.dailyTitle')}\n${buildDailySection(interaction, targetId)}`
     );
 
     const inventoryTxt = new TextDisplayBuilder().setContent(
-`## <:registry:1536459835921530890> Inventário\n${buildResourceList(targetId)}`
+`## <:registry:1536459835921530890> ${tFor(interaction, 'commands.painel.inventoryTitle')}\n${buildResourceList(interaction, targetId)}`
     );
 
     const container = new ContainerBuilder()
@@ -176,19 +190,19 @@ const buildPainelPayload = (interaction, targetId) => {
     const rowActions = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId(`painel_skip:${targetId}`)
-            .setLabel('Pular fase atual')
+            .setLabel(tFor(interaction, 'commands.painel.buttons.skipPhase'))
             .setEmoji('<:loading:1536247662372982794>')
             .setStyle(ButtonStyle.Primary)
             .setDisabled(!mission),
         new ButtonBuilder()
             .setCustomId(`painel_skipall:${targetId}`)
-            .setLabel('Pular até chegar')
+            .setLabel(tFor(interaction, 'commands.painel.buttons.skipAll'))
             .setEmoji('<:restart:1536248409634246719>')
             .setStyle(ButtonStyle.Primary)
             .setDisabled(!mission),
         new ButtonBuilder()
             .setCustomId(`painel_refresh:${targetId}`)
-            .setLabel('Atualizar')
+            .setLabel(tFor(interaction, 'commands.painel.buttons.refresh'))
             .setEmoji('<:online:1536247711169249391>')
             .setStyle(ButtonStyle.Secondary)
     );
@@ -196,24 +210,35 @@ const buildPainelPayload = (interaction, targetId) => {
     const rowSetters = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId(`painel_setres:${targetId}`)
-            .setLabel('Setar recurso')
+            .setLabel(tFor(interaction, 'commands.painel.buttons.setResource'))
             .setEmoji('<:registry:1536459835921530890>')
             .setStyle(ButtonStyle.Success),
         new ButtonBuilder()
             .setCustomId(`painel_setcoins:${targetId}`)
-            .setLabel('Setar moedas')
+            .setLabel(tFor(interaction, 'commands.painel.buttons.setCoins'))
             .setEmoji('<:gold_coins:1536941656178298992>')
             .setStyle(ButtonStyle.Success),
         new ButtonBuilder()
             .setCustomId(`painel_skipdaily:${targetId}`)
-            .setLabel('Pular diária')
+            .setLabel(tFor(interaction, 'commands.painel.buttons.skipDaily'))
             .setEmoji('<:restart:1536248409634246719>')
             .setStyle(ButtonStyle.Success)
             .setDisabled(dailyState.canClaim)
     );
 
+    // Ação GLOBAL (não depende do jogador aberto no painel): cria um
+    // resgate pendente pra todo mundo, que cada um pega com /redeem.
+    const rowGlobal = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId(`painel_giftall:${targetId}`)
+            .setLabel(tFor(interaction, 'commands.painel.buttons.giftAll'))
+            .setEmoji('<:gift_coins:1537511597013074030>')
+            .setStyle(ButtonStyle.Primary)
+    );
+
     container.addActionRowComponents(rowActions);
     container.addActionRowComponents(rowSetters);
+    container.addActionRowComponents(rowGlobal);
 
     return {
         content: '',
@@ -222,20 +247,20 @@ const buildPainelPayload = (interaction, targetId) => {
     };
 };
 
-const buildSetResourceModal = (targetId) => {
+const buildSetResourceModal = (interaction, targetId) => {
     const modal = new ModalBuilder()
         .setCustomId(`painel_setres_modal:${targetId}`)
-        .setTitle('Setar recurso');
+        .setTitle(tFor(interaction, 'commands.painel.buttons.setResource'));
 
     const resourceInput = new TextInputBuilder()
         .setCustomId('recurso')
-        .setLabel('Recurso (ex: pedra, ferro, blueCrystal)')
+        .setLabel(tFor(interaction, 'commands.painel.modal.resourceLabel'))
         .setStyle(TextInputStyle.Short)
         .setRequired(true);
 
     const amountInput = new TextInputBuilder()
         .setCustomId('quantidade')
-        .setLabel('Quantidade (número inteiro, ≥ 0)')
+        .setLabel(tFor(interaction, 'commands.painel.modal.amountLabel'))
         .setStyle(TextInputStyle.Short)
         .setRequired(true);
 
@@ -247,14 +272,14 @@ const buildSetResourceModal = (targetId) => {
     return modal;
 };
 
-const buildSetCoinsModal = (targetId) => {
+const buildSetCoinsModal = (interaction, targetId) => {
     const modal = new ModalBuilder()
         .setCustomId(`painel_setcoins_modal:${targetId}`)
-        .setTitle('Setar moedas');
+        .setTitle(tFor(interaction, 'commands.painel.buttons.setCoins'));
 
     const amountInput = new TextInputBuilder()
         .setCustomId('quantidade')
-        .setLabel('Quantidade de moedas (número inteiro, ≥ 0)')
+        .setLabel(tFor(interaction, 'commands.painel.modal.coinsLabel'))
         .setStyle(TextInputStyle.Short)
         .setRequired(true);
 
@@ -263,17 +288,58 @@ const buildSetCoinsModal = (targetId) => {
     return modal;
 };
 
+const buildGiftAllModal = (interaction, targetId) => {
+    const modal = new ModalBuilder()
+        .setCustomId(`painel_giftall_modal:${targetId}`)
+        .setTitle(tFor(interaction, 'commands.painel.modal.giftAllTitle'));
+
+    const field = (id, label, required, placeholder) => {
+        const input = new TextInputBuilder()
+            .setCustomId(id)
+            .setLabel(label)
+            .setStyle(TextInputStyle.Short)
+            .setRequired(required);
+        if (placeholder) input.setPlaceholder(placeholder);
+        return new ActionRowBuilder().addComponents(input);
+    };
+
+    modal.addComponents(
+        field('titulo_pt', tFor(interaction, 'commands.painel.modal.titlePtLabel'), true, 'Ex: Presente de lançamento!'),
+        field('titulo_en', tFor(interaction, 'commands.painel.modal.titleEnLabel'), true, 'Ex: Launch gift!'),
+        field('moedas', tFor(interaction, 'commands.painel.modal.giftCoinsLabel'), false, '1000'),
+        field('recursos', tFor(interaction, 'commands.painel.modal.giftResourcesLabel'), false, tFor(interaction, 'commands.painel.modal.giftResourcesPlaceholder'))
+    );
+
+    return modal;
+};
+
+// "pedra:20, ferro 10" -> [{ key: 'stone', amount: 20 }, { key: 'iron', amount: 10 }]
+// Retorna { resources } ou { error } com o trecho que não deu pra entender.
+const parseGiftResources = (raw) => {
+    const resources = [];
+    for (const part of raw.split(',').map((p) => p.trim()).filter(Boolean)) {
+        const match = /^(.+?)\s*[:= ]\s*(\d+)$/.exec(part);
+        const key = match ? normalizeResourceInput(match[1]) : null;
+        const amount = match ? Number.parseInt(match[2], 10) : 0;
+        if (!key || amount <= 0) return { error: part };
+        resources.push({ key, amount });
+    }
+    return { resources };
+};
+
 module.exports = {
     // Comando sensível: sem cooldown "de jogo" normal, mas também não precisa ser rápido.
     cooldown: 3,
 
     data: new SlashCommandBuilder()
         .setName('painel')
-        .setDescription('[Owner] Painel administrativo para gerenciar um jogador')
+        .setDescription('[Owner] Admin panel to manage a player')
+        .setDescriptionLocalizations({ 'pt-BR': '[Owner] Painel administrativo para gerenciar um jogador' })
         .addStringOption((option) =>
             option
                 .setName('id')
-                .setDescription('ID do Discord do usuário que você quer gerenciar')
+                .setDescription('Discord ID of the user you want to manage')
+                .setDescriptionLocalizations({ 'pt-BR': 'ID do Discord do usuário que você quer gerenciar' })
                 .setRequired(true)
         )
         .setDefaultMemberPermissions(0),
@@ -287,7 +353,7 @@ module.exports = {
         const targetId = interaction.options.getString('id', true).trim();
         if (!ID_REGEX.test(targetId)) {
             await interaction.editReply({
-                content: '<:hmm:1536247599365890139> ID inválido. Envie apenas o ID numérico do Discord do usuário.',
+                content: `<:hmm:1536247599365890139> ${tFor(interaction, 'commands.painel.invalidId')}`,
             });
             return;
         }
@@ -306,20 +372,22 @@ module.exports = {
 
         const [action, targetId] = interaction.customId.split(':');
         if (!targetId || !ID_REGEX.test(targetId)) {
-            await interaction.reply({
-                content: '<:hmm:1536247599365890139> ID inválido nesse componente.',
-                flags: MessageFlags.Ephemeral,
-            });
+            await replyHmm(interaction, 'invalidComponentId');
             return true;
         }
 
         if (action === 'painel_setres') {
-            await interaction.showModal(buildSetResourceModal(targetId));
+            await interaction.showModal(buildSetResourceModal(interaction, targetId));
             return true;
         }
 
         if (action === 'painel_setcoins') {
-            await interaction.showModal(buildSetCoinsModal(targetId));
+            await interaction.showModal(buildSetCoinsModal(interaction, targetId));
+            return true;
+        }
+
+        if (action === 'painel_giftall') {
+            await interaction.showModal(buildGiftAllModal(interaction, targetId));
             return true;
         }
 
@@ -360,10 +428,7 @@ module.exports = {
 
         const [action, targetId] = interaction.customId.split(':');
         if (!targetId || !ID_REGEX.test(targetId)) {
-            await interaction.reply({
-                content: '<:hmm:1536247599365890139> ID inválido nesse componente.',
-                flags: MessageFlags.Ephemeral,
-            });
+            await replyHmm(interaction, 'invalidComponentId');
             return true;
         }
 
@@ -375,18 +440,12 @@ module.exports = {
             const amount = Number.parseInt(rawAmount, 10);
 
             if (!resourceKey) {
-                await interaction.reply({
-                    content: `<:hmm:1536247599365890139> Recurso "${rawResource}" não reconhecido.`,
-                    flags: MessageFlags.Ephemeral,
-                });
+                await replyHmm(interaction, 'unknownResource', { resource: rawResource });
                 return true;
             }
 
             if (!Number.isFinite(amount) || amount < 0) {
-                await interaction.reply({
-                    content: '<:hmm:1536247599365890139> Quantidade inválida. Envie um número inteiro maior ou igual a 0.',
-                    flags: MessageFlags.Ephemeral,
-                });
+                await replyHmm(interaction, 'invalidAmount');
                 return true;
             }
 
@@ -402,15 +461,48 @@ module.exports = {
             return true;
         }
 
+        if (action === 'painel_giftall_modal') {
+            const titlePt = interaction.fields.getTextInputValue('titulo_pt').trim();
+            const titleEn = interaction.fields.getTextInputValue('titulo_en').trim();
+            const rawCoins = interaction.fields.getTextInputValue('moedas').trim();
+            const rawResources = interaction.fields.getTextInputValue('recursos').trim();
+
+            const coins = rawCoins ? Number.parseInt(rawCoins, 10) : 0;
+            if (!Number.isFinite(coins) || coins < 0) {
+                await replyHmm(interaction, 'invalidCoins');
+                return true;
+            }
+
+            const { resources, error } = parseGiftResources(rawResources);
+            if (error) {
+                await replyHmm(interaction, 'giftResourceParseError', { part: error });
+                return true;
+            }
+
+            if (coins === 0 && resources.length === 0) {
+                await replyHmm(interaction, 'giftEmpty');
+                return true;
+            }
+
+            const total = createRedeemableForAllUsers({ titlePt, titleEn, coins, resources });
+            logger.info(`${interaction.user.tag} enviou presente "${titlePt}" (${coins} ∩, ${JSON.stringify(resources)}) para ${total} jogadores via /painel`);
+
+            await interaction.reply({
+                content: `<:gift_coins:1537511597013074030> ${tFor(interaction, 'commands.painel.giftAllDone', {
+                    title: getUserLanguage(interaction.user.id) === 'en-US' ? titleEn : titlePt,
+                    total: total.toLocaleString(getUserLanguage(interaction.user.id)),
+                })}`,
+                flags: MessageFlags.Ephemeral,
+            });
+            return true;
+        }
+
         if (action === 'painel_setcoins_modal') {
             const rawAmount = interaction.fields.getTextInputValue('quantidade');
             const amount = Number.parseInt(rawAmount, 10);
 
             if (!Number.isFinite(amount) || amount < 0) {
-                await interaction.reply({
-                    content: '<:hmm:1536247599365890139> Quantidade inválida. Envie um número inteiro maior ou igual a 0.',
-                    flags: MessageFlags.Ephemeral,
-                });
+                await replyHmm(interaction, 'invalidAmount');
                 return true;
             }
 
