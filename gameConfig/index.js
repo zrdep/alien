@@ -17,6 +17,7 @@ const market = require('./market');
 const hats = require('./hats');
 const achievements = require('./achievements');
 const exploration = require('./exploration');
+const consumables = require('./consumables');
 
 const validateGameConfig = ({ throwOnError = true } = {}) => {
     const errors = [];
@@ -167,6 +168,28 @@ const validateGameConfig = ({ throwOnError = true } = {}) => {
         }
     }
 
+    // -- Consumíveis ---------------------------------------------------------
+    const seenConsumableKeys = new Set();
+    const knownEffects = new Set(['resourceBonusPercent', 'travelReductionPercent']);
+    for (const item of consumables.CONSUMABLES) {
+        if (seenConsumableKeys.has(item.key)) {
+            errors.push(`gameConfig/consumables.js: chave duplicada "${item.key}"`);
+        }
+        seenConsumableKeys.add(item.key);
+        if (!item.name?.['pt-BR'] || !item.name?.['en-US']) {
+            errors.push(`gameConfig/consumables.js: "${item.key}" está sem nome em pt-BR e/ou en-US`);
+        }
+        const effectKeys = Object.keys(item.effect ?? {});
+        if (effectKeys.length !== 1 || !knownEffects.has(effectKeys[0])) {
+            errors.push(`gameConfig/consumables.js: "${item.key}" precisa de exatamente 1 efeito conhecido (${[...knownEffects].join(', ')})`);
+        } else {
+            const value = item.effect[effectKeys[0]];
+            if (!Number.isFinite(value) || value <= 0 || (effectKeys[0] === 'travelReductionPercent' && value >= 100)) {
+                errors.push(`gameConfig/consumables.js: "${item.key}" tem valor de efeito inválido (${value})`);
+            }
+        }
+    }
+
     // -- Receitas de craft referenciam recursos válidos ----------------------
     // (lazy require pra evitar ciclo: craftRecipes não depende de config/index)
     try {
@@ -182,6 +205,12 @@ const validateGameConfig = ({ throwOnError = true } = {}) => {
                 if (!resourceKeys.has(ing.key)) {
                     errors.push(`utils/craftRecipes.js: a receita "${recipe.id}" usa o ingrediente "${ing.key}", que não existe em gameConfig/resources.js`);
                 }
+                if (!Number.isInteger(ing.amount) || ing.amount <= 0) {
+                    errors.push(`utils/craftRecipes.js: a receita "${recipe.id}" tem quantidade inválida de "${ing.key}" (${ing.amount})`);
+                }
+            }
+            if (recipe.coinsCost !== undefined && (!Number.isInteger(recipe.coinsCost) || recipe.coinsCost < 0)) {
+                errors.push(`utils/craftRecipes.js: a receita "${recipe.id}" tem coinsCost inválido (${recipe.coinsCost})`);
             }
         }
     } catch {
@@ -214,5 +243,6 @@ module.exports = {
     ...hats,
     ...achievements,
     ...exploration,
+    ...consumables,
     validateGameConfig,
 };

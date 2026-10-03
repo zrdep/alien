@@ -24,11 +24,12 @@ const PLANET_DROP_TABLES = {
         { resource: 'dirt', chance: 20 },
         { resource: 'metal', chance: 10 },
     ],
+    // Planeta incomum = "planeta dos metais".
     B: [
         { resource: 'iron', chance: 35 },
         { resource: 'copper', chance: 30 },
-        { resource: 'stone', chance: 20 },
-        { resource: 'wood', chance: 15 },
+        { resource: 'metal', chance: 20 },
+        { resource: 'stone', chance: 15 },
     ],
     C: [
         { resource: 'blueCrystal', chance: 40 },

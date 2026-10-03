@@ -16,6 +16,8 @@ const {
     getUserLanguage,
     getUserShip,
     getUserInventory,
+    getUserCoins,
+    getUserItemQuantity,
     startCraftJob,
     resolveActiveCraft,
     popCraftNotice,
@@ -55,6 +57,12 @@ const buildCategoryMenu = (interaction, selectedCategory = CATEGORIES.PROPULSOR)
                     value: CATEGORIES.SCANNER,
                     emoji: '<:saturn:1536459943480270959>',
                     default: selectedCategory === CATEGORIES.SCANNER,
+                },
+                {
+                    label: tFor(interaction, 'commands.craft.categories.consumables'),
+                    value: CATEGORIES.CONSUMABLES,
+                    emoji: '<:asteroid:1536459906973171782>',
+                    default: selectedCategory === CATEGORIES.CONSUMABLES,
                 },
             ])
     );
@@ -166,6 +174,24 @@ const buildCraftPanel = (interaction, category = CATEGORIES.PROPULSOR, selectedR
         return `${checkEmoji} ${meta?.emoji ?? '<:registry:1536459835921530890>'} **${name}**: \`${userHas}/${ing.amount}\``;
     }).join('\n');
 
+    const numLoc = lang === 'pt-BR' ? 'pt-BR' : 'en-US';
+    const coinsCost = currentRecipe.coinsCost ?? 0;
+    let coinsLine = '';
+    if (coinsCost > 0) {
+        const userCoins = getUserCoins(userId);
+        const hasCoins = userCoins >= coinsCost;
+        if (!hasCoins) allRequirementsMet = false;
+        const checkEmoji = hasCoins ? '<:online:1536247711169249391>' : '<:dnd:1536247547193204766>';
+        coinsLine = `\n${checkEmoji} <:gold_coins:1536941656178298992> **∩oins**: \`${userCoins.toLocaleString(numLoc)}/${coinsCost.toLocaleString(numLoc)}\``;
+    }
+
+    // Consumível: mostra quantos o jogador já tem guardados.
+    const ownedLine = currentRecipe.consumableKey
+        ? `\n<:registry:1536459835921530890> ${tFor(interaction, 'commands.craft.consumableOwned', {
+            amount: getUserItemQuantity(userId, currentRecipe.consumableKey),
+        })}`
+        : '';
+
     let statusWarning = '';
     if (alreadyOwned) {
         statusWarning = `\n\n<:online:1536247711169249391> *${tFor(interaction, 'commands.craft.alreadyMaxLevel')}*`;
@@ -178,10 +204,10 @@ const buildCraftPanel = (interaction, category = CATEGORIES.PROPULSOR, selectedR
 
 ${recipeDesc}
 
-<:saturn:1536459943480270959> **${tFor(interaction, 'commands.craft.craftTimeLabel')}:** \`${timeFormatted}\`
+<:saturn:1536459943480270959> **${tFor(interaction, 'commands.craft.craftTimeLabel')}:** \`${timeFormatted}\`${ownedLine}
 
 ### <:rock:1536579687407681596> ${ingredientsTitle}
-${ingredientLines}${statusWarning}
+${ingredientLines}${coinsLine}${statusWarning}
 `);
 
     const buttonRow = new ActionRowBuilder().addComponents(
@@ -275,7 +301,7 @@ module.exports = {
 
         if (!recipe) {
             await interaction.reply({
-                content: `<:error:1536247565006143528> Recipe not found.`,
+                content: `<:error:1536247565006143528> ${tFor(interaction, 'commands.craft.recipeNotFound')}`,
                 flags: MessageFlags.Ephemeral,
             });
             return true;
@@ -291,6 +317,8 @@ module.exports = {
                 errorKey = 'commands.craft.requirementNotMet';
             } else if (result.reason === 'craft_in_progress') {
                 errorKey = 'commands.craft.busyError';
+            } else if (result.reason === 'insufficient_coins') {
+                errorKey = 'commands.craft.insufficientCoins';
             }
             await interaction.reply({
                 content: `<:error:1536247565006143528> ${tFor(interaction, errorKey)}`,

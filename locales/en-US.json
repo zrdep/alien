@@ -208,14 +208,19 @@
       "fuelEmpty": "**Empty fuel tank!** You've used all {limit} space explorations for this hour. Recharge and come back in **{minutes} minutes** — until then, the ship stays in the hangar.",
       "hatOnPlanetTitle": "Hat detected!",
       "hatOnPlanetBody": "The sensors picked up a **{hat}** {emoji} hidden on this planet. Click **Explore** and your alien will bring it back!",
-      "hatLine": "<:sunglasses:1536248455519801386> Hat: {emoji} **{hat}**"
+      "hatLine": "<:sunglasses:1536248455519801386> Hat: {emoji} **{hat}**",
+      "exploreWithItem": "Explore + {item} ({amount})",
+      "exploreWithBoth": "Explore + both",
+      "consumableMissing": "You don't have that consumable anymore. Craft another one in </craft:1537544781020799121>.",
+      "boostActiveLine": "**{item}** active: {effect}"
     },
     "inventory": {
       "title": "Galactic Inventory",
       "subtitle": "All resources your aliens collected on expeditions.",
       "coinsLabel": "∩oins Balance",
       "resourcesTitle": "Your Resources",
-      "empty": "Your inventory is empty. Explore planets with </planet:1537544781020799123> and click **Explore**!"
+      "empty": "Your inventory is empty. Explore planets with </planet:1537544781020799123> and click **Explore**!",
+      "itemsTitle": "Consumables"
     },
     "daily": {
       "claimedTitle": "Daily Reward!",
@@ -321,7 +326,8 @@
       "categories": {
         "propulsor": "Speed Propulsors",
         "excavation": "Excavation Probes",
-        "scanner": "Star Scanners"
+        "scanner": "Star Scanners",
+        "consumables": "Consumables"
       },
       "ingredientsTitle": "Required Ingredients",
       "craftTimeLabel": "Crafting time",
@@ -384,11 +390,26 @@
           "title": "Star Scanner Level 5",
           "desc": "Legendary scanner with the shortest possible mining time: {minutes} minutes."
         }
-      }
+      },
+      "consumableTitle": "{name}",
+      "consumableOwned": "You have: `{amount}`",
+      "insufficientCoins": "Not enough ∩oins to pay the crafting cost.",
+      "recipeNotFound": "Recipe not found."
     },
     "achievements": {
       "previousPage": "◀ Previous",
       "nextPage": "Next ▶"
+    },
+    "consumables": {
+      "miningKit": {
+        "desc": "+{percent}% resources on your next mission."
+      },
+      "fuelCell": {
+        "desc": "-{percent}% travel time (both ways) on your next mission."
+      }
+    },
+    "gift": {
+      "feeLine": "{percent}% fee: `{fee}` ∩oins — the recipient gets `{net}` ∩oins."
     }
   }
 }

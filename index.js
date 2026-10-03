@@ -71,6 +71,12 @@ app.listen(PORT, () => {
     logger.success(`Site rodando na porta ${PORT}`);
 });
 
+// Registra os slash commands no Discord — só envia de verdade quando algum
+// comando mudou (ver scripts/deploy-commands.js). Roda em paralelo com o
+// login e nunca derruba o bot se falhar.
+const { deployCommands } = require('./scripts/deploy-commands');
+deployCommands();
+
 logger.br();
 logger.info('Conectando ao Discord...');
 client.login(token);

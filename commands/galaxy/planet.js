@@ -29,7 +29,11 @@ const {
     popMissionNotice,
     incrementPlanetsSeen,
     getUserMissionNotifyPref,
+    getUserItems,
+    consumeUserItems,
 } = require('../../utils/db');
+const { getConsumable, getConsumableName } = require('../../gameConfig/consumables');
+const { applyConsumablesToMission } = require('../../utils/consumables');
 const { gerarDadosPlaneta } = require('../../utils/planet');
 const { gerarRecursosPlaneta } = require('../../utils/planetResources');
 const { formatResourcesInline } = require('../../utils/resourcesDisplay');
@@ -91,19 +95,54 @@ const buildHatFoundContent = (interaction, hat) => {
     return `\n## <:excited:1536247579061256252> ${title}\n\n${line}\n`;
 };
 
+// "Explorar" normal + um botão pra cada consumível que o jogador tem (e um
+// combinando os dois, se tiver ambos). Os itens escolhidos vão no customId:
+// planet_explore:<seed>:<item1,item2>. Máximo 5 botões por linha:
+// Explorar + 2 itens + combo + Próximo.
 const buildPlanetButtons = (interaction, planetSeed) => {
-    return new ActionRowBuilder().addComponents(
+    const lang = getUserLanguage(interaction.user.id);
+    const owned = getUserItems(interaction.user.id).filter((i) => getConsumable(i.itemKey)).slice(0, 2);
+
+    const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId(`planet_explore:${planetSeed}`)
             .setLabel(tFor(interaction, 'commands.planet.exploreLabel'))
             .setStyle(ButtonStyle.Success)
-            .setEmoji('<:ovni:1536247726889762847>'),
+            .setEmoji('<:ovni:1536247726889762847>')
+    );
+
+    for (const item of owned) {
+        row.addComponents(
+            new ButtonBuilder()
+                .setCustomId(`planet_explore:${planetSeed}:${item.itemKey}`)
+                .setLabel(tFor(interaction, 'commands.planet.exploreWithItem', {
+                    item: getConsumableName(item.itemKey, lang),
+                    amount: item.quantity,
+                }))
+                .setStyle(ButtonStyle.Primary)
+                .setEmoji(getConsumable(item.itemKey).emoji)
+        );
+    }
+
+    if (owned.length === 2) {
+        row.addComponents(
+            new ButtonBuilder()
+                .setCustomId(`planet_explore:${planetSeed}:${owned.map((i) => i.itemKey).join(',')}`)
+                .setLabel(tFor(interaction, 'commands.planet.exploreWithBoth'))
+                .setStyle(ButtonStyle.Primary)
+                .setEmoji('<:rainbow:1536248394681552957>')
+        );
+    }
+
+    row.addComponents(
         new ButtonBuilder()
             .setCustomId('planet_next')
             .setLabel(tFor(interaction, 'commands.planet.nextLabel'))
             .setStyle(ButtonStyle.Secondary)
             .setEmoji('<:restart:1536248409634246719>')
     );
+
+    return row;
 };
 
 const buildPlanetContainer = (interaction, dados, usage, recursos, { withThumbnail = true, exploreSeed = null, hatFound = null } = {}) => {
@@ -558,7 +597,8 @@ module.exports = {
 
         if (!interaction.customId.startsWith('planet_explore:')) return false;
 
-        const planetSeed = interaction.customId.slice('planet_explore:'.length);
+        const [planetSeed, boostsRaw = ''] = interaction.customId.slice('planet_explore:'.length).split(':');
+        const boosts = [...new Set(boostsRaw.split(',').filter((key) => getConsumable(key)))];
         const userId = interaction.user.id;
 
         const { unlockedAchievements: arrivalUnlocks } = resolveExplorationMission(userId);
@@ -581,8 +621,22 @@ module.exports = {
             return true;
         }
 
+        // Gasta os consumíveis ANTES de criar a missão (tudo ou nada). Se o
+        // jogador não tiver mais algum (ex: usou em outra tela), não explora.
+        if (boosts.length && !consumeUserItems(userId, boosts)) {
+            await interaction.reply({
+                content: `<:error:1536247565006143528> ${tFor(interaction, 'commands.planet.consumableMissing')}`,
+                flags: MessageFlags.Ephemeral,
+            });
+            await notifyAchievementsFollowUp(interaction, arrivalUnlocks);
+            return true;
+        }
+
         const ship = getUserShip(userId);
-        const travelSeconds = calculateTravelSeconds(offer.payload.distancia, ship.propulsorTier);
+        const { resources: missionResources, travelSeconds } = applyConsumablesToMission(boosts, {
+            resources: offer.payload.recursos,
+            travelSeconds: calculateTravelSeconds(offer.payload.distancia, ship.propulsorTier),
+        });
         const now = Date.now();
         // Reaproveita o valor de moedas já sorteado e exibido no /planet (offer.payload.coins).
         // Só gera um novo caso, por algum motivo, a oferta salva não tenha esse valor.
@@ -594,12 +648,13 @@ module.exports = {
             planetSeed,
             planetDistanceKm: offer.payload.distancia,
             planetRarity: offer.payload.raridadeCode,
-            resources: offer.payload.recursos,
+            resources: missionResources,
             travelSeconds,
             phaseStartedAt: now,
             phaseEndsAt: now + travelSeconds * 1000,
             coinsJson: JSON.stringify(coinsReward),
             hatKey: offer.payload.hatKey ?? null,
+            boosts,
         });
 
         deletePlanetOffer(userId, planetSeed);

@@ -5,6 +5,7 @@ const { getScannerMiningMs } = require('../gameConfig/shipUpgrades');
 const { formatResourcesInline } = require('./resourcesDisplay');
 const { getHat, getHatName } = require('../gameConfig/hats');
 const { getRarityEmoji } = require('../gameConfig/rarities');
+const { getConsumable, getConsumableName } = require('../gameConfig/consumables');
 
 const EXPLORE_OFFER_MS = 3 * 60 * 1000;
 // Duração de mineração padrão (tier 1 do Scanner Estelar) — usada só como
@@ -101,6 +102,27 @@ const buildHatText = (userId, hatKey) => {
     })}`;
 };
 
+// Linhas dos consumíveis usados nesta missão (efeito já aplicado).
+const buildBoostsText = (userId, boostsJson) => {
+    let keys = [];
+    try {
+        keys = JSON.parse(boostsJson || '[]');
+    } catch {
+        keys = [];
+    }
+    const lang = getUserLanguage(userId);
+    return keys
+        .map((key) => getConsumable(key))
+        .filter(Boolean)
+        .map((item) => `\n${item.emoji} ${t(userId, 'commands.planet.boostActiveLine', {
+            item: getConsumableName(item.key, lang),
+            effect: t(userId, `commands.consumables.${item.key}.desc`, {
+                percent: item.effect.resourceBonusPercent ?? item.effect.travelReductionPercent ?? 0,
+            }),
+        })}`)
+        .join('');
+};
+
 const buildMissionStatusContent = (userId, mission) => {
     const lang = getUserLanguage(userId);
     const alienName = getAlienDisplayName(userId);
@@ -108,7 +130,7 @@ const buildMissionStatusContent = (userId, mission) => {
     const resourcesText = formatResourcesInline(lang, resources);
     const eta = formatTimeRemaining(mission.phase_ends_at, lang);
     const bonusText = buildProbeBonusText(userId);
-    const hatText = buildHatText(userId, mission.hat_key);
+    const hatText = buildHatText(userId, mission.hat_key) + buildBoostsText(userId, mission.boosts_json);
 
     const getMissionCoins = () => {
         if (mission.coins_json) {
@@ -235,7 +257,7 @@ ${t(userId, 'commands.planet.exploreStartedBody', {
         alien: alienName,
         planet: mission.planet_name,
         travel: travelTime,
-    })}
+    })}${buildBoostsText(userId, mission.boosts_json)}
 
 <:saturn:1536459943480270959> ${t(userId, 'commands.planet.missionEta', { time: eta })}`;
 };

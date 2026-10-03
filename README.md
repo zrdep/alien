@@ -129,6 +129,30 @@ Aplicado direto na quantidade de cada recurso sorteado no planeta (`utils/planet
 
 Em vez de "alcance" (que não tinha efeito nenhum na versão antiga), o Scanner agora mapeia o subsolo do planeta com mais precisão — reduzindo o tempo real que o alien passa minerando.
 
+### <img src="./images/emojis/pizza.png" width="18" valign="middle"> Custo dos upgrades
+
+Cada upgrade consome recursos **e** ∩oins (as ∩oins são destruídas — é um sumidouro da economia):
+
+| Tier | ∩oins | Recursos usados |
+|---|---:|---|
+| <img src="./images/emojis/incomum.png" width="18" valign="middle"> **B** | 300 | comuns e incomuns |
+| <img src="./images/emojis/rare.png" width="18" valign="middle"> **C** | 2.000 | incomuns e raros |
+| <img src="./images/emojis/epic.png" width="18" valign="middle"> **D** | 6.000 | raros e épicos |
+| <img src="./images/emojis/legendary.png" width="18" valign="middle"> **E** | 15.000 | épicos e lendários |
+
+Nenhuma receita pede recurso de raridade acima do nível que ela desbloqueia. Recursos comuns entram como volume, pra que a sobra deles tenha destino. Receitas completas em `utils/craftRecipes.js`.
+
+### <img src="./images/emojis/asteroid.png" width="18" valign="middle"> Consumíveis
+
+Fabricados no `/craft` (categoria **Consumíveis**, 1 min cada) e gastos ao clicar em explorar no `/planet` — aparecem como botões extras quando você tem algum:
+
+| Item | Receita | Efeito na próxima missão |
+|---|---|---|
+| <img src="./images/emojis/asteroid.png" width="16" valign="middle"> **Kit de Mineração** | 15 Pedra · 10 Terra · 5 Cobre · 200 ∩oins | +25% de recursos |
+| <img src="./images/emojis/loading.png" width="16" valign="middle"> **Célula de Combustível** | 10 Madeira · 10 Terra · 4 Ferro · 150 ∩oins | −40% no tempo de viagem (ida e volta) |
+
+Dá pra usar os dois na mesma missão. Definidos em `gameConfig/consumables.js`.
+
 ---
 
 ## <img src="./images/emojis/pizza.png" width="22" valign="middle"> Economia
@@ -143,6 +167,25 @@ Em vez de "alcance" (que não tinha efeito nenhum na versão antiga), o Scanner 
 | <img src="./images/emojis/saturn.png" width="16" valign="middle"> Reset | Todo dia à meia-noite (horário de Brasília) |
 
 <img src="./images/emojis/online.png" width="16" valign="middle"> Pode ser resgatado em **qualquer servidor** (ou na DM, via instalação de usuário).
+
+### <img src="./images/emojis/config.png" width="18" valign="middle"> Loja do Sistema — preços dos recursos
+
+O sistema vende a um preço fixo (≈ 50 ∩oins por minuto de jogo necessário pra conseguir o recurso) e compra de volta por **25%** desse valor:
+
+| Recurso | Raridade | Loja (compra) | Sistema paga (venda) |
+|---|---|---:|---:|
+| Pedra · Madeira · Terra | Comum | 50 | 13 |
+| Ferro · Cobre | Incomum | 100 | 25 |
+| Metal | Incomum | 150 | 38 |
+| Cristal Azul | Raro | 500 | 125 |
+| Fragmento Estelar | Raro | 550 | 138 |
+| Cristal Roxo | Épico | 1.500 | 375 |
+| Minério Luminoso | Épico | 1.600 | 400 |
+| Núcleo de Planeta | Lendário | 3.000 | 750 |
+| Pérola Cósmica | Lendário | 4.500 | 1.125 |
+| Essência Estelar | Lendário | 6.000 | 1.500 |
+
+Como o piso do mercado entre jogadores é 50% do preço da loja, vender pra outro jogador sempre rende pelo menos o dobro de vender pro sistema.
 
 ### <img src="./images/emojis/error.png" width="18" valign="middle"> `/market` — mercado global de recursos
 
@@ -160,7 +203,13 @@ Em vez de "alcance" (que não tinha efeito nenhum na versão antiga), o Scanner 
 | Taxa sobre venda concluída | 5% |
 | Anúncios ativos por chapéu (mesmo jogador) | 3 |
 
-As taxas de 5% funcionam como **sumidouro de moedas** — ajudam a evitar que a quantidade de ∩oins em circulação só cresça infinitamente.
+### <img src="./images/emojis/passionate.png" width="18" valign="middle"> `/gift` — presentear
+
+Os dois precisam confirmar. Presente de **∩oins paga a mesma taxa de 5%** do mercado (descontada do que o destinatário recebe); presente de recursos não tem taxa.
+
+### <img src="./images/emojis/restart.png" width="18" valign="middle"> Para onde as ∩oins vão (sumidouros)
+
+Taxa de 5% do `/market`, `/hatmarket` e `/gift` · custo em ∩oins dos upgrades e consumíveis · compras na Loja do Sistema e na loja de chapéus. Detalhes e simulação em [`docs/balanceamento-economia.md`](docs/balanceamento-economia.md).
 
 ---
 
@@ -206,7 +255,7 @@ O painel mostra um **pódio do 1º, 2º e 3º lugar** como destaque e a **posiç
 
 ```bash
 npm start                 # sobe o bot
-npm run deploy-commands   # registra/atualiza os slash commands no Discord
+npm run deploy-commands   # força o registro dos slash commands (o npm start já faz isso sozinho quando algum comando muda)
 npm run generate-planets  # gera as imagens dos planetas
 npm run check-config      # valida as variáveis de ambiente/config
 ```

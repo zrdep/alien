@@ -14,8 +14,10 @@ const {
     getExplorationMission,
     getUserInventory,
     getUserCoins,
+    getUserItems,
     popMissionNotice,
 } = require('../../utils/db');
+const { getConsumable, getConsumableName } = require('../../gameConfig/consumables');
 const { getResourceMeta } = require('../../utils/planetResources');
 const { formatResourceLine } = require('../../utils/resourcesDisplay');
 const { buildMissionStatusContent, buildArrivalNotice } = require('../../utils/exploration');
@@ -58,11 +60,9 @@ module.exports = {
 <:gold_coins:1536941656178298992> **${tFor(interaction, 'commands.inventory.coinsLabel')}:** \`${coins.toLocaleString(numLoc)}\` ∩oins
 `);
 
-        let body;
+        let bodyText;
         if (!inventory.length) {
-            body = new TextDisplayBuilder().setContent(
-                `<:hmm:1536247599365890139> ${tFor(interaction, 'commands.inventory.empty')}`
-            );
+            bodyText = `<:hmm:1536247599365890139> ${tFor(interaction, 'commands.inventory.empty')}`;
         } else {
             const sorted = inventory
                 .map((item) => {
@@ -82,12 +82,24 @@ module.exports = {
 
             const lines = sorted.map((item) => formatResourceLine(lang, item)).join('\n');
 
-            body = new TextDisplayBuilder().setContent(`
+            bodyText = `
 ## <:excited:1536247579061256252> ${tFor(interaction, 'commands.inventory.resourcesTitle')}
 
 ${lines}
-`);
+`;
         }
+
+        // Consumíveis (Kit de Mineração, Célula de Combustível...) — usados
+        // nos botões de exploração do /planet.
+        const items = getUserItems(interaction.user.id).filter((i) => getConsumable(i.itemKey));
+        if (items.length) {
+            const itemLines = items
+                .map((i) => `${getConsumable(i.itemKey).emoji} **${getConsumableName(i.itemKey, lang)}** × \`${i.quantity}\``)
+                .join('\n');
+            bodyText += `\n## <:rainbow:1536248394681552957> ${tFor(interaction, 'commands.inventory.itemsTitle')}\n\n${itemLines}\n`;
+        }
+
+        const body = new TextDisplayBuilder().setContent(bodyText);
 
         const inventoryContainer = new ContainerBuilder()
             .addTextDisplayComponents(header)

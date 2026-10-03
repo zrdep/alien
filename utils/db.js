@@ -252,6 +252,17 @@ if (!temMissionHat) {
     logger.success('Coluna `hat_key` adicionada à tabela `exploration_missions`');
 }
 
+// Consumíveis usados na missão (ex: ["miningKit","fuelCell"]) — o efeito já
+// foi aplicado nos recursos/tempo ao iniciar; isto é só pra exibir.
+const temMissionBoosts = colunasMission.some(c => c.name === 'boosts_json');
+if (!temMissionBoosts) {
+    db.exec(`
+        ALTER TABLE exploration_missions
+        ADD COLUMN boosts_json TEXT;
+    `);
+    logger.success('Coluna `boosts_json` adicionada à tabela `exploration_missions`');
+}
+
 db.exec(`
     CREATE TABLE IF NOT EXISTS user_inventory (
         user_id TEXT NOT NULL,
@@ -348,6 +359,17 @@ if (!temEquippedHat) {
     db.exec(`ALTER TABLE users ADD COLUMN equipped_hat TEXT;`);
     logger.success('Coluna `equipped_hat` adicionada à tabela `users`');
 }
+
+// Consumíveis (gameConfig/consumables.js) — fabricados no /craft, gastos
+// ao iniciar uma missão no /planet.
+db.exec(`
+    CREATE TABLE IF NOT EXISTS user_items (
+        user_id TEXT NOT NULL,
+        item_key TEXT NOT NULL,
+        quantity INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (user_id, item_key)
+    );
+`);
 
 db.exec(`
     CREATE TABLE IF NOT EXISTS user_hats (
@@ -858,8 +880,8 @@ const startExplorationMission = (userId, data) => {
     db.prepare(`
         INSERT INTO exploration_missions (
             user_id, status, planet_name, planet_seed, planet_distance_km,
-            planet_rarity, resources_json, travel_seconds, phase_started_at, phase_ends_at, coins_json, hat_key
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            planet_rarity, resources_json, travel_seconds, phase_started_at, phase_ends_at, coins_json, hat_key, boosts_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(user_id) DO UPDATE SET
             status = excluded.status,
             planet_name = excluded.planet_name,
@@ -871,7 +893,8 @@ const startExplorationMission = (userId, data) => {
             phase_started_at = excluded.phase_started_at,
             phase_ends_at = excluded.phase_ends_at,
             coins_json = excluded.coins_json,
-            hat_key = excluded.hat_key
+            hat_key = excluded.hat_key,
+            boosts_json = excluded.boosts_json
     `).run(
         userId,
         data.status,
@@ -885,6 +908,7 @@ const startExplorationMission = (userId, data) => {
         data.phaseEndsAt,
         data.coinsJson ?? null,
         data.hatKey ?? null,
+        data.boosts?.length ? JSON.stringify(data.boosts) : null,
     );
 };
 
@@ -949,9 +973,12 @@ const getUserInventory = (userId) => {
 // mudou entre a leitura e a escrita (ex: o destinatário recebeu ∩oins de uma
 // missão no meio do caminho). O débito só acontece se o remetente ainda tiver
 // saldo suficiente (`AND coins >= ?`). Retorna true/false.
-const transferUserCoins = (fromUserId, toUserId, amount) => {
+// `fee` (∩oins) é descontado do que o destinatário recebe e destruído —
+// mesma lógica da taxa do mercado (gameConfig/market.js#getSaleFee).
+const transferUserCoins = (fromUserId, toUserId, amount, fee = 0) => {
     const amt = Math.floor(Number(amount));
-    if (!Number.isFinite(amt) || amt <= 0 || fromUserId === toUserId) return false;
+    const feeInt = Math.max(0, Math.floor(Number(fee) || 0));
+    if (!Number.isFinite(amt) || amt <= 0 || feeInt >= amt || fromUserId === toUserId) return false;
     getUser(fromUserId);
     getUser(toUserId);
 
@@ -961,7 +988,7 @@ const transferUserCoins = (fromUserId, toUserId, amount) => {
         `).run(amt, fromUserId, amt);
         if (debit.changes === 0) return false;
 
-        db.prepare('UPDATE users SET coins = coins + ? WHERE user_id = ?').run(amt, toUserId);
+        db.prepare('UPDATE users SET coins = coins + ? WHERE user_id = ?').run(amt - feeInt, toUserId);
         return true;
     });
 
@@ -1281,6 +1308,11 @@ const startCraftJob = (userId, recipe, now = Date.now()) => {
         }
     }
 
+    const coinsCost = Math.max(0, Math.floor(recipe.coinsCost ?? 0));
+    if (getUserCoins(userId) < coinsCost) {
+        return { success: false, reason: 'insufficient_coins', coinsCost };
+    }
+
     const durationMs = (recipe.craftSeconds ?? 60) * 1000;
     const endsAt = now + durationMs;
 
@@ -1293,7 +1325,17 @@ const startCraftJob = (userId, recipe, now = Date.now()) => {
         for (const ing of recipe.ingredients) {
             const res = deductStmt.run(ing.amount, userId, ing.key, ing.amount);
             if (res.changes === 0) {
-                throw new Error(`Insufficient resource ${ing.key}`);
+                throw new Error('insufficient_resources');
+            }
+        }
+
+        // ∩oins do craft são destruídas (sumidouro), não vão pra ninguém.
+        if (coinsCost > 0) {
+            const paid = db.prepare(`
+                UPDATE users SET coins = coins - ? WHERE user_id = ? AND coins >= ?
+            `).run(coinsCost, userId, coinsCost);
+            if (paid.changes === 0) {
+                throw new Error('insufficient_coins');
             }
         }
 
@@ -1667,6 +1709,45 @@ const sellToSystemShop = (sellerId, resourceKey, amount) => {
         totalPayout,
         unlockedAchievements,
     };
+};
+
+// =============================================================================
+// CONSUMÍVEIS — inventário de itens (gameConfig/consumables.js)
+// =============================================================================
+
+const getUserItems = (userId) => {
+    return db.prepare(`
+        SELECT item_key AS itemKey, quantity
+        FROM user_items
+        WHERE user_id = ? AND quantity > 0
+        ORDER BY item_key ASC
+    `).all(userId);
+};
+
+const getUserItemQuantity = (userId, itemKey) => {
+    const row = db.prepare('SELECT quantity FROM user_items WHERE user_id = ? AND item_key = ?').get(userId, itemKey);
+    return row?.quantity ?? 0;
+};
+
+// Gasta 1 unidade de CADA item da lista, tudo ou nada (transação). Retorna
+// false se faltar qualquer um — nesse caso nada é gasto.
+const consumeUserItems = (userId, itemKeys) => {
+    if (!itemKeys.length) return true;
+    const tx = db.transaction(() => {
+        const stmt = db.prepare(`
+            UPDATE user_items SET quantity = quantity - 1
+            WHERE user_id = ? AND item_key = ? AND quantity >= 1
+        `);
+        for (const key of itemKeys) {
+            if (stmt.run(userId, key).changes === 0) throw new Error('missing_item');
+        }
+    });
+    try {
+        tx();
+        return true;
+    } catch {
+        return false;
+    }
 };
 
 // =============================================================================
@@ -2285,6 +2366,9 @@ module.exports = {
     cancelMarketListing,
     buyFromSystemShop,
     sellToSystemShop,
+    getUserItems,
+    getUserItemQuantity,
+    consumeUserItems,
     getUserHats,
     buyHatFromSystemShop,
     getUserHatQuantity,

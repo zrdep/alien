@@ -118,6 +118,7 @@ Copie uma receita parecida como modelo:
     titleKey: 'commands.craft.recipes.propulsor_f.title', // adicione em pt-BR e en-US
     descKey: 'commands.craft.recipes.propulsor_f.desc',   // adicione em pt-BR e en-US
     craftSeconds: 300,
+    coinsCost: 30000,            // ∩oins destruídas ao iniciar o craft (0 = grátis)
     ingredients: [
         { key: 'darkMatter', amount: 5 },   // key precisa existir em gameConfig/resources.js
         { key: 'starEssence', amount: 10 },
@@ -130,7 +131,9 @@ Copie uma receita parecida como modelo:
 },
 ```
 
-Receitas consomem só recursos — não existe custo em ∩oins hoje.
+Regra das receitas: nunca pedir recurso de raridade acima do nível que a
+receita desbloqueia. Veja `docs/balanceamento-economia.md` antes de mexer em
+quantidades ou `coinsCost`.
 
 `npm run check-config` confere que todo `ingredients[].key` referenciado
 realmente existe em `gameConfig/resources.js` — pega typo na hora.
@@ -162,6 +165,30 @@ como conseguir o upgrade.
 
 ---
 
+## 6. Adicionar um consumível
+
+Arquivo: `gameConfig/consumables.js`
+
+```js
+{
+    key: 'shieldBattery',
+    emoji: '<:rainbow:1536248394681552957>',   // de docs/emojisNome.txt
+    name: { 'pt-BR': 'Bateria de Escudo', 'en-US': 'Shield Battery' },
+    effect: { resourceBonusPercent: 10 },       // ou travelReductionPercent
+    recipe: {
+        ingredients: [{ key: 'metal', amount: 10 }],
+        coinsCost: 100,
+        craftSeconds: 60,
+    },
+},
+```
+
+Depois adicione `commands.consumables.shieldBattery.desc` nos dois locales.
+A receita aparece sozinha no `/craft` e o botão no `/planet`. Efeito de um
+tipo NOVO precisa ser implementado em `utils/consumables.js`.
+
+---
+
 ## Onde cada coisa mora (referência rápida)
 
 | Quero mudar...                              | Arquivo                              |
@@ -171,6 +198,8 @@ como conseguir o upgrade.
 | O que cai em cada raridade de planeta         | `gameConfig/planetDropTables.js`     |
 | Velocidade/bônus/tempo de mineração da nave  | `gameConfig/shipUpgrades.js`         |
 | Receitas de craft e seus custos               | `utils/craftRecipes.js`              |
+| Consumíveis (itens de missão)                 | `gameConfig/consumables.js`          |
+| Limite de planetas por hora                   | `gameConfig/exploration.js`          |
 | Nome traduzido de uma raridade (pt/en)        | `locales/pt-BR.json` / `en-US.json`  |
 
 **Nunca** edite `utils/planet.js`, `utils/planetResources.js`, `utils/ship.js`,

@@ -208,14 +208,19 @@
       "fuelEmpty": "**Tanque de combustível vazio!** Você já usou as {limit} explorações espaciais desta hora. Recarregue as energias e volte daqui **{minutes} minutos** — até lá, a nave fica no hangar.",
       "hatOnPlanetTitle": "Chapéu detectado!",
       "hatOnPlanetBody": "Os sensores captaram um(a) **{hat}** {emoji} escondido(a) neste planeta. Clique em **Explorar** para o seu alien trazê-lo na volta!",
-      "hatLine": "<:sunglasses:1536248455519801386> Chapéu: {emoji} **{hat}**"
+      "hatLine": "<:sunglasses:1536248455519801386> Chapéu: {emoji} **{hat}**",
+      "exploreWithItem": "Explorar + {item} ({amount})",
+      "exploreWithBoth": "Explorar + ambos",
+      "consumableMissing": "Você não tem mais esse consumível. Fabrique outro em </craft:1537544781020799121>.",
+      "boostActiveLine": "**{item}** em uso: {effect}"
     },
     "inventory": {
       "title": "Inventário Galáctico",
       "subtitle": "Todos os recursos que seus aliens coletaram nas expedições.",
       "coinsLabel": "Saldo de ∩oins",
       "resourcesTitle": "Seus Recursos",
-      "empty": "Seu inventário está vazio. Explore planetas com </planet:1537544781020799123> e clique em **Explorar**!"
+      "empty": "Seu inventário está vazio. Explore planetas com </planet:1537544781020799123> e clique em **Explorar**!",
+      "itemsTitle": "Consumíveis"
     },
     "daily": {
       "claimedTitle": "Recompensa Diária!",
@@ -321,7 +326,8 @@
       "categories": {
         "propulsor": "Propulsores de Velocidade",
         "excavation": "Sondas de Escavação",
-        "scanner": "Scanners Estelares"
+        "scanner": "Scanners Estelares",
+        "consumables": "Consumíveis"
       },
       "ingredientsTitle": "Ingredientes Necessários",
       "craftTimeLabel": "Tempo de fabricação",
@@ -384,11 +390,26 @@
           "title": "Scanner Estelar Nível 5",
           "desc": "Scanner Lendário com o menor tempo de mineração possível: {minutes} minutos."
         }
-      }
+      },
+      "consumableTitle": "{name}",
+      "consumableOwned": "Você tem: `{amount}`",
+      "insufficientCoins": "∩oins insuficientes para pagar o custo de fabricação.",
+      "recipeNotFound": "Receita não encontrada."
     },
     "achievements": {
       "previousPage": "◀ Anterior",
       "nextPage": "Próxima ▶"
+    },
+    "consumables": {
+      "miningKit": {
+        "desc": "+{percent}% de recursos na próxima missão."
+      },
+      "fuelCell": {
+        "desc": "-{percent}% no tempo de viagem (ida e volta) da próxima missão."
+      }
+    },
+    "gift": {
+      "feeLine": "Taxa de {percent}%: `{fee}` ∩oins — o destinatário recebe `{net}` ∩oins."
     }
   }
 }

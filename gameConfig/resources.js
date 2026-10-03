@@ -21,6 +21,13 @@
 //      automática avisa se você esqueceu algum passo ou digitou a `rarity`
 //      errado.
 //
+// REGRA DE PREÇO (ver docs/balanceamento-economia.md):
+//   - systemShopPrice ≈ 50 ∩oins por minuto de jogo necessário pra conseguir
+//     1 unidade (nave de meio de jogo, mirando o melhor planeta);
+//   - sellPrice = 25% do systemShopPrice (arredondado). Fica abaixo do piso
+//     do mercado entre jogadores (50%), então vender pra outro jogador sempre
+//     rende mais que vender pro sistema.
+//
 // SOBRE `sellPrice`:
 //   Preço (em ∩oins) que a Loja do Sistema paga por UNIDADE quando um
 //   jogador vende esse recurso diretamente pro bot (/mercado loja_venda).
@@ -36,7 +43,7 @@ const RESOURCES = [
         emoji: '<:rock:1536579687407681596>',
         name: { 'pt-BR': 'Pedra', 'en-US': 'Stone' },
         systemShopPrice: 50,
-        sellPrice: 12,
+        sellPrice: 13,
         daily: { eligible: true, min: 15, max: 30 },
     },
     {
@@ -45,7 +52,7 @@ const RESOURCES = [
         emoji: '<:wood:1536579684706418698>',
         name: { 'pt-BR': 'Madeira', 'en-US': 'Wood' },
         systemShopPrice: 50,
-        sellPrice: 12,
+        sellPrice: 13,
         daily: { eligible: true, min: 15, max: 30 },
     },
     {
@@ -53,8 +60,8 @@ const RESOURCES = [
         rarity: 'A',
         emoji: '<:dirt:1536579675172904960>',
         name: { 'pt-BR': 'Terra', 'en-US': 'Dirt' },
-        systemShopPrice: 30,
-        sellPrice: 8,
+        systemShopPrice: 50,
+        sellPrice: 13,
         daily: { eligible: true, min: 15, max: 30 },
     },
     {
@@ -77,11 +84,11 @@ const RESOURCES = [
     },
     {
         key: 'metal',
-        rarity: 'C',
+        rarity: 'B',
         emoji: '<:metal:1536579666385567774>',
         name: { 'pt-BR': 'Metal', 'en-US': 'Metal' },
         systemShopPrice: 150,
-        sellPrice: 35,
+        sellPrice: 38,
         daily: { eligible: true, min: 5, max: 15 },
     },
     {
@@ -89,8 +96,8 @@ const RESOURCES = [
         rarity: 'C',
         emoji: '<:blue_crystal:1536579663739093022>',
         name: { 'pt-BR': 'Cristal Azul', 'en-US': 'Blue Crystal' },
-        systemShopPrice: 400,
-        sellPrice: 100,
+        systemShopPrice: 500,
+        sellPrice: 125,
         daily: { eligible: false },
     },
     {
@@ -98,8 +105,8 @@ const RESOURCES = [
         rarity: 'C',
         emoji: '<:stellar_fragment:1536579660178006057>',
         name: { 'pt-BR': 'Fragmento Estelar', 'en-US': 'Star Fragment' },
-        systemShopPrice: 600,
-        sellPrice: 150,
+        systemShopPrice: 550,
+        sellPrice: 138,
         daily: { eligible: false },
     },
     {
@@ -107,8 +114,8 @@ const RESOURCES = [
         rarity: 'D',
         emoji: '<:purple_crystal:1536579657489588224>',
         name: { 'pt-BR': 'Cristal Roxo', 'en-US': 'Purple Crystal' },
-        systemShopPrice: 1000,
-        sellPrice: 250,
+        systemShopPrice: 1500,
+        sellPrice: 375,
         daily: { eligible: false },
     },
     {
@@ -116,8 +123,8 @@ const RESOURCES = [
         rarity: 'D',
         emoji: '<:luminous_ore:1536579654285262939>',
         name: { 'pt-BR': 'Minério Luminoso', 'en-US': 'Glowing Ore' },
-        systemShopPrice: 1500,
-        sellPrice: 300,
+        systemShopPrice: 1600,
+        sellPrice: 400,
         daily: { eligible: false },
     },
     {
@@ -126,7 +133,7 @@ const RESOURCES = [
         emoji: '<:planetary_core:1536579651437330432>',
         name: { 'pt-BR': 'Núcleo de Planeta', 'en-US': 'Planet Core' },
         systemShopPrice: 3000,
-        sellPrice: 600,
+        sellPrice: 750,
         daily: { eligible: false },
     },
     {
@@ -134,8 +141,8 @@ const RESOURCES = [
         rarity: 'E',
         emoji: '<:cosmic_pearl:1536579648073371658>',
         name: { 'pt-BR': 'Pérola Cósmica', 'en-US': 'Cosmic Pearl' },
-        systemShopPrice: 5000,
-        sellPrice: 850,
+        systemShopPrice: 4500,
+        sellPrice: 1125,
         daily: { eligible: false },
     },
     {
@@ -143,8 +150,8 @@ const RESOURCES = [
         rarity: 'E',
         emoji: '<:stellar_essence:1536579644692889651>',
         name: { 'pt-BR': 'Essência Estelar', 'en-US': 'Star Essence' },
-        systemShopPrice: 10000,
-        sellPrice: 1250,
+        systemShopPrice: 6000,
+        sellPrice: 1500,
         daily: { eligible: false },
     },
 

@@ -20,7 +20,20 @@ const {
     transferUserCoins,
     transferInventoryResource,
 } = require('../../utils/db');
-const { RESOURCES } = require('../../gameConfig');
+const { RESOURCES, MARKET_CONFIG, getSaleFee } = require('../../gameConfig');
+const { t } = require('../../utils/i18n');
+
+// Presentes de ∩oins pagam a mesma taxa do mercado (destruída). Sem isso,
+// passar ∩oins entre contas furava a taxa e o preço mínimo do /market.
+const buildGiftFeeLine = (entry) => {
+    if (entry.kind !== 'coins') return '';
+    const fee = getSaleFee(entry.amount);
+    return `\n${E_GOLD} ${t(entry.lang, 'commands.gift.feeLine', {
+        percent: MARKET_CONFIG.saleFeePercent,
+        fee: formatNum(fee, entry.lang),
+        net: formatNum(entry.amount - fee, entry.lang),
+    })}`;
+};
 
 const GIFT_IMAGE_NAME = 'gift_coins.png';
 const GIFT_IMAGE_PATH = path.join(__dirname, '..', '..', 'images', 'moedas', GIFT_IMAGE_NAME);
@@ -120,7 +133,7 @@ const buildPendingBody = (entry) => {
 
     return (
         `> ${item}\n` +
-        `<@${entry.senderId}> **→** <@${entry.targetId}>\n\n` +
+        `<@${entry.senderId}> **→** <@${entry.targetId}>${buildGiftFeeLine(entry)}\n\n` +
         `${statusLine(entry.senderId, entry.confirmed.has(entry.senderId))}\n` +
         `${statusLine(entry.targetId, entry.confirmed.has(entry.targetId))}\n\n` +
         `-# ${E_HMM} ${isPt ? 'Ambos precisam confirmar em até 3 minutos, ou o presente é cancelado.' : 'Both must confirm within 3 minutes, or the gift is cancelled.'}`
@@ -342,7 +355,7 @@ module.exports = {
         // ainda tiver saldo e soma com UPDATE relativo, então nenhum ganho que
         // aconteça ao mesmo tempo (ex: missão concluída) é sobrescrito.
         if (entry.kind === 'coins') {
-            if (!transferUserCoins(entry.senderId, entry.targetId, entry.amount)) {
+            if (!transferUserCoins(entry.senderId, entry.targetId, entry.amount, getSaleFee(entry.amount))) {
                 await interaction.update(buildContainer(
                     entry.lang,
                     `${E_SOB} *${isPt ? 'O remetente não tem mais ∩oins suficientes. Presente cancelado.' : 'The sender no longer has enough ∩oins. Gift cancelled.'}*`,
@@ -362,7 +375,7 @@ module.exports = {
         }
 
         const body =
-            `${E_GOLD} *<@${entry.senderId}> ${isPt ? 'presenteou' : 'gifted'} <@${entry.targetId}> ${isPt ? 'com' : 'with'} ${describeItem(entry, entry.lang)}!*`;
+            `${E_GOLD} *<@${entry.senderId}> ${isPt ? 'presenteou' : 'gifted'} <@${entry.targetId}> ${isPt ? 'com' : 'with'} ${describeItem(entry, entry.lang)}!*${buildGiftFeeLine(entry)}`;
         await interaction.update(buildContainer(entry.lang, body, buildConfirmButtons(giftId, entry.targetId, isPt, true)));
         return true;
     },
