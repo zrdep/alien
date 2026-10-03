@@ -26,6 +26,11 @@
 //   HAT_MARKET_CONFIG.minPricePercentOfBase abaixo) quanto como preço FIXO
 //   de compra direta na Loja do Sistema (aba "Loja" do /hatmarket — espelha
 //   a Loja do Sistema do /market pra recursos).
+//
+// SOBRE `keepAntennae` (opcional):
+//   Por padrão, o alien aparece SEM antenas quando usa chapéu (images/aliens/hat/),
+//   pra elas não ficarem saindo em volta do chapéu. Use `keepAntennae: true`
+//   em chapéus pequenos que não cobrem a cabeça toda (ex.: aniversário).
 // =============================================================================
 
 const HATS = [
@@ -132,6 +137,7 @@ const HATS = [
         rarity: 'E',
         findChance: 2,
         marketBasePrice: 35_000,
+        keepAntennae: true,
         name: { 'pt-BR': 'Chapéu de Aniversário', 'en-US': 'Birthday Hat' },
     },
 ];

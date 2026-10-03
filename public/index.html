@@ -3,387 +3,843 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Alien</title>
-<meta name="description" content="∩lien: um RPG de exploração espacial jogado inteiramente por comandos / no Discord.">
-<link rel="icon" href="images/logo/logo.png">
+<title>∩lien — RPG espacial no Discord</title>
+<meta name="description" content="∩lien: adote um alienígena, monte sua nave e explore planetas. Um RPG de exploração espacial e economia jogado por comandos no Discord.">
+<meta name="theme-color" content="#2C1766">
+<meta property="og:title" content="∩lien — RPG espacial no Discord">
+<meta property="og:description" content="Adote um alienígena, monte sua nave e explore planetas, tudo por comandos no Discord.">
+<meta property="og:image" content="images/logo/logo.png">
+<meta property="og:type" content="website">
+<link rel="icon" href="images/logo/alien-logo.svg" type="image/svg+xml">
+<link rel="icon" href="images/logo/logo.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&family=Lilita+One&display=swap" rel="stylesheet">
 <style>
+  /* ------------------------------------------------------------------
+     Tokens — tirados da própria arte do ∩lien: fundo roxo-noite dos
+     retratos dos aliens, roxo do logo, contorno preto grosso de desenho.
+     --accent muda conforme a cor de alien escolhida no topo da página.
+     ------------------------------------------------------------------ */
   :root{
-    --bg: #0a0714;
-    --bg-soft: #120c22;
-    --accent: #8b5cf6;
-    --accent-soft: #c9b8ff;
-    --text: #f3efff;
-    --text-dim: #a99fc4;
-    --border: rgba(255,255,255,.09);
-    --card: rgba(255,255,255,.035);
+    --night: #2C1766;   /* fundo dos retratos dos aliens */
+    --grape: #601EAB;   /* fundo do logo */
+    --lilac: #D8C7FF;   /* texto sobre o roxo */
+    --paper: #F7F1FF;   /* "figurinhas" claras */
+    --plum:  #24124F;   /* texto sobre as figurinhas */
+    --ink:   #000000;   /* contorno e sombra dura */
+    --gold:  #F7B733;   /* botão principal (moedas, coroa) */
+    --accent: #A56BF0;  /* cor do alien escolhido */
+
+    --stroke: 3px solid var(--ink);
+    --shadow: 5px 5px 0 var(--ink);
+    --shadow-sm: 3px 3px 0 var(--ink);
+    --radius: 20px;
+
+    --display: 'Lilita One', 'Arial Black', system-ui, sans-serif;
+    --body: 'Fredoka', system-ui, sans-serif;
   }
 
   *{ box-sizing:border-box; margin:0; padding:0; }
-
-  html{ scroll-behavior:smooth; }
-
+  html{ scroll-behavior:smooth; scroll-padding-top: 84px; }
   body{
-    background:
-      radial-gradient(1px 1px at 10% 20%, #fff, transparent),
-      radial-gradient(1px 1px at 80% 10%, #fff, transparent),
-      radial-gradient(1px 1px at 60% 70%, #fff, transparent),
-      radial-gradient(1.5px 1.5px at 30% 85%, #fff, transparent),
-      radial-gradient(1px 1px at 90% 60%, #fff, transparent),
-      radial-gradient(1px 1px at 45% 40%, #fff, transparent),
-      radial-gradient(1.5px 1.5px at 15% 55%, #fff, transparent),
-      radial-gradient(1px 1px at 70% 90%, #fff, transparent),
-      var(--bg);
-    background-attachment: fixed;
-    color: var(--text);
-    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--night);
+    color: var(--lilac);
+    font-family: var(--body);
+    font-size: 1.0625rem;
     line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
   }
-
-  h1, h2, h3, .brand{
-    font-family: 'Baloo 2', system-ui, sans-serif;
-  }
-
   img{ max-width:100%; display:block; }
+  a{ color:inherit; }
+  :focus-visible{ outline: 3px solid var(--gold); outline-offset: 3px; border-radius: 8px; }
 
-  a{ color: inherit; text-decoration:none; }
+  h1, h2, h3{ font-family: var(--display); font-weight:400; line-height:1.05; color: var(--paper); }
+  h2{ font-size: clamp(2rem, 4.4vw, 2.75rem); }
+  h3{ font-size: 1.35rem; }
 
-  .wrap{
-    max-width: 880px;
-    margin: 0 auto;
-    padding: 0 24px;
-  }
+  .wrap{ max-width: 1120px; margin: 0 auto; padding: 0 20px; }
 
-  /* NAV */
-  nav{
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    backdrop-filter: blur(10px);
-    background: rgba(10,7,20,.7);
-    border-bottom: 1px solid var(--border);
-  }
-  nav .wrap{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    height: 64px;
-  }
-  .brand{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    font-size: 1.25rem;
-    font-weight: 700;
-    letter-spacing: .3px;
-  }
-  .brand img{ width:32px; height:32px; border-radius:50%; }
-  .nav-links{ display:flex; gap: 28px; font-size:.9rem; color: var(--text-dim); }
-  .nav-links a:hover{ color: var(--text); }
+  /* O "∩" do nome é desenhado em SVG: as fontes não têm esse caractere
+     e o fallback do sistema quebraria o título. */
+  [hidden]{ display:none !important; }
+  .cap{ display:inline-block; height:.7em; width:.533em; fill: currentColor; stroke: var(--ink); stroke-width: 5; paint-order: stroke; stroke-linejoin: round; vertical-align: baseline; margin-right:.02em; overflow:visible; }
 
-  /* HERO */
-  header.hero{
-    padding: 96px 0 72px;
-    text-align:center;
-  }
-  header.hero .logo{
-    width: 108px;
-    height: 108px;
-    border-radius: 28px;
-    margin: 0 auto 28px;
-    box-shadow: 0 0 0 1px var(--border), 0 20px 60px -20px rgba(139,92,246,.55);
-  }
-  header.hero h1{
-    font-size: 3.2rem;
-    font-weight: 800;
-    background: linear-gradient(180deg, #fff, var(--accent-soft));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-  header.hero p.lead{
-    margin: 18px auto 6px;
-    max-width: 480px;
-    font-size: 1.05rem;
-    color: var(--text-dim);
-  }
-  header.hero p.tagline{
-    margin-top: 10px;
-    font-size: .88rem;
-    font-style: italic;
-    color: #7a6f96;
-  }
-  .cta-row{
-    margin-top: 34px;
-    display:flex;
-    gap: 14px;
-    justify-content:center;
-    flex-wrap: wrap;
-  }
+  /* ---------- botões ---------- */
   .btn{
-    display:inline-block;
-    padding: 13px 26px;
-    border-radius: 999px;
-    font-weight: 600;
-    font-size: .95rem;
-    transition: transform .15s ease, box-shadow .15s ease;
+    display:inline-flex; align-items:center; gap:10px;
+    font-family: var(--display); font-size: 1.15rem; letter-spacing:.2px;
+    padding: 12px 22px;
+    border: var(--stroke); border-radius: 999px;
+    box-shadow: var(--shadow-sm);
+    text-decoration:none; cursor:pointer;
+    transition: transform .12s ease, box-shadow .12s ease;
   }
-  .btn-primary{
-    background: linear-gradient(135deg, var(--accent), #6d28d9);
-    color:#fff;
-    box-shadow: 0 8px 24px -8px rgba(139,92,246,.7);
-  }
-  .btn-primary:hover{ transform: translateY(-2px); }
-  .btn-ghost{
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-  }
-  .btn-ghost:hover{ color:var(--text); border-color: rgba(255,255,255,.25); }
+  .btn img{ width:24px; height:24px; }
+  .btn:hover{ transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--ink); }
+  .btn:active{ transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--ink); }
+  .btn-gold{ background: var(--gold); color: var(--ink); }
+  .btn-paper{ background: var(--paper); color: var(--plum); }
 
-  .rarities{
-    margin-top: 56px;
-    display:flex;
-    justify-content:center;
-    gap: 18px;
+  /* ---------- navegação ---------- */
+  .nav{
+    position: sticky; top:0; z-index:20;
+    background: var(--night);
+    border-bottom: var(--stroke);
   }
-  .rarities img{ width:30px; height:30px; opacity:.85; }
+  .nav .wrap{ display:flex; align-items:center; gap: 22px; height: 68px; }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-family: var(--display); font-size: 1.6rem; color: var(--paper); text-decoration:none;
+  }
+  .brand img{ height:42px; width:auto; filter: drop-shadow(2px 2px 0 var(--ink)); }
+  .brand .cap{ stroke-width: 0; }
+  .nav-links{ display:flex; gap: 22px; margin-left: auto; font-weight:500; }
+  .nav-links a{ text-decoration:none; color: var(--lilac); }
+  .nav-links a:hover{ color: var(--paper); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
+  .nav .btn{ font-size: 1rem; padding: 8px 16px; }
 
-  /* SECTIONS */
-  section{ padding: 64px 0; }
-  section h2{
-    font-size: 1.7rem;
-    font-weight: 700;
-    text-align:center;
+  .lang{
+    display:flex; border: var(--stroke); border-radius: 999px; overflow:hidden; background: var(--paper);
   }
-  section > .wrap > p.section-lead{
-    text-align:center;
-    color: var(--text-dim);
-    max-width: 560px;
-    margin: 14px auto 0;
+  .lang button{
+    font: 600 .85rem var(--body); color: var(--plum);
+    background: transparent; border:0; padding: 6px 11px; cursor:pointer;
   }
+  .lang button[aria-pressed="true"]{ background: var(--plum); color: var(--paper); }
 
-  .divider{
-    height:1px;
-    background: var(--border);
-    max-width: 880px;
-    margin: 0 auto;
+  /* ---------- topo: o alien do visitante ---------- */
+  .hero{ padding: 56px 0 72px; }
+  .hero .wrap{
+    display:grid; grid-template-columns: 1.05fr .95fr; gap: 40px; align-items:center;
   }
+  .hero h1{
+    font-size: clamp(5rem, 13vw, 9.5rem);
+    color: var(--accent);
+    -webkit-text-stroke: 4px var(--ink);
+    paint-order: stroke fill;
+    text-shadow: 7px 7px 0 var(--ink);
+    transition: color .25s ease;
+    margin-bottom: 18px;
+  }
+  .hero h1 .cap{ stroke-width: 6; }
+  .hero h1 .cap{ filter: drop-shadow(7px 7px 0 var(--ink)); }
+  .hero .lead{ font-size: 1.3rem; color: var(--paper); max-width: 30ch; font-weight:500; }
+  .hero .sub{ margin-top: 10px; max-width: 40ch; }
+  .cta{ display:flex; gap:14px; flex-wrap:wrap; margin-top: 30px; }
 
-  /* FEATURE CARDS */
-  .grid3{
-    margin-top: 44px;
-    display:grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 18px;
+  .builder{ display:flex; flex-direction:column; align-items:center; }
+  .stage{
+    position:relative; width: min(100%, 340px); aspect-ratio: 400 / 650;
   }
-  .card{
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 26px 22px;
-  }
-  .card img{ width:40px; height:40px; margin-bottom:14px; }
-  .card h3{ font-size: 1.05rem; margin-bottom: 8px; }
-  .card p{ font-size: .89rem; color: var(--text-dim); }
-
-  /* LOOP STEPS */
-  .loop{
-    margin-top: 46px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-  .step{
-    text-align:center;
-    width: 130px;
-  }
-  .step img{ width:38px; height:38px; margin: 0 auto 10px; }
-  .step span{ font-size:.82rem; color: var(--text-dim); }
-  .arrow{ color:#4b3f68; font-size:1.3rem; padding: 0 4px; }
-
-  /* TERMS / PRIVACY */
-  .grid2{
-    margin-top: 44px;
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 18px;
-  }
-  .panel{
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 30px 28px;
-  }
-  .panel h3{
-    font-size: 1.1rem;
-    margin-bottom: 16px;
-    display:flex;
-    align-items:center;
-    gap:8px;
-  }
-  .panel ul{ list-style:none; }
-  .panel li{
-    font-size: .88rem;
-    color: var(--text-dim);
-    padding-left: 18px;
-    position:relative;
-    margin-bottom: 12px;
-  }
-  .panel li::before{
-    content:"·";
-    color: var(--accent-soft);
-    position:absolute;
-    left:0;
-    font-size:1.2rem;
-    line-height:1;
-  }
-  .panel li:last-child{ margin-bottom:0; }
-  .panel .note{
-    margin-top: 18px;
-    font-size: .78rem;
-    color:#6f6489;
+  .stage img{ position:absolute; inset:0; width:100%; height:100%; }
+  #alien-img{ -webkit-mask-image: radial-gradient(ellipse 62% 56% at 50% 50%, #000 72%, transparent 100%); mask-image: radial-gradient(ellipse 62% 56% at 50% 50%, #000 72%, transparent 100%); }
+  .stage .hat{ transition: opacity .15s ease; }
+  .stage.boing{ animation: boing .45s cubic-bezier(.3,1.6,.5,1); }
+  @keyframes boing{
+    0%{ transform: scale(1,1); }
+    30%{ transform: scale(1.06,.93); }
+    60%{ transform: scale(.97,1.04); }
+    100%{ transform: scale(1,1); }
   }
 
-  /* FOOTER */
-  footer{
-    border-top: 1px solid var(--border);
-    padding: 32px 0;
-    text-align:center;
-    color: #59507a;
-    font-size: .8rem;
+  .picker{
+    width: 100%; max-width: 440px; margin-top: -40px; position:relative;
+    background: var(--paper); color: var(--plum);
+    border: var(--stroke); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 18px 18px 16px;
   }
-  footer .brand{ justify-content:center; margin-bottom:10px; font-size:1rem; color:var(--text-dim); }
-  footer .brand img{ width:22px; height:22px; }
+  .picker h3{ color: var(--plum); font-size: 1.05rem; margin-bottom: 10px; }
+  .picker h3 + .row{ margin-bottom: 16px; }
+  .row{ display:flex; gap: 10px; }
+  .swatch{
+    width: 42px; height: 42px; border-radius:50%; cursor:pointer;
+    border: var(--stroke); box-shadow: var(--shadow-sm);
+  }
+  .swatch[aria-pressed="true"]{ box-shadow: 0 0 0 3px var(--paper), 0 0 0 6px var(--plum); }
+  #swatches{ padding: 6px 6px 4px; margin-left: -6px; }
+  .hats{ flex-wrap:wrap; gap: 8px; padding: 2px 4px 6px 2px; }
+  .hat-chip{
+    flex: 0 0 auto; position:relative;
+    width: 60px; height: 52px; border-radius: 14px; cursor:pointer;
+    background: #fff; border: var(--stroke); box-shadow: var(--shadow-sm);
+    overflow:hidden;
+  }
+  .hat-chip img{ position:absolute; max-width:none; }
+  .hat-chip .rar{ position:absolute; right:2px; bottom:2px; width:16px; height:16px; }
+  .hat-chip.none{ font: 600 .75rem var(--body); color: var(--plum); }
+  .hat-chip[aria-pressed="true"]{ background: var(--gold); }
+  .hat-name{ margin-top: 2px; font-weight:600; min-height: 1.6em; display:flex; align-items:center; gap:6px; }
+  .hat-name img{ width:20px; height:20px; }
+  .hat-note{ font-size: .88rem; opacity:.8; }
 
-  @media (max-width: 680px){
+  /* ---------- missão (sequência real → números) ---------- */
+  .band{
+    background: var(--grape);
+    border-top: var(--stroke); border-bottom: var(--stroke);
+    padding: 72px 0;
+  }
+  .section{ padding: 80px 0; }
+  .intro{ max-width: 56ch; margin-top: 12px; }
+  .intro code{ font-family: var(--body); font-weight:600; color: var(--paper); }
+  .steps{
+    list-style:none; counter-reset: step;
+    display:grid; grid-template-columns: repeat(4, 1fr); gap: 22px; margin-top: 40px;
+  }
+  .steps li{
+    counter-increment: step; position:relative;
+    background: var(--paper); color: var(--plum);
+    border: var(--stroke); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 26px 20px 22px;
+  }
+  .steps li::before{
+    content: counter(step);
+    position:absolute; top:-20px; left: 18px;
+    width: 40px; height: 40px; display:grid; place-items:center;
+    font: 1.3rem var(--display); color: var(--ink);
+    background: var(--accent); border: var(--stroke); border-radius:50%;
+    transition: background .25s ease;
+  }
+  .steps img{ width:44px; height:44px; margin-bottom: 10px; }
+  .steps h3{ color: var(--plum); margin-bottom: 6px; }
+  .steps p{ font-size: .98rem; }
+  .steps code, .cmd code{ font-family: var(--body); font-weight:600; }
+
+  /* ---------- raridades ---------- */
+  .rarities{ display:grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-top: 36px; }
+  .rarity{
+    border: var(--stroke); border-radius: var(--radius); background: var(--paper); color: var(--plum);
+    box-shadow: var(--shadow); padding: 18px 16px; text-align:center;
+  }
+  .rarity img{ width: 48px; height:48px; margin: 0 auto 8px; }
+  .rarity strong{ display:block; font-family: var(--display); font-weight:400; font-size: 1.25rem; }
+  .rarity .pct{ font-family: var(--display); font-size: 2.1rem; line-height:1.1; margin-top: 6px; }
+  .rarity .bar{ height: 10px; border: 2px solid var(--ink); border-radius: 99px; margin-top: 10px; background:#fff; overflow:hidden; }
+  .rarity .bar span{ display:block; height:100%; background: var(--c); }
+  .footnote{ margin-top: 22px; font-size:.95rem; max-width: 64ch; }
+
+  /* ---------- comandos ---------- */
+  .cmd-groups{ display:grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 36px; align-items:start; }
+  .cmd{
+    background: var(--paper); color: var(--plum);
+    border: var(--stroke); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 22px 20px;
+  }
+  .cmd h3{ color: var(--plum); display:flex; align-items:center; gap:10px; margin-bottom: 14px; }
+  .cmd h3 img{ width: 30px; height: 30px; }
+  .cmd ul{ list-style:none; display:grid; gap: 12px; }
+  .cmd li{ font-size: .96rem; line-height:1.45; }
+  .cmd code{
+    display:inline-block; font-size: 1rem; color: var(--plum);
+    background: color-mix(in srgb, var(--accent) 35%, #fff);
+    border: 2px solid var(--ink); border-radius: 8px; padding: 0 7px; margin-bottom: 3px;
+    transition: background .25s ease;
+  }
+
+  /* ---------- ranking ---------- */
+  .ranking .wrap{ display:grid; grid-template-columns: .9fr 1.1fr; gap: 40px; align-items:start; }
+  .tabs{ display:flex; flex-direction:column; gap: 10px; margin-top: 28px; }
+  .tab{
+    display:flex; align-items:center; gap: 12px; text-align:left;
+    font: 1.1rem var(--display); color: var(--plum); background: var(--paper);
+    border: var(--stroke); border-radius: 14px; box-shadow: var(--shadow-sm);
+    padding: 10px 14px; cursor:pointer;
+  }
+  .tab img{ width: 30px; height: 30px; }
+  .tab[aria-selected="true"]{ background: var(--accent); color: var(--ink); transition: background .25s ease; }
+  .board{
+    background: var(--paper); color: var(--plum);
+    border: var(--stroke); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 22px 22px 18px;
+  }
+  .board > p{ font-size: .98rem; margin-bottom: 14px; }
+  .board ol{ list-style:none; display:grid; gap: 10px; }
+  .board li{
+    display:grid; grid-template-columns: 34px 44px 1fr auto; align-items:center; gap: 12px;
+    background:#fff; border: 2px solid var(--ink); border-radius: 14px; padding: 8px 12px;
+  }
+  .board .place{
+    width: 34px; height: 34px; display:grid; place-items:center; border-radius:50%;
+    font: 1.05rem var(--display); border: 2px solid var(--ink); background: var(--lilac);
+  }
+  .board li:nth-child(1) .place{ background: var(--gold); }
+  .board li:nth-child(2) .place{ background: #D9DDE6; }
+  .board li:nth-child(3) .place{ background: #E59A5C; }
+  .board .avatar{ width: 44px; height: 44px; border-radius:50%; border: 2px solid var(--ink); background: var(--grape); object-fit: cover; }
+  .board .avatar.fallback{ object-fit: contain; padding: 4px; }
+  .board .name{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .board .value{ font-weight:600; white-space:nowrap; }
+  .board .empty{ padding: 18px 0 8px; font-weight:500; }
+  .board .updated{ margin-top: 12px; font-size: .85rem; opacity: .75; }
+
+  /* ---------- votar / suporte ---------- */
+  .support .wrap{ display:flex; align-items:center; justify-content:space-between; gap: 32px; flex-wrap:wrap; }
+  .support .intro{ max-width: 46ch; }
+  .support .cta{ margin-top: 0; }
+
+  /* ---------- termos ---------- */
+  .legal{ border-top: var(--stroke); }
+  .legal .cols{ display:grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-top: 28px; }
+  .legal h3{ display:flex; align-items:center; gap: 10px; margin-bottom: 12px; font-size: 1.4rem; }
+  .legal h3 img{ width:28px; height:28px; }
+  .legal ul{ padding-left: 1.1em; display:grid; gap: 8px; }
+  .legal li::marker{ color: var(--gold); }
+  .legal .note{ margin-top: 14px; font-size:.92rem; opacity:.85; }
+
+  /* ---------- rodapé ---------- */
+  footer{ border-top: var(--stroke); background: var(--grape); padding: 40px 0; }
+  footer .wrap{ display:flex; align-items:center; justify-content:space-between; gap: 20px; flex-wrap:wrap; }
+  footer p{ color: var(--paper); }
+  .foot-links{ display:flex; gap: 18px; flex-wrap:wrap; order: 3; flex-basis: 100%; }
+  .foot-links a{ color: var(--paper); font-weight:500; }
+  .legal .note a{ color: var(--gold); font-weight:600; }
+
+  /* ---------- responsivo ---------- */
+  @media (max-width: 960px){
+    .steps{ grid-template-columns: repeat(2, 1fr); row-gap: 34px; }
+    .rarities{ grid-template-columns: repeat(3, 1fr); }
+    .cmd-groups{ grid-template-columns: 1fr 1fr; }
+    .ranking .wrap{ grid-template-columns: 1fr; gap: 24px; }
+    .tabs{ flex-direction:row; flex-wrap:wrap; }
+  }
+  @media (max-width: 760px){
     .nav-links{ display:none; }
-    header.hero h1{ font-size: 2.3rem; }
-    .grid3, .grid2{ grid-template-columns: 1fr; }
-    .rarities img{ width:24px; height:24px; }
+    .lang{ margin-left:auto; }
+    .hero{ padding-top: 32px; }
+    .hero .wrap{ grid-template-columns: 1fr; gap: 12px; }
+    .hero .text{ text-align:center; }
+    .hero .lead, .hero .sub{ margin-left:auto; margin-right:auto; }
+    .cta{ justify-content:center; }
+    .stage{ width: min(70%, 280px); }
+    .legal .cols{ grid-template-columns: 1fr; gap: 32px; }
+    .cmd-groups{ grid-template-columns: 1fr; }
+  }
+  @media (max-width: 520px){
+    .nav .btn span{ display:none; }
+    .nav .btn{ padding: 7px 10px; }
+    .brand{ font-size: 1.35rem; }
+    .steps{ grid-template-columns: 1fr; }
+    .rarities{ grid-template-columns: 1fr 1fr; }
+    .rarities .rarity:last-child{ grid-column: 1 / -1; }
+    .tab{ font-size: .95rem; padding: 8px 10px; gap: 8px; }
+    .tab img{ width: 24px; height: 24px; }
+    .board{ padding: 16px 14px 14px; }
+    .board li{ grid-template-columns: 30px 36px 1fr; gap: 10px; padding: 8px 10px; }
+    .board .place{ width: 30px; height: 30px; }
+    .board .avatar{ width: 36px; height: 36px; }
+    .board .value{ grid-column: 3; font-size: .92rem; margin-top: -6px; }
+    .support .cta .btn{ width: 100%; justify-content:center; }
+    .hero h1{ -webkit-text-stroke-width: 3px; text-shadow: 5px 5px 0 var(--ink); }
   }
 
   @media (prefers-reduced-motion: reduce){
     html{ scroll-behavior:auto; }
-    .btn-primary:hover{ transform:none; }
+    *, *::before{ transition:none !important; animation:none !important; }
   }
 </style>
 </head>
 <body>
 
-<nav>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="cap" viewBox="0 0 64 84">
+    <path d="M5 81 V33 a27 27 0 0 1 54 0 V81 H41 V33 a9 9 0 0 0 -18 0 V81 Z"/>
+  </symbol>
+</svg>
+
+<nav class="nav" aria-label="Principal">
   <div class="wrap">
-    <div class="brand"><img src="images/logo/logo.png" alt="Alien"> Alien</div>
+    <a class="brand" href="#topo" aria-label="∩lien">
+      <img src="images/logo/alien-logo.svg" alt="" width="36" height="42">
+      <span aria-hidden="true"><svg class="cap"><use href="#cap"/></svg>lien</span>
+    </a>
     <div class="nav-links">
-      <a href="#sobre">Sobre</a>
-      <a href="#como-funciona">Como funciona</a>
-      <a href="#termos">Termos</a>
-      <a href="#privacidade">Privacidade</a>
+      <a href="#missao" data-i18n="nav.mission">Missões</a>
+      <a href="#raridades" data-i18n="nav.rarities">Raridades</a>
+      <a href="#comandos" data-i18n="nav.commands">Comandos</a>
+      <a href="#ranking" data-i18n="nav.ranking" id="nav-ranking" hidden>Ranking</a>
+      <a href="#apoie" data-i18n="nav.support">Apoie</a>
     </div>
+    <div class="lang" role="group" aria-label="Idioma / Language">
+      <button type="button" data-lang="pt-BR" aria-pressed="true">PT</button>
+      <button type="button" data-lang="en-US" aria-pressed="false">EN</button>
+    </div>
+    <a class="btn btn-gold" href="https://discord.com/oauth2/authorize?client_id=1492423719069679728">
+      <img src="images/emojis/ovni.png" alt=""><span data-i18n="cta.invite">Adicionar ao Discord</span>
+    </a>
   </div>
 </nav>
 
-<header class="hero">
-  <div class="wrap">
-    <img class="logo" src="images/logo/logo.png" alt="Logo do ∩lien">
-    <h1>Alien</h1>
-    <p class="lead">Um RPG de exploração espacial e economia, jogado inteiramente por comandos no Discord.</p>
-    <p class="tagline">Projeto secreto. Não sabemos de onde veio, só estamos deixando ele crescer.</p>
-    <div class="cta-row">
-      <a class="btn btn-primary" href="https://discord.com/oauth2/authorize?client_id=1492423719069679728">Convidar</a>
-      <a class="btn btn-ghost" href="#sobre">Saiba mais</a>
-    </div>
-    <div class="rarities">
-      <img src="images/emojis/comum.png" alt="Comum" title="Comum">
-      <img src="images/emojis/incomum.png" alt="Incomum" title="Incomum">
-      <img src="images/emojis/rare.png" alt="Raro" title="Raro">
-      <img src="images/emojis/epic.png" alt="Épico" title="Épico">
-      <img src="images/emojis/legendary.png" alt="Lendário" title="Lendário">
-    </div>
-  </div>
-</header>
-
-<div class="divider"></div>
-
-<section id="sobre">
-  <div class="wrap">
-    <h2>O que é o ∩lien?</h2>
-    <p class="section-lead">Adote um alienígena, monte sua nave e explore o espaço — sozinho ou com o resto do servidor.</p>
-    <div class="grid3">
-      <div class="card">
-        <img src="images/emojis/ovni.png" alt="">
-        <h3>Seu alienígena</h3>
-        <p>Escolha a cor do seu companheiro intergaláctico e leve ele pra explorar o desconhecido.</p>
+<main id="topo">
+  <section class="hero">
+    <div class="wrap">
+      <div class="text">
+        <h1 aria-label="∩lien"><svg class="cap" aria-hidden="true"><use href="#cap"/></svg><span aria-hidden="true">lien</span></h1>
+        <p class="lead" data-i18n="hero.lead">Adote um alienígena, monte sua nave e explore planetas. Tudo por comandos no Discord.</p>
+        <p class="sub" data-i18n="hero.sub">Colete recursos, negocie no mercado com outros jogadores e suba no ranking do seu servidor.</p>
+        <div class="cta">
+          <a class="btn btn-gold" href="https://discord.com/oauth2/authorize?client_id=1492423719069679728">
+            <img src="images/emojis/ovni.png" alt=""><span data-i18n="cta.invite">Adicionar ao Discord</span>
+          </a>
+          <a class="btn btn-paper" href="#comandos"><img src="images/emojis/book.png" alt=""><span data-i18n="cta.commands">Ver comandos</span></a>
+        </div>
       </div>
-      <div class="card">
-        <img src="images/emojis/earth.png" alt="">
-        <h3>Planetas únicos</h3>
-        <p>Cada planeta é gerado na hora, com sua própria distância, raridade e recursos pra coletar.</p>
-      </div>
-      <div class="card">
-        <img src="images/emojis/asteroid.png" alt="">
-        <h3>Minere e evolua</h3>
-        <p>Colete recursos, melhore os upgrades da nave e negocie no mercado com outros jogadores.</p>
+
+      <div class="builder">
+        <div class="stage" id="stage">
+          <img id="alien-img" src="images/aliens/purple.png" alt="" width="400" height="650">
+          <img id="hat-img" class="hat" alt="" width="400" height="650" hidden>
+        </div>
+        <div class="picker">
+          <h3 id="color-label" data-i18n="builder.color">Escolha a cor do seu alien</h3>
+          <div class="row" role="group" aria-labelledby="color-label" id="swatches"></div>
+          <h3 id="hat-label" data-i18n="builder.hat">Experimente um chapéu</h3>
+          <div class="row hats" role="group" aria-labelledby="hat-label" id="hats"></div>
+          <p class="hat-name" id="hat-name" aria-live="polite"></p>
+          <p class="hat-note" data-i18n="builder.note">No jogo, os chapéus aparecem escondidos em planetas, e os raros quase só nos planetas raros.</p>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<div class="divider"></div>
-
-<section id="como-funciona">
-  <div class="wrap">
-    <h2>Como funciona</h2>
-    <p class="section-lead">O loop principal do jogo, do início ao fim de uma missão.</p>
-    <div class="loop">
-      <div class="step"><img src="images/emojis/earth.png" alt=""><span>Escolher planeta</span></div>
-      <div class="arrow">→</div>
-      <div class="step"><img src="images/emojis/loading.png" alt=""><span>Viajar até lá</span></div>
-      <div class="arrow">→</div>
-      <div class="step"><img src="images/emojis/asteroid.png" alt=""><span>Minerar recursos</span></div>
-      <div class="arrow">→</div>
-      <div class="step"><img src="images/emojis/excited.png" alt=""><span>Voltar pra Terra</span></div>
+  <section class="band" id="missao">
+    <div class="wrap">
+      <h2 data-i18n="mission.title">Como funciona uma missão</h2>
+      <p class="intro" data-i18n="mission.intro">Cada exploração leva alguns minutos. Enquanto o alien trabalha, você pode fazer outras coisas, e o bot avisa quando ele voltar.</p>
+      <ol class="steps">
+        <li><img src="images/emojis/earth.png" alt=""><h3 data-i18n="mission.s1t">Encontre um planeta</h3><p data-i18n-html="mission.s1">Use <code>/planeta</code> e veja a raridade, a distância e o que dá pra coletar lá.</p></li>
+        <li><img src="images/emojis/loading.png" alt=""><h3 data-i18n="mission.s2t">Viaje até lá</h3><p data-i18n="mission.s2">O tempo de viagem depende do Propulsor da sua nave.</p></li>
+        <li><img src="images/emojis/asteroid.png" alt=""><h3 data-i18n="mission.s3t">Minere</h3><p data-i18n="mission.s3">O Scanner Estelar encurta a mineração e a Sonda de Escavação traz mais recursos.</p></li>
+        <li><img src="images/emojis/excited.png" alt=""><h3 data-i18n="mission.s4t">Volte com o loot</h3><p data-i18n-html="mission.s4">Recursos, ∩oins e às vezes um chapéu. Use tudo no <code>/fabricar</code> pra melhorar a nave.</p></li>
+      </ol>
     </div>
-  </div>
-</section>
+  </section>
 
-<div class="divider"></div>
+  <section class="section" id="raridades">
+    <div class="wrap">
+      <h2 data-i18n="rar.title">Nem todo planeta é igual</h2>
+      <p class="intro" data-i18n="rar.intro">Cada planeta tem uma raridade. Os raros ficam mais longe, mas guardam os recursos e os chapéus mais valiosos.</p>
+      <div class="rarities" id="rarities"></div>
+      <p class="footnote" data-i18n="rar.note">Chance de cada raridade aparecer a cada planeta visto no /planeta.</p>
+    </div>
+  </section>
 
-<section id="termos-privacidade">
-  <div class="wrap">
-    <h2>Termos & Privacidade</h2>
-    <p class="section-lead">Resumido e direto ao ponto — sem letras miúdas.</p>
-    <div class="grid2">
-      <div class="panel" id="termos">
-        <h3><img src="images/emojis/hmm.png" alt="" style="width:20px;height:20px;">Termos de Uso</h3>
-        <ul>
-          <li>Use o bot com respeito — não abuse dos comandos nem tente explorar falhas.</li>
-          <li>O acesso pode ser suspenso em caso de uso indevido.</li>
-          <li>O jogo pode mudar com o tempo: novos recursos, planetas e ajustes de economia, sem aviso prévio.</li>
-          <li>Este é um projeto independente, sem vínculo com o Discord.</li>
-        </ul>
+  <section class="band" id="comandos">
+    <div class="wrap">
+      <h2 data-i18n="cmd.title">Comandos</h2>
+      <p class="intro" data-i18n="cmd.intro">Todos funcionam com / no Discord. Começando agora? Use /tutorial.</p>
+      <div class="cmd-groups" id="cmd-groups"></div>
+    </div>
+  </section>
+
+  <section class="section ranking" id="ranking" hidden>
+    <div class="wrap">
+      <div>
+        <h2 id="rank-title" data-i18n="rank.title">Ranking global</h2>
+        <p class="intro" data-i18n-html="rank.intro">Os 5 melhores exploradores de cada categoria. Quer ver o do seu servidor? Use <code>/ranking</code>.</p>
+        <div class="tabs" role="tablist" aria-labelledby="rank-title" id="rank-tabs"></div>
       </div>
-      <div class="panel" id="privacidade">
-        <h3><img src="images/emojis/ovni.png" alt="" style="width:20px;height:20px;">Privacidade</h3>
-        <ul>
-          <li>Guardamos apenas o seu ID do Discord, pra salvar progresso e preferências dentro do bot.</li>
-          <li>Nenhum dado é vendido ou compartilhado com terceiros.</li>
-          <li>Tudo fica armazenado localmente, no banco de dados do próprio bot.</li>
-        </ul>
-        <p class="note">Dúvidas sobre seus dados? Fale com a equipe no servidor de suporte.</p>
+      <div class="board" role="tabpanel" id="rank-board" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="band support" id="apoie">
+    <div class="wrap">
+      <div>
+        <h2 data-i18n="support.title">Dê uma força pro projeto</h2>
+        <p class="intro" data-i18n="support.intro">Votar leva poucos segundos e ajuda mais gente a encontrar o bot. Achou um bug ou tem uma ideia? Chama a gente no servidor de suporte.</p>
+      </div>
+      <div class="cta">
+        <a class="btn btn-gold" href="https://top.gg/bot/1492423719069679728/vote" target="_blank" rel="noopener"><img src="images/emojis/passionate.png" alt=""><span data-i18n="support.topgg">Votar no top.gg</span></a>
+        <a class="btn btn-gold" href="https://discordbotlist.com/bots/lien/upvote" target="_blank" rel="noopener"><img src="images/emojis/rainbow.png" alt=""><span data-i18n="support.dbl">Votar no DiscordBotList</span></a>
+        <a class="btn btn-paper" href="https://discord.gg/hYrmuYxtkQ" target="_blank" rel="noopener"><img src="images/emojis/support.png" alt=""><span data-i18n="support.server">Servidor de suporte</span></a>
       </div>
     </div>
-  </div>
-</section>
+  </section>
+
+  <section class="section legal" id="termos">
+    <div class="wrap">
+      <h2 data-i18n="legal.title">Termos e privacidade</h2>
+      <div class="cols">
+        <div>
+          <h3><img src="images/emojis/registry.png" alt=""><span data-i18n="legal.termsTitle">Termos de uso</span></h3>
+          <ul>
+            <li data-i18n="legal.t1">Use o bot com respeito: não abuse dos comandos nem tente explorar falhas.</li>
+            <li data-i18n="legal.t2">O acesso pode ser suspenso em caso de uso indevido.</li>
+            <li data-i18n="legal.t3">O jogo muda com o tempo: novos recursos, planetas e ajustes de economia podem chegar sem aviso.</li>
+            <li data-i18n="legal.t4">O ∩lien é um projeto independente, sem vínculo com o Discord.</li>
+          </ul>
+        </div>
+        <div id="privacidade">
+          <h3><img src="images/emojis/support.png" alt=""><span data-i18n="legal.privacyTitle">Privacidade</span></h3>
+          <ul>
+            <li data-i18n="legal.p1">Guardamos apenas o seu ID do Discord, para salvar progresso e preferências dentro do bot.</li>
+            <li data-i18n="legal.p2">Nenhum dado é vendido ou compartilhado com terceiros.</li>
+            <li data-i18n="legal.p3">Tudo fica armazenado no banco de dados do próprio bot.</li>
+            <li data-i18n="legal.p4">O ranking global deste site mostra o nome de usuário e a foto do Discord dos 5 primeiros de cada categoria.</li>
+          </ul>
+          <p class="note" data-i18n-html="legal.note">Dúvidas sobre seus dados? Fale com a equipe no <a href="https://discord.gg/hYrmuYxtkQ" target="_blank" rel="noopener">servidor de suporte</a>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
 
 <footer>
   <div class="wrap">
-    <div class="brand"><img src="images/logo/logo.png" alt=""> ∩lien</div>
+    <a class="brand" href="#topo" aria-label="∩lien">
+      <img src="images/logo/alien-logo.svg" alt="" width="36" height="42">
+      <span aria-hidden="true"><svg class="cap"><use href="#cap"/></svg>lien</span>
+    </a>
+    <p data-i18n="footer.text">Feito com carinho pra galáxia do Discord.</p>
+    <nav class="foot-links" aria-label="Links">
+      <a href="https://discord.gg/hYrmuYxtkQ" target="_blank" rel="noopener" data-i18n="support.server">Servidor de suporte</a>
+      <a href="https://top.gg/bot/1492423719069679728" target="_blank" rel="noopener">top.gg</a>
+      <a href="https://discordbotlist.com/bots/lien" target="_blank" rel="noopener">DiscordBotList</a>
+      <a href="#termos" data-i18n="nav.terms">Termos</a>
+    </nav>
+    <a class="btn btn-gold" href="https://discord.com/oauth2/authorize?client_id=1492423719069679728">
+      <img src="images/emojis/ovni.png" alt=""><span data-i18n="cta.invite">Adicionar ao Discord</span>
+    </a>
   </div>
 </footer>
 
+<script>
+  // ---------------------------------------------------------------------
+  // Dados do jogo (espelham gameConfig/ e os nomes dos comandos). Ao mudar
+  // algo no bot — chapéu novo, chance de raridade — atualize aqui também.
+  // ---------------------------------------------------------------------
+  const COLORS = [
+    { key: 'purple', hex: '#A56BF0', name: { 'pt-BR': 'Roxo',    'en-US': 'Purple' } },
+    { key: 'green',  hex: '#7DCB3F', name: { 'pt-BR': 'Verde',   'en-US': 'Green'  } },
+    { key: 'blue',   hex: '#4FB0E8', name: { 'pt-BR': 'Azul',    'en-US': 'Blue'   } },
+    { key: 'pink',   hex: '#EE7DCF', name: { 'pt-BR': 'Rosa',    'en-US': 'Pink'   } },
+    { key: 'orange', hex: '#F7A42A', name: { 'pt-BR': 'Laranja', 'en-US': 'Orange' } },
+  ];
+
+  const RARITY_FILE = { A: 'comum', B: 'incomum', C: 'rare', D: 'epic', E: 'legendary' };
+
+  // bbox = área do chapéu dentro da imagem 400x650 (medida do PNG), usada pra
+  // recortar a miniatura do botão.
+  const HATS = [
+    { key: 'straw',    r: 'A', bbox: [61,107,345,265], name: { 'pt-BR': 'Chapéu de Palha',       'en-US': 'Straw Hat' } },
+    { key: 'builder',  r: 'A', bbox: [87,88,311,254],  name: { 'pt-BR': 'Capacete de Obra',      'en-US': 'Builder Helmet' } },
+    { key: 'touca',    r: 'B', bbox: [77,100,319,269], name: { 'pt-BR': 'Touca de Lã',           'en-US': 'Beanie' } },
+    { key: 'chef',     r: 'B', bbox: [94,19,328,201],  name: { 'pt-BR': 'Chapéu de Chef',        'en-US': 'Chef Hat' } },
+    { key: 'frog',     r: 'B', bbox: [87,121,322,267], name: { 'pt-BR': 'Gorro de Sapo',         'en-US': 'Frog Hat' } },
+    { key: 'cowboy',   r: 'C', bbox: [72,96,330,244],  name: { 'pt-BR': 'Chapéu de Cowboy',      'en-US': 'Cowboy Hat' } },
+    { key: 'fedora',   r: 'C', bbox: [61,109,339,280], name: { 'pt-BR': 'Fedora',                'en-US': 'Fedora' } },
+    { key: 'viking',   r: 'D', bbox: [74,83,342,260],  name: { 'pt-BR': 'Elmo Viking',           'en-US': 'Viking Helmet' } },
+    { key: 'wizzard',  r: 'D', bbox: [71,50,339,268],  name: { 'pt-BR': 'Chapéu de Mago',        'en-US': 'Wizard Hat' } },
+    { key: 'tophat',   r: 'E', bbox: [84,62,319,253],  name: { 'pt-BR': 'Cartola',               'en-US': 'Top Hat' } },
+    { key: 'king',     r: 'E', bbox: [82,60,334,246],  name: { 'pt-BR': 'Coroa Real',            'en-US': 'Royal Crown' } },
+    { key: 'birthday', r: 'E', bbox: [148,59,257,202], keepAntennae: true, name: { 'pt-BR': 'Chapéu de Aniversário', 'en-US': 'Birthday Hat' } },
+  ];
+
+  // Chance de cada raridade de planeta (gameConfig/rarities.js → planetWeight).
+  const RARITIES = [
+    { code: 'A', pct: 40, color: '#9CA3AF' },
+    { code: 'B', pct: 30, color: '#22C55E' },
+    { code: 'C', pct: 15, color: '#3B82F6' },
+    { code: 'D', pct: 10, color: '#A855F7' },
+    { code: 'E', pct: 5,  color: '#F59E0B' },
+  ];
+
+  const CMD_GROUPS = [
+    { key: 'galaxy', icon: 'ovni', cmds: [
+      ['alien', 'alien'], ['planet', 'planeta'], ['inventory', 'inventario'], ['craft', 'fabricar'] ] },
+    { key: 'economy', icon: 'gold', cmds: [
+      ['daily', 'daily'], ['market', 'mercado'], ['hatmarket', 'mercadochapeus'], ['gift', 'presentear'], ['wallet', 'carteira'], ['redeem', 'resgatar'] ] },
+    { key: 'utility', icon: 'config', cmds: [
+      ['tutorial', 'tutorial'], ['profile', 'perfil'], ['achievements', 'conquistas'], ['ranking', 'ranking'], ['config', 'config'], ['help', 'ajuda'] ] },
+  ];
+
+  const T = {
+    'pt-BR': {
+      'nav.mission': 'Missões', 'nav.rarities': 'Raridades', 'nav.commands': 'Comandos', 'nav.terms': 'Termos',
+      'cta.invite': 'Adicionar ao Discord', 'cta.commands': 'Ver comandos',
+      'hero.lead': 'Adote um alienígena, monte sua nave e explore planetas. Tudo por comandos no Discord.',
+      'hero.sub': 'Colete recursos, negocie no mercado com outros jogadores e suba no ranking do seu servidor.',
+      'builder.color': 'Escolha a cor do seu alien', 'builder.hat': 'Experimente um chapéu', 'builder.noHat': 'Nenhum',
+      'builder.noHatName': 'Sem chapéu', 'builder.colorAria': 'Alien {color}',
+      'builder.note': 'No jogo, os chapéus aparecem escondidos em planetas, e os raros quase só nos planetas raros.',
+      'mission.title': 'Como funciona uma missão',
+      'mission.intro': 'Cada exploração leva alguns minutos. Enquanto o alien trabalha, você pode fazer outras coisas, e o bot avisa quando ele voltar.',
+      'mission.s1t': 'Encontre um planeta', 'mission.s1': 'Use <code>/planeta</code> e veja a raridade, a distância e o que dá pra coletar lá.',
+      'mission.s2t': 'Viaje até lá', 'mission.s2': 'O tempo de viagem depende do Propulsor da sua nave.',
+      'mission.s3t': 'Minere', 'mission.s3': 'O Scanner Estelar encurta a mineração e a Sonda de Escavação traz mais recursos.',
+      'mission.s4t': 'Volte com o loot', 'mission.s4': 'Recursos, ∩oins e às vezes um chapéu. Use tudo no <code>/fabricar</code> pra melhorar a nave.',
+      'rar.title': 'Nem todo planeta é igual',
+      'rar.intro': 'Cada planeta tem uma raridade. Os raros ficam mais longe, mas guardam os recursos e os chapéus mais valiosos.',
+      'rar.note': 'Chance de cada raridade aparecer a cada planeta visto no /planeta.',
+      'rar.A': 'Comum', 'rar.B': 'Incomum', 'rar.C': 'Raro', 'rar.D': 'Épico', 'rar.E': 'Lendário',
+      'cmd.title': 'Comandos', 'cmd.intro': 'Todos funcionam com / no Discord. Começando agora? Use /tutorial.',
+      'cmd.galaxy': 'Galáxia', 'cmd.economy': 'Economia', 'cmd.utility': 'Perfil e ajustes',
+      'cmd.alien': 'Seu alien, a nave e os chapéus equipados.',
+      'cmd.planet': 'Encontra planetas e manda o alien em missões de coleta.',
+      'cmd.inventory': 'Tudo o que você já coletou.',
+      'cmd.craft': 'Melhorias da nave e consumíveis para as missões.',
+      'cmd.daily': 'Recompensa diária, com bônus de sequência.',
+      'cmd.market': 'Compre e venda recursos com outros jogadores ou na loja.',
+      'cmd.hatmarket': 'Compre e venda chapéus.',
+      'cmd.gift': 'Presenteie ∩oins ou recursos para um amigo.',
+      'cmd.wallet': 'Seu saldo de ∩oins ou o de outro explorador.',
+      'cmd.redeem': 'Resgate presentes e recompensas pendentes.',
+      'cmd.tutorial': 'Guia passo a passo para começar.',
+      'cmd.profile': 'Suas estatísticas, nave e alien.',
+      'cmd.achievements': 'Conquistas e o seu progresso nelas.',
+      'cmd.ranking': 'Os melhores do mundo ou do seu servidor.',
+      'cmd.config': 'Idioma, avisos de missão e ajustes do servidor.',
+      'cmd.help': 'Lista de comandos dentro do Discord.',
+      'legal.title': 'Termos e privacidade', 'legal.termsTitle': 'Termos de uso', 'legal.privacyTitle': 'Privacidade',
+      'legal.t1': 'Use o bot com respeito: não abuse dos comandos nem tente explorar falhas.',
+      'legal.t2': 'O acesso pode ser suspenso em caso de uso indevido.',
+      'legal.t3': 'O jogo muda com o tempo: novos recursos, planetas e ajustes de economia podem chegar sem aviso.',
+      'legal.t4': 'O ∩lien é um projeto independente, sem vínculo com o Discord.',
+      'legal.p1': 'Guardamos apenas o seu ID do Discord, para salvar progresso e preferências dentro do bot.',
+      'legal.p2': 'Nenhum dado é vendido ou compartilhado com terceiros.',
+      'legal.p3': 'Tudo fica armazenado no banco de dados do próprio bot.',
+      'legal.note': 'Dúvidas sobre seus dados? Fale com a equipe no <a href="https://discord.gg/hYrmuYxtkQ" target="_blank" rel="noopener">servidor de suporte</a>.',
+      'footer.text': 'Feito com carinho pra galáxia do Discord.',
+      'nav.ranking': 'Ranking', 'nav.support': 'Apoie',
+      'rank.title': 'Ranking global',
+      'rank.intro': 'Os 5 melhores exploradores de cada categoria. Quer ver o do seu servidor? Use <code>/ranking</code>.',
+      'rank.empty': 'Ninguém entrou nesse ranking ainda. Seja o primeiro!',
+      'rank.updated': 'Atualizado a cada 5 minutos · última vez às {time}',
+      'rank.place': '{n}º lugar',
+      'support.title': 'Dê uma força pro projeto',
+      'support.intro': 'Votar leva poucos segundos e ajuda mais gente a encontrar o bot. Achou um bug ou tem uma ideia? Chama a gente no servidor de suporte.',
+      'support.topgg': 'Votar no top.gg', 'support.dbl': 'Votar no DiscordBotList', 'support.server': 'Servidor de suporte',
+      'legal.p4': 'O ranking global deste site mostra o nome de usuário e a foto do Discord dos 5 primeiros de cada categoria.',
+      'meta.title': '∩lien — RPG espacial no Discord',
+    },
+    'en-US': {
+      'nav.mission': 'Missions', 'nav.rarities': 'Rarities', 'nav.commands': 'Commands', 'nav.terms': 'Terms',
+      'cta.invite': 'Add to Discord', 'cta.commands': 'See commands',
+      'hero.lead': 'Adopt an alien, build your ship and explore planets. All through commands on Discord.',
+      'hero.sub': 'Collect resources, trade on the market with other players and climb your server\'s leaderboard.',
+      'builder.color': 'Pick your alien\'s color', 'builder.hat': 'Try on a hat', 'builder.noHat': 'None',
+      'builder.noHatName': 'No hat', 'builder.colorAria': '{color} alien',
+      'builder.note': 'In the game, hats are hidden on planets, and the rare ones show up almost only on rare planets.',
+      'mission.title': 'How a mission works',
+      'mission.intro': 'Each exploration takes a few minutes. While your alien works, you can do other things, and the bot lets you know when it\'s back.',
+      'mission.s1t': 'Find a planet', 'mission.s1': 'Use <code>/planet</code> to see its rarity, distance and what you can collect there.',
+      'mission.s2t': 'Travel there', 'mission.s2': 'Travel time depends on your ship\'s Propulsor.',
+      'mission.s3t': 'Mine', 'mission.s3': 'The Star Scanner shortens mining and the Excavation Probe brings back more resources.',
+      'mission.s4t': 'Come back with the loot', 'mission.s4': 'Resources, ∩oins and sometimes a hat. Spend them in <code>/craft</code> to upgrade your ship.',
+      'rar.title': 'Not every planet is the same',
+      'rar.intro': 'Every planet has a rarity. Rare ones are farther away, but hold the most valuable resources and hats.',
+      'rar.note': 'Chance of each rarity showing up for every planet you see with /planet.',
+      'rar.A': 'Common', 'rar.B': 'Uncommon', 'rar.C': 'Rare', 'rar.D': 'Epic', 'rar.E': 'Legendary',
+      'cmd.title': 'Commands', 'cmd.intro': 'They all work with / on Discord. Just starting? Use /tutorial.',
+      'cmd.galaxy': 'Galaxy', 'cmd.economy': 'Economy', 'cmd.utility': 'Profile & settings',
+      'cmd.alien': 'Your alien, your ship and equipped hats.',
+      'cmd.planet': 'Finds planets and sends your alien on collection missions.',
+      'cmd.inventory': 'Everything you\'ve collected.',
+      'cmd.craft': 'Ship upgrades and consumables for missions.',
+      'cmd.daily': 'Daily reward, with a streak bonus.',
+      'cmd.market': 'Buy and sell resources with other players or at the shop.',
+      'cmd.hatmarket': 'Buy and sell hats.',
+      'cmd.gift': 'Gift ∩oins or resources to a friend.',
+      'cmd.wallet': 'Your ∩oins balance or another explorer\'s.',
+      'cmd.redeem': 'Claim pending gifts and rewards.',
+      'cmd.tutorial': 'Step-by-step guide to get started.',
+      'cmd.profile': 'Your stats, ship and alien.',
+      'cmd.achievements': 'Achievements and your progress on them.',
+      'cmd.ranking': 'The best players worldwide or in your server.',
+      'cmd.config': 'Language, mission notices and server settings.',
+      'cmd.help': 'Command list inside Discord.',
+      'legal.title': 'Terms and privacy', 'legal.termsTitle': 'Terms of use', 'legal.privacyTitle': 'Privacy',
+      'legal.t1': 'Use the bot respectfully: don\'t abuse commands or try to exploit bugs.',
+      'legal.t2': 'Access may be suspended in case of misuse.',
+      'legal.t3': 'The game changes over time: new resources, planets and economy tweaks may arrive without notice.',
+      'legal.t4': '∩lien is an independent project, not affiliated with Discord.',
+      'legal.p1': 'We only store your Discord ID, to save your progress and preferences inside the bot.',
+      'legal.p2': 'No data is sold or shared with third parties.',
+      'legal.p3': 'Everything is stored in the bot\'s own database.',
+      'legal.note': 'Questions about your data? Talk to the team on the <a href="https://discord.gg/hYrmuYxtkQ" target="_blank" rel="noopener">support server</a>.',
+      'footer.text': 'Made with love for the Discord galaxy.',
+      'nav.ranking': 'Leaderboard', 'nav.support': 'Support us',
+      'rank.title': 'Global leaderboard',
+      'rank.intro': 'The top 5 explorers in each category. Want to see your server\'s? Use <code>/ranking</code>.',
+      'rank.empty': 'Nobody is on this leaderboard yet. Be the first!',
+      'rank.updated': 'Updated every 5 minutes · last at {time}',
+      'rank.place': '#{n}',
+      'support.title': 'Give the project a boost',
+      'support.intro': 'Voting takes a few seconds and helps more people find the bot. Found a bug or have an idea? Talk to us on the support server.',
+      'support.topgg': 'Vote on top.gg', 'support.dbl': 'Vote on DiscordBotList', 'support.server': 'Support server',
+      'legal.p4': 'The global leaderboard on this site shows the Discord username and avatar of the top 5 in each category.',
+      'meta.title': '∩lien — Space RPG on Discord',
+    },
+  };
+
+  // ---------------------------------------------------------------------
+  // Idioma: salvo no navegador (se der), senão o idioma do navegador.
+  // ---------------------------------------------------------------------
+  const store = {
+    get(k){ try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v){ try { localStorage.setItem(k, v); } catch {} },
+  };
+  let lang = store.get('alien-lang')
+    || ((navigator.language || '').toLowerCase().startsWith('pt') ? 'pt-BR' : 'en-US');
+  const t = (k, vars = {}) => (T[lang][k] ?? T['pt-BR'][k] ?? k).replace(/\{(\w+)\}/g, (_, v) => vars[v] ?? '');
+
+  let state = { color: 'purple', hat: null };
+  const $ = (s) => document.querySelector(s);
+
+  const renderStatic = () => {
+    document.documentElement.lang = lang;
+    document.title = t('meta.title');
+    document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
+    document.querySelectorAll('[data-i18n-html]').forEach((el) => { el.innerHTML = t(el.dataset.i18nHtml); });
+    document.querySelectorAll('.lang button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
+  };
+
+  const renderSwatches = () => {
+    const box = $('#swatches'); box.innerHTML = '';
+    for (const c of COLORS) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'swatch'; b.style.background = c.hex;
+      b.setAttribute('aria-label', t('builder.colorAria', { color: c.name[lang] }));
+      b.setAttribute('aria-pressed', String(state.color === c.key));
+      b.addEventListener('click', () => { state.color = c.key; update(true); });
+      box.appendChild(b);
+    }
+  };
+
+  const renderHats = () => {
+    const box = $('#hats'); box.innerHTML = '';
+    const none = document.createElement('button');
+    none.type = 'button'; none.className = 'hat-chip none'; none.textContent = t('builder.noHat');
+    none.setAttribute('aria-pressed', String(state.hat === null));
+    none.addEventListener('click', () => { state.hat = null; update(true); });
+    box.appendChild(none);
+
+    for (const h of HATS) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'hat-chip';
+      b.setAttribute('aria-label', h.name[lang]);
+      b.setAttribute('aria-pressed', String(state.hat === h.key));
+      // Recorta a área do chapéu (bbox) pra caber no botão de 54x46 úteis.
+      const [x1, y1, x2, y2] = h.bbox;
+      const scale = Math.min(48 / (x2 - x1), 40 / (y2 - y1));
+      const img = document.createElement('img');
+      img.src = `images/hats/${h.key}.png`; img.alt = ''; img.loading = 'lazy';
+      img.style.width = `${400 * scale}px`;
+      img.style.left = `${(54 - (x2 - x1) * scale) / 2 - x1 * scale}px`;
+      img.style.top = `${(46 - (y2 - y1) * scale) / 2 - y1 * scale}px`;
+      const rar = document.createElement('img');
+      rar.className = 'rar'; rar.src = `images/emojis/${RARITY_FILE[h.r]}.png`; rar.alt = '';
+      b.append(img, rar);
+      b.addEventListener('click', () => { state.hat = h.key; update(true); });
+      box.appendChild(b);
+    }
+  };
+
+  const renderRarities = () => {
+    const box = $('#rarities'); box.innerHTML = '';
+    for (const r of RARITIES) {
+      const el = document.createElement('div');
+      el.className = 'rarity'; el.style.setProperty('--c', r.color);
+      el.innerHTML = `<img src="images/emojis/${RARITY_FILE[r.code]}.png" alt=""><strong>${t('rar.' + r.code)}</strong>
+        <div class="pct">${r.pct}%</div><div class="bar" aria-hidden="true"><span style="width:${r.pct / 40 * 100}%"></span></div>`;
+      box.appendChild(el);
+    }
+  };
+
+  const renderCommands = () => {
+    const box = $('#cmd-groups'); box.innerHTML = '';
+    for (const g of CMD_GROUPS) {
+      const icon = g.icon === 'gold' ? 'images/moedas/gold_coins.png' : `images/emojis/${g.icon}.png`;
+      const items = g.cmds.map(([en, pt]) =>
+        `<li><code>/${lang === 'pt-BR' ? pt : en}</code><br>${t('cmd.' + en)}</li>`).join('');
+      const el = document.createElement('div');
+      el.className = 'cmd';
+      el.innerHTML = `<h3><img src="${icon}" alt="">${t('cmd.' + g.key)}</h3><ul>${items}</ul>`;
+      box.appendChild(el);
+    }
+  };
+
+  const update = (animate = false) => {
+    const color = COLORS.find((c) => c.key === state.color);
+    document.documentElement.style.setProperty('--accent', color.hex);
+    const hat = HATS.find((h) => h.key === state.hat);
+    // Com chapéu, o alien sem antenas (images/aliens/hat/) — senão elas aparecem
+    // em volta do chapéu. Igual ao bot: keepAntennae em gameConfig/hats.js.
+    $('#alien-img').src = `images/aliens/${hat && !hat.keepAntennae ? 'hat/' : ''}${color.key}.png`;
+    const hatImg = $('#hat-img');
+    if (hat) { hatImg.src = `images/hats/${hat.key}.png`; hatImg.hidden = false; } else { hatImg.hidden = true; }
+    const label = $('#hat-name');
+    label.innerHTML = hat
+      ? `<img src="images/emojis/${RARITY_FILE[hat.r]}.png" alt="">${hat.name[lang]}`
+      : t('builder.noHatName');
+    $('#alien-img').alt = `${t('builder.colorAria', { color: color.name[lang] })}${hat ? ' + ' + hat.name[lang] : ''}`;
+    renderSwatches(); renderHats();
+    if (animate) {
+      const stage = $('#stage');
+      stage.classList.remove('boing'); void stage.offsetWidth; stage.classList.add('boing');
+    }
+  };
+
+  // ---------------------------------------------------------------------
+  // Ranking: vem de /api/ranking (utils/siteApi.js), já com nome e valor
+  // formatado nos dois idiomas. Se a API não responder (ex.: site aberto
+  // fora do bot), a seção simplesmente não aparece.
+  // ---------------------------------------------------------------------
+  const RANK_ICONS = {
+    coins: 'images/moedas/gold_coins.png', planets_seen: 'images/emojis/earth.png',
+    trips_completed: 'images/emojis/ovni.png', distance_traveled_km: 'images/emojis/saturn.png',
+    total_resources_collected: 'images/emojis/asteroid.png',
+  };
+  let ranking = null;
+  let rankKey = null;
+  const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  const renderRanking = () => {
+    if (!ranking) return;
+    const cat = ranking.categories.find((c) => c.key === rankKey) ?? ranking.categories[0];
+    rankKey = cat.key;
+    const tabs = $('#rank-tabs'); tabs.innerHTML = '';
+    for (const c of ranking.categories) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'tab'; b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', String(c.key === rankKey));
+      b.setAttribute('aria-controls', 'rank-board');
+      b.innerHTML = `<img src="${RANK_ICONS[c.key] ?? 'images/emojis/registry.png'}" alt="">${esc(c.label[lang])}`;
+      b.addEventListener('click', () => { rankKey = c.key; renderRanking(); });
+      tabs.appendChild(b);
+    }
+    const rows = cat.rows.map((r, i) => `<li>
+        <span class="place" aria-label="${esc(t('rank.place', { n: i + 1 }))}">${i + 1}</span>
+        <img class="avatar${r.avatar ? '' : ' fallback'}" src="${esc(r.avatar ?? 'images/logo/alien-logo.svg')}" alt="" loading="lazy" referrerpolicy="no-referrer">
+        <span class="name">${esc(r.name[lang])}</span>
+        <span class="value">${esc(r.value[lang])}</span>
+      </li>`).join('');
+    const time = new Date(ranking.updatedAt).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });
+    $('#rank-board').innerHTML = `<p>${esc(cat.desc[lang])}</p>`
+      + (rows ? `<ol>${rows}</ol>` : `<p class="empty">${t('rank.empty')}</p>`)
+      + `<p class="updated">${t('rank.updated', { time })}</p>`;
+  };
+
+  const loadRanking = async () => {
+    try {
+      const res = await fetch('api/ranking');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data?.categories?.length) return;
+      ranking = data;
+      $('#ranking').hidden = false; $('#nav-ranking').hidden = false;
+      renderRanking();
+    } catch { /* sem API: a seção continua escondida */ }
+  };
+
+  const renderAll = () => { renderStatic(); renderRarities(); renderCommands(); renderRanking(); update(); };
+
+  document.querySelectorAll('.lang button').forEach((b) => b.addEventListener('click', () => {
+    lang = b.dataset.lang; store.set('alien-lang', lang); renderAll();
+  }));
+
+  renderAll();
+  loadRanking();
+</script>
 </body>
 </html>

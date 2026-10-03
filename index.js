@@ -65,6 +65,7 @@ for (const file of eventFiles) {
 
 // Site simples (public/index.html)
 app.use(express.static(path.join(__dirname, 'public')));
+require('./utils/siteApi').registerSiteApi(app, client);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

@@ -146,7 +146,7 @@ module.exports = {
             const alienFullPath = path.join(ALIEN_IMAGES_DIR, alienFile);
 
             if (equippedHat && fs.existsSync(alienFullPath)) {
-                const composedBuffer = composeAlienWithHat(alienFile, equippedHat.file);
+                const composedBuffer = composeAlienWithHat(alienFile, equippedHat);
                 if (composedBuffer) {
                     const thumbnail = new ThumbnailBuilder().setURL(`attachment://${COMPOSED_ALIEN_HAT_NAME}`);
                     files.push({

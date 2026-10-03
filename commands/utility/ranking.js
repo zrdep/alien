@@ -224,6 +224,10 @@ const buildRankingPayload = async (interaction, category = DEFAULT_CATEGORY, req
 };
 
 module.exports = {
+    // Reaproveitados pela API do site (utils/siteApi.js).
+    CATEGORY_META,
+    CATEGORY_ORDER,
+
     cooldown: 5,
 
     data: new SlashCommandBuilder()

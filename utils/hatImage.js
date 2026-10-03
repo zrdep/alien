@@ -12,6 +12,11 @@
 // isso (o compositing alpha padrão do SVG já faz o chapéu se encaixar sobre
 // o alien e respeitar a transparência).
 //
+// Com chapéu, usamos a versão do alien SEM antenas (images/aliens/hat/), senão
+// as bolinhas das antenas aparecem por cima/do lado do chapéu — exceto nos
+// chapéus com `keepAntennae` (gameConfig/hats.js). Se a versão sem antena de
+// uma cor não existir, cai de volta pra imagem normal.
+//
 // O resultado é cacheado em memória por combinação (cor do alien + chapéu),
 // já que o total de combinações é pequeno (poucas cores x poucos chapéus).
 // =============================================================================
@@ -22,6 +27,7 @@ const { Resvg } = require('@resvg/resvg-js');
 const logger = require('./logger');
 
 const ALIENS_DIR = path.join(__dirname, '..', 'images', 'aliens');
+const ALIENS_NO_ANTENNA_DIR = path.join(ALIENS_DIR, 'hat');
 const HATS_DIR = path.join(__dirname, '..', 'images', 'hats');
 
 const WIDTH = 400;
@@ -32,17 +38,21 @@ const cache = new Map();
 const toBase64 = (filePath) => fs.readFileSync(filePath).toString('base64');
 
 /**
- * Retorna um Buffer PNG do alien da `colorFile` com o chapéu `hatFile`
+ * Retorna um Buffer PNG do alien da `colorFile` com o chapéu `hat` (objeto de gameConfig/hats.js)
  * sobreposto, ou null se algo der errado (arquivo faltando etc — quem chama
  * deve cair de volta pra imagem do alien sem chapéu nesse caso).
  */
-const composeAlienWithHat = (colorFile, hatFile) => {
+const composeAlienWithHat = (colorFile, hat) => {
+    const hatFile = hat?.file;
     if (!colorFile || !hatFile) return null;
 
     const cacheKey = `${colorFile}::${hatFile}`;
     if (cache.has(cacheKey)) return cache.get(cacheKey);
 
-    const alienPath = path.join(ALIENS_DIR, colorFile);
+    const noAntennaPath = path.join(ALIENS_NO_ANTENNA_DIR, colorFile);
+    const alienPath = !hat.keepAntennae && fs.existsSync(noAntennaPath)
+        ? noAntennaPath
+        : path.join(ALIENS_DIR, colorFile);
     const hatPath = path.join(HATS_DIR, hatFile);
 
     if (!fs.existsSync(alienPath) || !fs.existsSync(hatPath)) {

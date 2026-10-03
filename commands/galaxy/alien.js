@@ -314,7 +314,7 @@ ${colorLine}
     const equippedHat = equippedHatKey ? getHat(equippedHatKey) : null;
     const alienFile = getAlienFile(alien.color);
     const composedBuffer = (alienFile && equippedHat)
-        ? composeAlienWithHat(alienFile, equippedHat.file)
+        ? composeAlienWithHat(alienFile, equippedHat)
         : null;
 
     const hatTxt = new TextDisplayBuilder().setContent(buildHatSectionContent(interaction));
