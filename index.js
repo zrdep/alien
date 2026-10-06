@@ -67,6 +67,15 @@ for (const file of eventFiles) {
 app.use(express.static(path.join(__dirname, 'public')));
 require('./utils/siteApi').registerSiteApi(app, client);
 
+// Top.gg Webhook (sistema de votação)
+const { topggWebhookSecret } = require('./config.json');
+if (topggWebhookSecret) {
+    const { registerTopggWebhook } = require('./utils/topgg');
+    registerTopggWebhook(app, client, topggWebhookSecret);
+} else {
+    logger.warn('topggWebhookSecret não definido — webhook do Top.gg desativado');
+}
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     logger.success(`Site rodando na porta ${PORT}`);

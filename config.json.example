@@ -8,6 +8,7 @@
 	"changelogEnabled": true,
 	"backupChannelId": "",
 	"backupIntervalHours": 6,
+	"topggWebhookSecret": "YOUR_TOPGG_WEBHOOK_SECRET",
 	"changelogMessage": {
 		"pt-BR": "",
 		"en-US": ""
