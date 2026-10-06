@@ -728,5 +728,19 @@
     "millionKm": "{value} milhões de km",
     "billion": "{value} bilhões",
     "million": "{value} milhões"
+  },
+  "topgg": {
+    "redeemTitle": "Voto no top.gg",
+    "redeemTitleWeekend": "Voto no top.gg (bônus de fim de semana)",
+    "dm": {
+      "title": "Obrigado por votar!",
+      "body": "Seu voto no **top.gg** ajuda o ∩lien a chegar a mais exploradores pela galáxia!",
+      "weekendBonus": "**Bônus de fim de semana:** recompensa ×{multiplier}!",
+      "rewardTitle": "Sua recompensa",
+      "redeemHint": "Use </redeem:1538333297430765702> para resgatar!",
+      "nextVote": "Você pode votar de novo {time}.",
+      "voteButton": "Votar no top.gg",
+      "testNotice": "Este foi um **voto de teste** — nenhuma recompensa foi salva."
+    }
   }
 }

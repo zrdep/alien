@@ -728,5 +728,19 @@
     "millionKm": "{value} million km",
     "billion": "{value} billion",
     "million": "{value} million"
+  },
+  "topgg": {
+    "redeemTitle": "Top.gg vote",
+    "redeemTitleWeekend": "Top.gg vote (weekend bonus)",
+    "dm": {
+      "title": "Thanks for voting!",
+      "body": "Your vote on **top.gg** helps ∩lien reach more explorers across the galaxy!",
+      "weekendBonus": "**Weekend bonus:** reward ×{multiplier}!",
+      "rewardTitle": "Your reward",
+      "redeemHint": "Use </redeem:1538333297430765702> to claim it!",
+      "nextVote": "You can vote again {time}.",
+      "voteButton": "Vote on top.gg",
+      "testNotice": "This was a **test vote** — no reward was saved."
+    }
   }
 }
