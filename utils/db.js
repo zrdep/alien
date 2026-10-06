@@ -308,6 +308,12 @@ db.exec(`
     );
 `);
 
+// Lotes de consumível (/craft 2x, 5x, 10x): quantos itens o craft ativo entrega.
+if (!db.prepare('PRAGMA table_info(active_crafts)').all().some(c => c.name === 'quantity')) {
+    db.exec('ALTER TABLE active_crafts ADD COLUMN quantity INTEGER NOT NULL DEFAULT 1;');
+    logger.success('Coluna `quantity` adicionada à tabela `active_crafts`');
+}
+
 db.exec(`
     CREATE TABLE IF NOT EXISTS craft_notices (
         user_id TEXT PRIMARY KEY,
@@ -1331,8 +1337,13 @@ const popCraftNotice = (userId) => {
     }
 };
 
-const startCraftJob = (userId, recipe, now = Date.now()) => {
+const startCraftJob = (userId, recipe, quantity = 1, now = Date.now()) => {
     if (!recipe) return { success: false, reason: 'invalid_recipe' };
+
+    const { getAllowedQuantities } = require('./craftRecipes');
+    if (!getAllowedQuantities(recipe).includes(quantity)) {
+        return { success: false, reason: 'invalid_quantity' };
+    }
 
     const active = getActiveCraft(userId);
     if (active) {
@@ -1351,19 +1362,22 @@ const startCraftJob = (userId, recipe, now = Date.now()) => {
     const inventory = getUserInventory(userId);
     const userStock = new Map(inventory.map((item) => [item.key, item.amount]));
 
-    for (const ing of recipe.ingredients) {
+    // Lote: ingredientes, ∩oins e tempo multiplicam pela quantidade.
+    const ingredients = recipe.ingredients.map((ing) => ({ key: ing.key, amount: ing.amount * quantity }));
+
+    for (const ing of ingredients) {
         const hasAmount = userStock.get(ing.key) ?? 0;
         if (hasAmount < ing.amount) {
             return { success: false, reason: 'insufficient_resources' };
         }
     }
 
-    const coinsCost = Math.max(0, Math.floor(recipe.coinsCost ?? 0));
+    const coinsCost = Math.max(0, Math.floor(recipe.coinsCost ?? 0)) * quantity;
     if (getUserCoins(userId) < coinsCost) {
         return { success: false, reason: 'insufficient_coins', coinsCost };
     }
 
-    const durationMs = (recipe.craftSeconds ?? 60) * 1000;
+    const durationMs = (recipe.craftSeconds ?? 60) * 1000 * quantity;
     const endsAt = now + durationMs;
 
     const performStartCraftTx = db.transaction(() => {
@@ -1372,7 +1386,7 @@ const startCraftJob = (userId, recipe, now = Date.now()) => {
             SET amount = amount - ?
             WHERE user_id = ? AND resource_key = ? AND amount >= ?
         `);
-        for (const ing of recipe.ingredients) {
+        for (const ing of ingredients) {
             const res = deductStmt.run(ing.amount, userId, ing.key, ing.amount);
             if (res.changes === 0) {
                 throw new Error('insufficient_resources');
@@ -1390,13 +1404,14 @@ const startCraftJob = (userId, recipe, now = Date.now()) => {
         }
 
         db.prepare(`
-            INSERT INTO active_crafts (user_id, recipe_id, started_at, ends_at)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO active_crafts (user_id, recipe_id, started_at, ends_at, quantity)
+            VALUES (?, ?, ?, ?, ?)
             ON CONFLICT(user_id) DO UPDATE SET
                 recipe_id = excluded.recipe_id,
                 started_at = excluded.started_at,
-                ends_at = excluded.ends_at
-        `).run(userId, recipe.id, now, endsAt);
+                ends_at = excluded.ends_at,
+                quantity = excluded.quantity
+        `).run(userId, recipe.id, now, endsAt, quantity);
     });
 
     try {
@@ -1420,15 +1435,16 @@ const resolveActiveCraft = (userId, now = Date.now()) => {
     }
 
     const recipe = getRecipe(active.recipe_id);
+    const quantity = active.quantity ?? 1;
     if (recipe) {
         try {
-            recipe.applyReward(db, userId);
+            recipe.applyReward(db, userId, quantity);
         } catch (err) {
             logger.error(`Falha ao aplicar recompensa do craft "${active.recipe_id}" para o usuário ${userId}: ${err.message}`);
         }
     }
 
-    incrementCraftCompleted(userId, 1);
+    incrementCraftCompleted(userId, quantity);
     const unlockedAchievements = checkAchievementsForUser(userId);
 
     db.prepare('DELETE FROM active_crafts WHERE user_id = ?').run(userId);
@@ -1436,10 +1452,36 @@ const resolveActiveCraft = (userId, now = Date.now()) => {
     const notice = {
         recipeId: active.recipe_id,
         titleKey: recipe?.titleKey ?? null,
+        quantity,
     };
     setCraftNotice(userId, notice);
 
     return { craft: null, notice, unlockedAchievements };
+};
+
+// Acelera o craft ativo: cobra ∩oins (destruídas) e marca como concluído
+// agora. Quem chama depois usa resolveActiveCraft pra entregar o item. O
+// custo é recalculado aqui, então nunca passa do que a tela mostrou (o
+// tempo restante só diminui).
+const skipActiveCraft = (userId, now = Date.now()) => {
+    const { getCraftSkipCost } = require('../gameConfig/craft');
+
+    const tx = db.transaction(() => {
+        const active = getActiveCraft(userId);
+        if (!active) return { success: false, reason: 'no_active_craft' };
+        if (now >= active.ends_at) return { success: false, reason: 'already_done' };
+
+        const cost = getCraftSkipCost(active.ends_at - now);
+        const paid = db.prepare(`
+            UPDATE users SET coins = coins - ? WHERE user_id = ? AND coins >= ?
+        `).run(cost, userId, cost);
+        if (paid.changes === 0) return { success: false, reason: 'insufficient_coins', cost };
+
+        db.prepare('UPDATE active_crafts SET ends_at = ? WHERE user_id = ?').run(now, userId);
+        return { success: true, cost, recipeId: active.recipe_id };
+    });
+
+    return tx();
 };
 
 const resolveAllPendingCrafts = (now = Date.now()) => {
@@ -2388,6 +2430,7 @@ module.exports = {
     setInventoryResource,
     getActiveCraft,
     startCraftJob,
+    skipActiveCraft,
     resolveActiveCraft,
     popCraftNotice,
     resolveAllPendingCrafts,

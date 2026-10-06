@@ -450,7 +450,18 @@
       "consumableTitle": "{name}",
       "consumableOwned": "You have: `{amount}`",
       "insufficientCoins": "Not enough ∩oins to pay the crafting cost.",
-      "recipeNotFound": "Recipe not found."
+      "recipeNotFound": "Recipe not found.",
+      "buttonCraftQty": "Craft {qty}x",
+      "perUnit": "per unit",
+      "maxCraftable": "You can craft up to **{amount}** right now.",
+      "invalidQuantity": "Invalid quantity for this recipe.",
+      "balanceLine": "Your balance: `{coins}` ∩oins",
+      "skipButton": "Speed up ({cost} ∩oins)",
+      "skipConfirmTitle": "Speed up crafting?",
+      "skipConfirmBody": "Finishing **{item}** now costs up to **{cost} ∩oins**.\nThese ∩oins are **destroyed** and won't come back.",
+      "skipConfirmButton": "Pay and finish",
+      "skipCancelButton": "Cancel",
+      "skipSuccess": "You paid **{cost} ∩oins** to speed up crafting."
     },
     "achievements": {
       "previousPage": "◀ Previous",

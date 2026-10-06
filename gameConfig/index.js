@@ -18,6 +18,7 @@ const hats = require('./hats');
 const achievements = require('./achievements');
 const exploration = require('./exploration');
 const consumables = require('./consumables');
+const craft = require('./craft');
 
 const validateGameConfig = ({ throwOnError = true } = {}) => {
     const errors = [];
@@ -182,6 +183,16 @@ const validateGameConfig = ({ throwOnError = true } = {}) => {
         }
     }
 
+    // -- Craft (lotes de consumível e aceleração) ----------------------------
+    const batchSizes = craft.CRAFT_CONFIG.consumableBatchSizes;
+    if (!Array.isArray(batchSizes) || !batchSizes.includes(1) || batchSizes.some((n) => !Number.isInteger(n) || n < 1) || batchSizes.length > 5) {
+        errors.push('gameConfig/craft.js: consumableBatchSizes precisa ter até 5 inteiros >= 1, incluindo o 1');
+    }
+    const { coinsPerMinute, minCost } = craft.CRAFT_CONFIG.skip;
+    if (!(coinsPerMinute > 0) || !(minCost > 0)) {
+        errors.push('gameConfig/craft.js: skip.coinsPerMinute e skip.minCost precisam ser > 0');
+    }
+
     // -- Consumíveis ---------------------------------------------------------
     const seenConsumableKeys = new Set();
     const knownEffects = new Set(['resourceBonusPercent', 'travelReductionPercent']);
@@ -258,5 +269,6 @@ module.exports = {
     ...achievements,
     ...exploration,
     ...consumables,
+    ...craft,
     validateGameConfig,
 };

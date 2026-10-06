@@ -450,7 +450,18 @@
       "consumableTitle": "{name}",
       "consumableOwned": "Você tem: `{amount}`",
       "insufficientCoins": "∩oins insuficientes para pagar o custo de fabricação.",
-      "recipeNotFound": "Receita não encontrada."
+      "recipeNotFound": "Receita não encontrada.",
+      "buttonCraftQty": "Fabricar {qty}x",
+      "perUnit": "por unidade",
+      "maxCraftable": "Você pode fabricar até **{amount}** agora.",
+      "invalidQuantity": "Quantidade inválida para esta receita.",
+      "balanceLine": "Seu saldo: `{coins}` ∩oins",
+      "skipButton": "Acelerar ({cost} ∩oins)",
+      "skipConfirmTitle": "Acelerar a fabricação?",
+      "skipConfirmBody": "Concluir **{item}** agora custa até **{cost} ∩oins**.\nEssas ∩oins são **destruídas** e não voltam.",
+      "skipConfirmButton": "Pagar e concluir",
+      "skipCancelButton": "Cancelar",
+      "skipSuccess": "Você pagou **{cost} ∩oins** pra acelerar a fabricação."
     },
     "achievements": {
       "previousPage": "◀ Anterior",

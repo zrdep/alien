@@ -6,6 +6,7 @@ const {
     formatSpeed,
 } = require('./ship');
 const { CONSUMABLES, getConsumableName } = require('../gameConfig/consumables');
+const { CRAFT_CONFIG } = require('../gameConfig/craft');
 
 const CATEGORIES = {
     PROPULSOR: 'propulsor',
@@ -269,12 +270,12 @@ const CRAFT_RECIPES = [
         coinsCost: item.recipe.coinsCost,
         ingredients: item.recipe.ingredients,
         consumableKey: item.key,
-        applyReward: (db, userId) => {
+        applyReward: (db, userId, quantity = 1) => {
             db.prepare(`
                 INSERT INTO user_items (user_id, item_key, quantity)
-                VALUES (?, ?, 1)
-                ON CONFLICT(user_id, item_key) DO UPDATE SET quantity = quantity + 1
-            `).run(userId, item.key);
+                VALUES (?, ?, ?)
+                ON CONFLICT(user_id, item_key) DO UPDATE SET quantity = quantity + excluded.quantity
+            `).run(userId, item.key, quantity);
         },
     })),
 ];
@@ -284,6 +285,9 @@ const getAllRecipes = () => CRAFT_RECIPES;
 const getRecipe = (id) => CRAFT_RECIPES.find((r) => r.id === id) ?? null;
 
 const getRecipesByCategory = (category) => CRAFT_RECIPES.filter((r) => r.category === category);
+
+// Quantidades que podem ser fabricadas de uma vez: lotes só nos consumíveis.
+const getAllowedQuantities = (recipe) => (recipe?.consumableKey ? CRAFT_CONFIG.consumableBatchSizes : [1]);
 
 // Monta as variáveis pra interpolar no texto de descrição da receita
 // (locales/*.json, chave `descKey`) SEMPRE lendo o valor atual direto de
@@ -343,6 +347,7 @@ module.exports = {
     getAllRecipes,
     getRecipe,
     getRecipesByCategory,
+    getAllowedQuantities,
     getRecipeDescParams,
     isRecipeAlreadyOwned,
 };

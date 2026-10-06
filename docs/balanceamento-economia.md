@@ -293,6 +293,39 @@ upgrades, passa a ser alcançável: os consumíveis contam como craft.
 
 ---
 
+## 7.1 Lotes de consumível e aceleração de craft
+
+Config em `gameConfig/craft.js` (`CRAFT_CONFIG`).
+
+### Lotes (1x / 2x / 5x / 10x)
+
+- Só nos consumíveis. Ingredientes, ∩oins **e tempo** multiplicam pela
+  quantidade: 10 Kits = 150 Pedra · 100 Terra · 50 Cobre · 2.000 ∩ · 10 min.
+- Não muda a economia, só tira cliques. O custo por unidade é o mesmo.
+- Cada unidade conta como 1 craft na conquista Mestre Artesão (50 crafts).
+  Como o tempo também escala, chegar nos 50 continua levando 50 min de oficina.
+
+### Acelerar (pagar pra pular)
+
+- Custo: **300 ∩ por minuto restante** (arredondado pra cima), mínimo **500 ∩**.
+  As ∩oins são **destruídas** (sumidouro puro, não cria moeda).
+- Referência: um jogador de nave máxima gera ~8.700 ∩/h ≈ **145 ∩/min**.
+  Pular custa ~**2x** o que ele ganharia no mesmo tempo, por isso é caro.
+
+| Craft | Tempo | Custo pra pular na hora |
+|---|---:|---:|
+| 1 consumível | 1 min | 500 |
+| Upgrade (qualquer nível) | 5 min | 1.500 |
+| 10 consumíveis | 10 min | 3.000 |
+
+- Para comparação: o `/daily` dá ~1.500–2.100 ∩. Pular um upgrade custa
+  quase um daily inteiro.
+- Atenção: como os crafts hoje duram só 1–5 min, o ganho de tempo é pequeno.
+  O sistema rende mais como sumidouro de ∩oins do que como atalho. Se um dia
+  os upgrades ficarem mais longos, o preço por minuto já acompanha sozinho.
+
+---
+
 ## 8. Outros ajustes da economia
 
 | Onde | Mudança | Motivo |

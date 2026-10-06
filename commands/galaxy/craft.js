@@ -19,6 +19,7 @@ const {
     getUserCoins,
     getUserItemQuantity,
     startCraftJob,
+    skipActiveCraft,
     resolveActiveCraft,
     popCraftNotice,
 } = require('../../utils/db');
@@ -26,9 +27,23 @@ const {
     CATEGORIES,
     getRecipesByCategory,
     getRecipe,
+    getAllowedQuantities,
     getRecipeDescParams,
     isRecipeAlreadyOwned,
 } = require('../../utils/craftRecipes');
+const { getCraftSkipCost } = require('../../gameConfig/craft');
+
+const E_GOLD = '<:gold_coins:1536941656178298992>';
+
+const formatNum = (n, lang) => (n ?? 0).toLocaleString(lang === 'pt-BR' ? 'pt-BR' : 'en-US');
+
+// Nome do item do craft, com a quantidade na frente quando é lote ("5x Kit").
+const craftItemLabel = (interaction, recipeId, quantity = 1) => {
+    const recipe = getRecipe(recipeId);
+    const lang = getUserLanguage(interaction.user.id);
+    const title = recipe ? tFor(interaction, recipe.titleKey, getRecipeDescParams(recipe, lang)) : recipeId;
+    return quantity > 1 ? `${quantity}x ${title}` : title;
+};
 const { getResourceMeta } = require('../../utils/planetResources');
 const { getResourceLabel } = require('../../utils/resourcesDisplay');
 const { formatDuration, formatTimeRemaining } = require('../../utils/exploration');
@@ -86,22 +101,57 @@ const buildRecipeMenu = (interaction, category, selectedRecipeId = null) => {
     );
 };
 
-const buildActiveCraftPanel = (interaction, activeCraft) => {
+const buildActiveCraftPanel = (interaction, activeCraft, confirmSkip = false) => {
     const userId = interaction.user.id;
     const lang = getUserLanguage(userId);
-    const recipe = getRecipe(activeCraft.recipe_id);
-    const itemTitle = recipe ? tFor(interaction, recipe.titleKey, getRecipeDescParams(recipe, lang)) : activeCraft.recipe_id;
+    const itemTitle = craftItemLabel(interaction, activeCraft.recipe_id, activeCraft.quantity ?? 1);
     const eta = formatTimeRemaining(activeCraft.ends_at, lang);
+    const skipCost = getCraftSkipCost(activeCraft.ends_at - Date.now());
+    const userCoins = getUserCoins(userId);
+    const canPay = userCoins >= skipCost;
+    const balanceLine = `${E_GOLD} ${tFor(interaction, 'commands.craft.balanceLine', { coins: formatNum(userCoins, lang) })}`;
 
-    const text = `<:loading:1536247662372982794> **${tFor(interaction, 'commands.craft.inProgressTitle')}**
+    let text;
+    let buttons;
+
+    if (confirmSkip) {
+        text = `# <:hmm:1536247599365890139> ${tFor(interaction, 'commands.craft.skipConfirmTitle')}
+
+${tFor(interaction, 'commands.craft.skipConfirmBody', { item: itemTitle, cost: formatNum(skipCost, lang) })}
+
+${balanceLine}`;
+        buttons = [
+            new ButtonBuilder()
+                .setCustomId('craft_skip_confirm')
+                .setLabel(tFor(interaction, 'commands.craft.skipConfirmButton'))
+                .setStyle(ButtonStyle.Success)
+                .setEmoji(E_GOLD)
+                .setDisabled(!canPay),
+            new ButtonBuilder()
+                .setCustomId('craft_skip_cancel')
+                .setLabel(tFor(interaction, 'commands.craft.skipCancelButton'))
+                .setStyle(ButtonStyle.Secondary),
+        ];
+    } else {
+        text = `<:loading:1536247662372982794> **${tFor(interaction, 'commands.craft.inProgressTitle')}**
 
 ${tFor(interaction, 'commands.craft.inProgressBody', { item: itemTitle })}
 
-<:saturn:1536459943480270959> ${tFor(interaction, 'commands.craft.inProgressEta', { time: eta })}`;
+<:saturn:1536459943480270959> ${tFor(interaction, 'commands.craft.inProgressEta', { time: eta })}
+${balanceLine}`;
+        buttons = [
+            new ButtonBuilder()
+                .setCustomId('craft_skip')
+                .setLabel(tFor(interaction, 'commands.craft.skipButton', { cost: formatNum(skipCost, lang) }))
+                .setStyle(ButtonStyle.Primary)
+                .setEmoji(E_GOLD)
+                .setDisabled(!canPay),
+        ];
+    }
 
-    const container = new ContainerBuilder().addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(text)
-    );
+    const container = new ContainerBuilder()
+        .addTextDisplayComponents(new TextDisplayBuilder().setContent(text))
+        .addActionRowComponents(new ActionRowBuilder().addComponents(buttons));
 
     return {
         flags: MessageFlags.IsComponentsV2,
@@ -110,24 +160,27 @@ ${tFor(interaction, 'commands.craft.inProgressBody', { item: itemTitle })}
     };
 };
 
-const buildCraftPanel = (interaction, category = CATEGORIES.PROPULSOR, selectedRecipeId = null, toastMessage = null) => {
+const buildCraftPanel = (interaction, category = CATEGORIES.PROPULSOR, selectedRecipeId = null, toastMessage = null, { confirmSkip = false, extraToast = null } = {}) => {
     const userId = interaction.user.id;
 
     const { craft: activeCraft, notice, unlockedAchievements } = resolveActiveCraft(userId);
+    // resolveActiveCraft também guarda o aviso pra quem não está no /craft
+    // (ex.: /alien). Como ele já vai aparecer aqui, consome pra não repetir
+    // na próxima interação.
+    if (notice) popCraftNotice(userId);
 
     if (notice && !toastMessage) {
-        const noticeRecipe = notice.recipeId ? getRecipe(notice.recipeId) : null;
-        const noticeLang = getUserLanguage(userId);
-        const itemTitle = notice.titleKey
-            ? tFor(interaction, notice.titleKey, noticeRecipe ? getRecipeDescParams(noticeRecipe, noticeLang) : {})
-            : notice.recipeId;
+        const itemTitle = craftItemLabel(interaction, notice.recipeId, notice.quantity ?? 1);
         toastMessage = `<:excited:1536247579061256252> **${tFor(interaction, 'commands.craft.successTitle')}**\n${tFor(interaction, 'commands.craft.successBody', { item: itemTitle })}`;
+    }
+    if (extraToast) {
+        toastMessage = toastMessage ? `${toastMessage}\n${extraToast}` : extraToast;
     }
 
     const __craftUnlockedAchievements = unlockedAchievements || [];
 
     if (activeCraft) {
-        const panel = buildActiveCraftPanel(interaction, activeCraft);
+        const panel = buildActiveCraftPanel(interaction, activeCraft, confirmSkip);
         return { ...panel, __craftUnlockedAchievements };
     }
 
@@ -148,7 +201,9 @@ const buildCraftPanel = (interaction, category = CATEGORIES.PROPULSOR, selectedR
     const recipeDescParams = getRecipeDescParams(currentRecipe, lang);
     const recipeTitle = tFor(interaction, currentRecipe.titleKey, recipeDescParams);
     const recipeDesc = tFor(interaction, currentRecipe.descKey, recipeDescParams);
-    const ingredientsTitle = tFor(interaction, 'commands.craft.ingredientsTitle');
+    const isBatchRecipe = getAllowedQuantities(currentRecipe).length > 1;
+    const perUnit = isBatchRecipe ? ` *(${tFor(interaction, 'commands.craft.perUnit')})*` : '';
+    const ingredientsTitle = tFor(interaction, 'commands.craft.ingredientsTitle') + perUnit;
     const timeFormatted = formatDuration(currentRecipe.craftSeconds ?? 60, lang);
 
     let allRequirementsMet = true;
@@ -176,9 +231,16 @@ const buildCraftPanel = (interaction, category = CATEGORIES.PROPULSOR, selectedR
 
     const numLoc = lang === 'pt-BR' ? 'pt-BR' : 'en-US';
     const coinsCost = currentRecipe.coinsCost ?? 0;
+    const userCoins = getUserCoins(userId);
+
+    // Quantas unidades dá pra fabricar com o que o jogador tem agora.
+    let maxCraftable = Math.min(...currentRecipe.ingredients.map(
+        (ing) => Math.floor((userStock.get(ing.key) ?? 0) / ing.amount)
+    ));
+    if (coinsCost > 0) maxCraftable = Math.min(maxCraftable, Math.floor(userCoins / coinsCost));
+
     let coinsLine = '';
     if (coinsCost > 0) {
-        const userCoins = getUserCoins(userId);
         const hasCoins = userCoins >= coinsCost;
         if (!hasCoins) allRequirementsMet = false;
         const checkEmoji = hasCoins ? '<:online:1536247711169249391>' : '<:dnd:1536247547193204766>';
@@ -193,6 +255,9 @@ const buildCraftPanel = (interaction, category = CATEGORIES.PROPULSOR, selectedR
         : '';
 
     let statusWarning = '';
+    if (isBatchRecipe) {
+        statusWarning = `\n\n<:sunglasses:1536248455519801386> ${tFor(interaction, 'commands.craft.maxCraftable', { amount: maxCraftable })}`;
+    }
     if (alreadyOwned) {
         statusWarning = `\n\n<:online:1536247711169249391> *${tFor(interaction, 'commands.craft.alreadyMaxLevel')}*`;
     } else if (!meetsLevelReq) {
@@ -204,19 +269,23 @@ const buildCraftPanel = (interaction, category = CATEGORIES.PROPULSOR, selectedR
 
 ${recipeDesc}
 
-<:saturn:1536459943480270959> **${tFor(interaction, 'commands.craft.craftTimeLabel')}:** \`${timeFormatted}\`${ownedLine}
+<:saturn:1536459943480270959> **${tFor(interaction, 'commands.craft.craftTimeLabel')}:** \`${timeFormatted}\`${perUnit}${ownedLine}
 
 ### <:rock:1536579687407681596> ${ingredientsTitle}
 ${ingredientLines}${coinsLine}${statusWarning}
 `);
 
+    // Upgrades: um botão só. Consumíveis: um botão por tamanho de lote,
+    // cada um desabilitado se o jogador não tiver o suficiente pra ele.
     const buttonRow = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-            .setCustomId(`craft_submit:${currentRecipe.id}`)
-            .setLabel(tFor(interaction, 'commands.craft.buttonCraft'))
+        getAllowedQuantities(currentRecipe).map((qty) => new ButtonBuilder()
+            .setCustomId(`craft_submit:${currentRecipe.id}:${qty}`)
+            .setLabel(isBatchRecipe
+                ? tFor(interaction, 'commands.craft.buttonCraftQty', { qty })
+                : tFor(interaction, 'commands.craft.buttonCraft'))
             .setStyle(ButtonStyle.Success)
             .setEmoji('<:excited:1536247579061256252>')
-            .setDisabled(!allRequirementsMet)
+            .setDisabled(!allRequirementsMet || qty > maxCraftable))
     );
 
     const container = new ContainerBuilder();
@@ -294,9 +363,52 @@ module.exports = {
     },
 
     async handleButton(interaction) {
-        if (!interaction.customId.startsWith('craft_submit:')) return false;
+        const { customId } = interaction;
 
-        const recipeId = interaction.customId.slice('craft_submit:'.length);
+        // --- Acelerar craft com ∩oins ---------------------------------------
+        if (customId === 'craft_skip' || customId === 'craft_skip_cancel') {
+            const panel = buildCraftPanel(interaction, CATEGORIES.PROPULSOR, null, null, {
+                confirmSkip: customId === 'craft_skip',
+            });
+            await interaction.update(panel);
+            await notifyAchievementsFollowUp(interaction, panel.__craftUnlockedAchievements);
+            return true;
+        }
+
+        if (customId === 'craft_skip_confirm') {
+            const lang = getUserLanguage(interaction.user.id);
+            const result = skipActiveCraft(interaction.user.id);
+
+            if (!result.success && result.reason === 'insufficient_coins') {
+                await interaction.reply({
+                    content: `<:error:1536247565006143528> ${tFor(interaction, 'commands.craft.insufficientCoins')}`,
+                    flags: MessageFlags.Ephemeral,
+                });
+                return true;
+            }
+
+            // Se o craft já tinha acabado sozinho, o painel só entrega o item.
+            const recipe = result.recipeId ? getRecipe(result.recipeId) : null;
+            const extraToast = result.success
+                ? `${E_GOLD} ${tFor(interaction, 'commands.craft.skipSuccess', { cost: formatNum(result.cost, lang) })}`
+                : null;
+            const panel = buildCraftPanel(
+                interaction,
+                recipe?.category ?? CATEGORIES.PROPULSOR,
+                recipe?.id ?? null,
+                null,
+                { extraToast },
+            );
+            await interaction.update(panel);
+            await notifyAchievementsFollowUp(interaction, panel.__craftUnlockedAchievements);
+            return true;
+        }
+
+        if (!customId.startsWith('craft_submit:')) return false;
+
+        // craft_submit:<recipeId>:<quantidade> (botões antigos, sem quantidade, = 1)
+        const [recipeId, qtyRaw] = customId.slice('craft_submit:'.length).split(':');
+        const quantity = Number(qtyRaw ?? 1);
         const recipe = getRecipe(recipeId);
 
         if (!recipe) {
@@ -307,7 +419,7 @@ module.exports = {
             return true;
         }
 
-        const result = startCraftJob(interaction.user.id, recipe);
+        const result = startCraftJob(interaction.user.id, recipe, quantity);
 
         if (!result.success) {
             let errorKey = 'commands.craft.insufficientResources';
@@ -319,6 +431,8 @@ module.exports = {
                 errorKey = 'commands.craft.busyError';
             } else if (result.reason === 'insufficient_coins') {
                 errorKey = 'commands.craft.insufficientCoins';
+            } else if (result.reason === 'invalid_quantity') {
+                errorKey = 'commands.craft.invalidQuantity';
             }
             await interaction.reply({
                 content: `<:error:1536247565006143528> ${tFor(interaction, errorKey)}`,
