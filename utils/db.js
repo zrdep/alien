@@ -308,6 +308,63 @@ db.exec(`
     );
 `);
 
+// Histórico de ∩oins (/wallet → Histórico). Uma linha por entrada/saída,
+// com o saldo logo depois dela. Guarda só as últimas COIN_HISTORY_LIMIT por
+// jogador (ver logCoinTx).
+db.exec(`
+    CREATE TABLE IF NOT EXISTS coin_transactions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT NOT NULL,
+        amount INTEGER NOT NULL,
+        type TEXT NOT NULL,
+        detail_json TEXT,
+        balance_after INTEGER NOT NULL,
+        created_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_coin_transactions_user ON coin_transactions (user_id, id);
+`);
+
+const COIN_HISTORY_LIMIT = 50;
+
+// Registra uma movimentação de ∩oins. Chame DEPOIS do UPDATE do saldo (e
+// dentro da mesma transação, quando houver) — o saldo final é lido aqui.
+// `detail` são os dados pra montar o texto na tela (recurso, quantidade,
+// outro jogador...), traduzidos só na hora de exibir.
+const logCoinTx = (userId, amount, type, detail = null) => {
+    const amt = Math.floor(Number(amount));
+    if (!Number.isFinite(amt) || amt === 0) return;
+
+    db.prepare(`
+        INSERT INTO coin_transactions (user_id, amount, type, detail_json, balance_after, created_at)
+        VALUES (?, ?, ?, ?, (SELECT coins FROM users WHERE user_id = ?), ?)
+    `).run(userId, amt, type, detail ? JSON.stringify(detail) : null, userId, Date.now());
+
+    db.prepare(`
+        DELETE FROM coin_transactions
+        WHERE user_id = ? AND id <= (
+            SELECT id FROM coin_transactions WHERE user_id = ?
+            ORDER BY id DESC LIMIT 1 OFFSET ?
+        )
+    `).run(userId, userId, COIN_HISTORY_LIMIT);
+};
+
+const getCoinHistory = (userId, limit = 10, offset = 0) => {
+    return db.prepare(`
+        SELECT amount, type, detail_json AS detailJson, balance_after AS balanceAfter, created_at AS createdAt
+        FROM coin_transactions
+        WHERE user_id = ?
+        ORDER BY id DESC
+        LIMIT ? OFFSET ?
+    `).all(userId, limit, offset).map((r) => ({
+        ...r,
+        detail: r.detailJson ? JSON.parse(r.detailJson) : {},
+    }));
+};
+
+const countCoinHistory = (userId) => {
+    return db.prepare('SELECT COUNT(*) AS total FROM coin_transactions WHERE user_id = ?').get(userId).total;
+};
+
 // Lotes de consumível (/craft 2x, 5x, 10x): quantos itens o craft ativo entrega.
 if (!db.prepare('PRAGMA table_info(active_crafts)').all().some(c => c.name === 'quantity')) {
     db.exec('ALTER TABLE active_crafts ADD COLUMN quantity INTEGER NOT NULL DEFAULT 1;');
@@ -605,7 +662,7 @@ const getUserCoins = (userId) => {
     return user.coins ?? 0;
 };
 
-const addUserCoins = (userId, amount) => {
+const addUserCoins = (userId, amount, type = 'other', detail = null) => {
     if (typeof amount !== 'number' || amount <= 0) return;
     getUser(userId);
     const amt = Math.floor(amount);
@@ -614,16 +671,18 @@ const addUserCoins = (userId, amount) => {
         SET coins = coins + ?
         WHERE user_id = ?
     `).run(amt, userId);
+    logCoinTx(userId, amt, type, detail);
 };
 
 const setUserCoins = (userId, amount) => {
     if (typeof amount !== 'number' || amount < 0 || !Number.isFinite(amount)) return;
-    getUser(userId);
+    const before = getUser(userId).coins ?? 0;
     db.prepare(`
         UPDATE users
         SET coins = ?
         WHERE user_id = ?
     `).run(Math.floor(amount), userId);
+    logCoinTx(userId, Math.floor(amount) - before, 'admin_set');
 };
 
 const getDailyState = (userId, date = new Date()) => {
@@ -669,6 +728,7 @@ const claimDaily = (userId, dateStr, coinsAmount) => {
             daily_streak = ?
         WHERE user_id = ?
     `).run(dateStr, coinsInt, newStreak, userId);
+    logCoinTx(userId, coinsInt, 'daily', { streak: newStreak });
 
     const unlockedAchievements = checkAchievementsForUser(userId);
 
@@ -1045,6 +1105,8 @@ const transferUserCoins = (fromUserId, toUserId, amount, fee = 0) => {
         if (debit.changes === 0) return false;
 
         db.prepare('UPDATE users SET coins = coins + ? WHERE user_id = ?').run(amt - feeInt, toUserId);
+        logCoinTx(fromUserId, -amt, 'gift_sent', { user: toUserId });
+        logCoinTx(toUserId, amt - feeInt, 'gift_received', { user: fromUserId });
         return true;
     });
 
@@ -1199,7 +1261,7 @@ const resolveExplorationMission = (userId, now = Date.now()) => {
 
             addInventoryResources(userId, resources);
             if (coinsReward && coinsReward.amount) {
-                addUserCoins(userId, coinsReward.amount);
+                addUserCoins(userId, coinsReward.amount, 'mission', { planet: mission.planet_name });
             }
             const hatKey = mission.hat_key && getHat(mission.hat_key) ? mission.hat_key : null;
             if (hatKey) {
@@ -1401,6 +1463,7 @@ const startCraftJob = (userId, recipe, quantity = 1, now = Date.now()) => {
             if (paid.changes === 0) {
                 throw new Error('insufficient_coins');
             }
+            logCoinTx(userId, -coinsCost, 'craft', { recipe: recipe.id, qty: quantity });
         }
 
         db.prepare(`
@@ -1478,6 +1541,7 @@ const skipActiveCraft = (userId, now = Date.now()) => {
         if (paid.changes === 0) return { success: false, reason: 'insufficient_coins', cost };
 
         db.prepare('UPDATE active_crafts SET ends_at = ? WHERE user_id = ?').run(now, userId);
+        logCoinTx(userId, -cost, 'craft_skip', { recipe: active.recipe_id });
         return { success: true, cost, recipeId: active.recipe_id };
     });
 
@@ -1642,6 +1706,8 @@ const buyMarketListing = (buyerId, listingId, buyAmount) => {
 
         getUser(listing.sellerId);
         db.prepare('UPDATE users SET coins = coins + ? WHERE user_id = ?').run(sellerProceeds, listing.sellerId);
+        logCoinTx(buyerId, -totalCost, 'market_buy', { resource: listing.resourceKey, qty });
+        logCoinTx(listing.sellerId, sellerProceeds, 'market_sale', { resource: listing.resourceKey, qty });
 
         db.prepare(`
             INSERT INTO user_inventory (user_id, resource_key, amount)
@@ -1723,6 +1789,7 @@ const buyFromSystemShop = (buyerId, resourceKey, amount) => {
 
     const tx = db.transaction(() => {
         db.prepare('UPDATE users SET coins = coins - ? WHERE user_id = ?').run(totalCost, buyerId);
+        logCoinTx(buyerId, -totalCost, 'shop_buy', { resource: resourceKey, qty });
 
         db.prepare(`
             INSERT INTO user_inventory (user_id, resource_key, amount)
@@ -1786,6 +1853,7 @@ const sellToSystemShop = (sellerId, resourceKey, amount) => {
         `).run(qty, sellerId, resourceKey);
 
         db.prepare('UPDATE users SET coins = coins + ? WHERE user_id = ?').run(totalPayout, sellerId);
+        logCoinTx(sellerId, totalPayout, 'shop_sell', { resource: resourceKey, qty });
     });
 
     tx();
@@ -1880,6 +1948,7 @@ const buyHatFromSystemShop = (buyerId, hatKey, qty = 1) => {
 
     const tx = db.transaction(() => {
         db.prepare('UPDATE users SET coins = coins - ? WHERE user_id = ?').run(totalCost, buyerId);
+        logCoinTx(buyerId, -totalCost, 'hat_shop_buy', { hat: hatKey, qty: amount });
         addUserHat(buyerId, hatKey, amount);
     });
     tx();
@@ -2063,6 +2132,8 @@ const buyHatMarketListing = (buyerId, listingId) => {
         db.prepare(`UPDATE hat_market_listings SET status = 'sold' WHERE id = ?`).run(listingId);
         db.prepare(`UPDATE users SET coins = coins - ? WHERE user_id = ?`).run(listing.price, buyerId);
         db.prepare(`UPDATE users SET coins = coins + ? WHERE user_id = ?`).run(proceeds, listing.sellerId);
+        logCoinTx(buyerId, -listing.price, 'hat_market_buy', { hat: listing.hatKey });
+        logCoinTx(listing.sellerId, proceeds, 'hat_market_sale', { hat: listing.hatKey });
         addUserHat(buyerId, listing.hatKey, 1);
     });
     tx();
@@ -2242,6 +2313,7 @@ const applyAchievementReward = (userId, achievement) => {
 
         if (rewardCoins > 0) {
             db.prepare('UPDATE users SET coins = coins + ? WHERE user_id = ?').run(rewardCoins, userId);
+            logCoinTx(userId, rewardCoins, 'achievement', { achievement: achievement.id });
         }
 
         if (rewardResources.length > 0) {
@@ -2380,6 +2452,7 @@ const claimAllRedeemables = (userId) => {
         for (const item of pending) {
             if (item.coins > 0) {
                 db.prepare('UPDATE users SET coins = coins + ? WHERE user_id = ?').run(item.coins, userId);
+                logCoinTx(userId, item.coins, 'redeem', { titlePt: item.titlePt, titleEn: item.titleEn });
             }
             if (item.resources.length > 0) {
                 const stmt = db.prepare(`
@@ -2452,6 +2525,8 @@ module.exports = {
     getUserCoins,
     addUserCoins,
     setUserCoins,
+    getCoinHistory,
+    countCoinHistory,
     transferUserCoins,
     transferInventoryResource,
     getDailyState,
