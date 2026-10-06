@@ -88,17 +88,20 @@ function registerTopggWebhook(app, client, webhookSecret) {
             return res.status(401).json({ error: 'unauthorized' });
         }
 
-        // ── Payload do Top.gg ───────────────────────────────────────
-        const { user: userId, type, isWeekend } = req.body;
+        // ── Payload do Top.gg (v1) ──────────────────────────────────
+        // Formato v1: { type: "vote.create", data: { user: { platform_id }, weight, ... } }
+        const { type, data } = req.body;
+        const userId = data?.user?.platform_id;
+        const isWeekend = (data?.weight ?? 1) > 1;
 
         if (!userId) {
             logger.warn('Top.gg webhook — payload sem userId');
             return res.status(400).json({ error: 'missing_user' });
         }
 
-        // Top.gg envia type "test" quando você testa pelo painel — aceitamos
+        // Top.gg envia type "vote.test" quando você testa pelo painel — aceitamos
         // pra facilitar debug, mas logamos separado.
-        if (type === 'test') {
+        if (type === 'vote.test') {
             logger.info(`Top.gg webhook — voto de TESTE recebido (user ${userId})`);
         }
 
