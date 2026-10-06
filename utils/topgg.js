@@ -1,16 +1,16 @@
 // =============================================================================
-// TOP.GG — WEBHOOK DE VOTAÇÃO
+// TOP.GG — WEBHOOK DE VOTAÇÃO (v1 — assinatura HMAC)
 // =============================================================================
 // Recebe o POST do Top.gg quando alguém vota, gera recompensa (coins +
 // recursos), salva como redeemable pendente e envia uma DM avisando o
-// jogador. A rota é protegida pelo header `Authorization` que deve bater
-// com o secret configurado no Top.gg e em config.json.
+// jogador. A rota é protegida pela assinatura HMAC-SHA256 enviada no
+// header `x-topgg-signature` (formato: t={timestamp},v1={hash}).
 // =============================================================================
 
-const { createRedeemable } = require('./db');
+const crypto = require('node:crypto');
+const { createRedeemable, getUserLanguage } = require('./db');
 const { generateDailyResources, getRandomStepValue } = require('./coins');
 const { getResourceName } = require('../gameConfig/resources');
-const { getUserLanguage } = require('./db');
 const logger = require('./logger');
 
 // ── Configuração das recompensas de voto ────────────────────────────────
@@ -34,26 +34,61 @@ function generateVoteReward(isWeekend) {
 }
 
 /**
+ * Verifica a assinatura HMAC-SHA256 do Top.gg (v1).
+ * Header: x-topgg-signature → "t={timestamp},v1={hex_signature}"
+ * Payload assinado: "{timestamp}.{rawBody}"
+ */
+function verifyTopggSignature(rawBody, signatureHeader, secret) {
+    if (!signatureHeader) return false;
+
+    const parts = signatureHeader.split(',');
+    const tPart = parts.find(p => p.startsWith('t='));
+    const v1Part = parts.find(p => p.startsWith('v1='));
+
+    if (!tPart || !v1Part) return false;
+
+    const timestamp = tPart.slice(2);
+    const receivedSig = v1Part.slice(3);
+
+    const hmac = crypto.createHmac('sha256', secret);
+    const expectedSig = hmac.update(`${timestamp}.${rawBody}`).digest('hex');
+
+    try {
+        return crypto.timingSafeEqual(
+            Buffer.from(receivedSig, 'hex'),
+            Buffer.from(expectedSig, 'hex'),
+        );
+    } catch {
+        return false;
+    }
+}
+
+/**
  * Registra a rota de webhook do Top.gg na instância Express.
  * @param {import('express').Application} app
  * @param {import('discord.js').Client} client
- * @param {string} webhookSecret — secret compartilhado com o Top.gg
+ * @param {string} webhookSecret — secret compartilhado com o Top.gg (whs_...)
  */
 function registerTopggWebhook(app, client, webhookSecret) {
-    // O Express 5 já vem com body-parser embutido, mas precisamos garantir
-    // que JSON está habilitado na rota.
     const express = require('express');
 
-    app.post('/api/topgg/vote', express.json(), async (req, res) => {
-        // ── Autenticação ────────────────────────────────────────────
-        const authHeader = req.headers['authorization'];
-        if (!authHeader || authHeader !== webhookSecret) {
-            logger.warn('Top.gg webhook — autorização inválida');
+    // Precisamos do body cru (Buffer) pra validar a assinatura HMAC,
+    // mas também do JSON parseado. O `verify` do express.json() nos dá os dois.
+    const jsonParser = express.json({
+        verify: (req, _res, buf) => {
+            req.rawBody = buf.toString('utf-8');
+        },
+    });
+
+    app.post('/api/topgg/vote', jsonParser, async (req, res) => {
+        // ── Verificação da assinatura HMAC ──────────────────────────
+        const sigHeader = req.headers['x-topgg-signature'];
+        if (!verifyTopggSignature(req.rawBody, sigHeader, webhookSecret)) {
+            logger.warn('Top.gg webhook — assinatura inválida');
             return res.status(401).json({ error: 'unauthorized' });
         }
 
         // ── Payload do Top.gg ───────────────────────────────────────
-        // Docs: https://docs.top.gg/resources/webhooks/#bot-webhooks
         const { user: userId, type, isWeekend } = req.body;
 
         if (!userId) {
